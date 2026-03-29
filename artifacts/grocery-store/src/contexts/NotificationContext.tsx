@@ -39,21 +39,24 @@ export function useNotifications() {
   return useContext(NotificationContext);
 }
 
-const STORAGE_KEY = 'freshveg-notifications';
 const MAX_STORED = 50;
 
-function loadStored(): NotificationItem[] {
+function storageKey(role: string): string {
+  return `freshveg-notifications-${role}`;
+}
+
+function loadStored(role: string): NotificationItem[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey(role));
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
   }
 }
 
-function saveStored(items: NotificationItem[]) {
+function saveStored(items: NotificationItem[], role: string) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items.slice(0, MAX_STORED)));
+    localStorage.setItem(storageKey(role), JSON.stringify(items.slice(0, MAX_STORED)));
   } catch {}
 }
 
@@ -145,7 +148,7 @@ function getLocalizedText(
 
 export function NotificationProvider({ children, role, token, onNotification }: NotificationProviderProps) {
   const lang = useStore(s => s.lang);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(loadStored);
+  const [notifications, setNotifications] = useState<NotificationItem[]>(() => loadStored(role));
   const [swRegistration, setSwRegistration] = useState<ServiceWorkerRegistration | null>(null);
   const [permissionState, setPermissionState] = useState<NotificationPermission | 'unsupported'>('default');
   const [soundMuted, setSoundMuted] = useState(false);
@@ -168,7 +171,7 @@ export function NotificationProvider({ children, role, token, onNotification }: 
   const addNotification = useCallback((item: NotificationItem) => {
     setNotifications(prev => {
       const updated = [item, ...prev].slice(0, MAX_STORED);
-      saveStored(updated);
+      saveStored(updated, role);
       return updated;
     });
     if (!soundMuted) {
@@ -178,28 +181,28 @@ export function NotificationProvider({ children, role, token, onNotification }: 
       }
     }
     onNotification?.(item);
-  }, [onNotification, soundMuted]);
+  }, [onNotification, soundMuted, role]);
 
   const markAllRead = useCallback(() => {
     setNotifications(prev => {
       const updated = prev.map(n => ({ ...n, read: true }));
-      saveStored(updated);
+      saveStored(updated, role);
       return updated;
     });
-  }, []);
+  }, [role]);
 
   const markRead = useCallback((id: string) => {
     setNotifications(prev => {
       const updated = prev.map(n => n.id === id ? { ...n, read: true } : n);
-      saveStored(updated);
+      saveStored(updated, role);
       return updated;
     });
-  }, []);
+  }, [role]);
 
   const clear = useCallback(() => {
     setNotifications([]);
-    saveStored([]);
-  }, []);
+    saveStored([], role);
+  }, [role]);
 
   useEffect(() => {
     const handler = () => { hasInteracted.current = true; };
@@ -335,7 +338,11 @@ export function NotificationProvider({ children, role, token, onNotification }: 
           <Bell className="w-5 h-5 flex-shrink-0" />
           <p className="text-sm flex-1">{permDeniedBannerText}</p>
           <button
-            onClick={() => window.open('about:preferences#privacy', '_blank')}
+            title={lang === 'ar' ? 'انقر على أيقونة القفل في شريط العنوان ثم السماح بالإشعارات' : 'Click the lock icon in the address bar and allow notifications'}
+            onClick={() => alert(lang === 'ar'
+              ? 'لإعادة التفعيل: انقر على أيقونة القفل (🔒) في شريط العنوان ← الأذونات ← السماح بالإشعارات، ثم أعِد تحميل الصفحة.'
+              : 'To re-enable: click the lock icon (🔒) in the address bar → Permissions → Allow Notifications, then reload the page.'
+            )}
             className="text-xs font-semibold underline flex-shrink-0"
           >
             {permDeniedBtnText}
