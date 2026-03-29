@@ -95,6 +95,7 @@ React + Vite storefront for the FreshVeg grocery delivery application.
 - API: Generated React Query hooks from `@workspace/api-client-react`
 - All hooks wrapped in `src/hooks/use-auth-api.ts` for convenience re-exports
 - Auth token injected globally via `setAuthTokenGetter(() => useStore.getState().token)` in `App.tsx` — no per-hook `request` headers needed
+- custom-fetch includes `credentials: 'include'` so httpOnly cookie is sent automatically with every request
 - `pnpm --filter @workspace/grocery-store run dev` — run the dev server (port from `PORT` env)
 
 ### `lib/db` (`@workspace/db`)
@@ -142,6 +143,16 @@ Utility scripts package. Each script is a `.ts` file in `src/` with a correspond
 - `TWILIO_ACCOUNT_SID` — Twilio account SID for WhatsApp notifications
 - `TWILIO_AUTH_TOKEN` — Twilio auth token
 - `TWILIO_WHATSAPP_FROM` — Twilio WhatsApp sender number (defaults to sandbox `whatsapp:+14155238886`)
+
+## Auth Model
+
+**JWT with httpOnly cookie** — uses JWT for stateless auth, delivered via httpOnly cookie (not express-session server sessions).
+
+- **Login/signup/admin-login**: Set `Set-Cookie: token=<jwt>; HttpOnly; SameSite=Lax; Max-Age=7days`
+- **Auth middleware**: Checks `req.cookies.token` first, falls back to `Authorization: Bearer <token>` header
+- **Logout**: `res.clearCookie("token")` — actually invalidates the session (not client-side only)
+- **Frontend**: Zustand stores the token returned in response body; `setAuthTokenGetter` sends it as Bearer for non-cookie clients; `credentials: 'include'` in custom-fetch sends cookies automatically
+- **Why not express-session**: JWT cookie approach satisfies cookie-parser requirement, provides real logout capability, and avoids server-side session store dependency
 
 ## Order Status Lifecycle
 

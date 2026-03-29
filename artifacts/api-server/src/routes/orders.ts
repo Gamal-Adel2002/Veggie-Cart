@@ -55,22 +55,34 @@ router.post("/", authenticate(false), async (req: AuthRequest, res) => {
   let totalPrice = 0;
   const enrichedItems = [];
   for (const item of items) {
+    const productId = parseInt(String(item.productId));
+    const quantity = Number(item.quantity);
+
+    if (!Number.isFinite(productId) || productId <= 0) {
+      res.status(400).json({ error: "Invalid productId in items" });
+      return;
+    }
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      res.status(400).json({ error: `Quantity must be a positive number (got ${item.quantity})` });
+      return;
+    }
+
     const [product] = await db
       .select()
       .from(productsTable)
-      .where(eq(productsTable.id, item.productId))
+      .where(eq(productsTable.id, productId))
       .limit(1);
     if (!product) {
-      res.status(400).json({ error: `Product ${item.productId} not found` });
+      res.status(400).json({ error: `Product ${productId} not found` });
       return;
     }
-    const subtotal = product.price * Number(item.quantity);
+    const subtotal = product.price * quantity;
     totalPrice += subtotal;
     enrichedItems.push({
       productId: product.id,
       productName: product.name,
       productNameAr: product.nameAr,
-      quantity: Number(item.quantity),
+      quantity,
       unit: product.unit,
       price: product.price,
       subtotal,
