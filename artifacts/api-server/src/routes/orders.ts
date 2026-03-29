@@ -236,11 +236,12 @@ router.post("/", authenticate(false), async (req: AuthRequest, res) => {
         orderId: orderId!,
         customerName: full?.customerName || customerName,
         totalPrice: full?.totalPrice || 0,
+        url: `/admin/orders?orderId=${orderId}`,
       });
       await sendPushToAdmins({
         title: "FreshVeg — New Order",
         body: `${full?.customerName || customerName} · EGP ${(full?.totalPrice || 0).toFixed(2)}`,
-        url: "/admin/orders",
+        url: `/admin/orders?orderId=${orderId}`,
       });
     } catch {}
   });

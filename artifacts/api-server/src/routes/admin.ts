@@ -190,11 +190,12 @@ router.post("/orders/:id/assign", authenticate(), requireAdmin, async (req: Auth
         customerName: order.customerName,
         deliveryAddress: order.deliveryAddress,
         totalPrice: order.totalPrice,
+        url: `/delivery/dashboard`,
       });
       await sendPushToDeliveryPerson(Number(deliveryPersonId), {
         title: "FreshVeg — New Delivery",
         body: `Order #${id} · ${order.deliveryAddress || order.customerName}`,
-        url: "/delivery",
+        url: `/delivery/dashboard`,
       });
     } catch {}
   });

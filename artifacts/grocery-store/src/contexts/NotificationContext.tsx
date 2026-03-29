@@ -291,7 +291,7 @@ export function NotificationProvider({ children, role, token, onNotification }: 
             type: eventType,
             title,
             body,
-            url: eventType === 'new_order' ? '/admin/orders' : '/delivery',
+            url: data.url || (eventType === 'new_order' ? '/admin/orders' : '/delivery/dashboard'),
             timestamp: Date.now(),
             read: false,
             orderId: data.orderId,
