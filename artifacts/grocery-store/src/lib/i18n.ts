@@ -168,6 +168,14 @@ export const dictionary = {
     adminZoneLoading: "Loading zones...",
     adminZoneDeleteConfirm: (name: string) => `Delete zone "${name}"?`,
     adminZoneRadiusInfo: (km: number) => `Radius: ${km} km`,
+    adminZoneFailCreate: "Failed to create zone",
+    adminZoneFailUpdate: "Failed to update zone",
+    adminZoneFailDelete: "Failed to delete zone",
+    adminZoneFillAll: "Please fill all fields and pin a location on the map",
+    adminZoneStatusActive: "Active",
+    adminZoneStatusInactive: "Inactive",
+    adminZoneLatLabel: "Latitude",
+    adminZoneLngLabel: "Longitude",
 
     // Not found
     pageNotFound: "404 Page Not Found",
@@ -343,6 +351,14 @@ export const dictionary = {
     adminZoneLoading: "جاري تحميل المناطق...",
     adminZoneDeleteConfirm: (name: string) => `حذف المنطقة "${name}"؟`,
     adminZoneRadiusInfo: (km: number) => `النطاق: ${km} كم`,
+    adminZoneFailCreate: "فشل إنشاء المنطقة",
+    adminZoneFailUpdate: "فشل تحديث المنطقة",
+    adminZoneFailDelete: "فشل حذف المنطقة",
+    adminZoneFillAll: "يرجى ملء جميع الحقول وتحديد موقع على الخريطة",
+    adminZoneStatusActive: "نشطة",
+    adminZoneStatusInactive: "غير نشطة",
+    adminZoneLatLabel: "خط العرض",
+    adminZoneLngLabel: "خط الطول",
 
     // Not found
     pageNotFound: "404 الصفحة غير موجودة",

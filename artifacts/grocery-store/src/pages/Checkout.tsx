@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { useStore } from '@/store';
 import { useTranslation } from '@/lib/i18n';
@@ -13,7 +13,26 @@ import { Badge } from '@/components/ui/badge';
 import { Clock, MapPin, CheckCircle2, Loader2, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
 import type { CartItem } from '@/store';
+
+interface DeliveryZone {
+  id: number;
+  centerLat: number;
+  centerLng: number;
+  radiusKm: number;
+  active: boolean;
+}
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 export default function Checkout() {
   const { t, lang } = useTranslation();
@@ -36,7 +55,33 @@ export default function Checkout() {
   const hasSavedLoc = user && user.latitude && user.longitude;
   const [useSaved, setUseSaved] = useState(!!hasSavedLoc);
   const [mapLoc, setMapLoc] = useState<{latitude: number, longitude: number} | null>(null);
-  const [zoneValid, setZoneValid] = useState(true);
+  const [mapZoneValid, setMapZoneValid] = useState(true);
+  const [savedZoneValid, setSavedZoneValid] = useState(true);
+
+  // Fetch active zones to validate saved location
+  const { data: zones = [] } = useQuery<DeliveryZone[]>({
+    queryKey: ['delivery-zones'],
+    queryFn: async () => {
+      const res = await fetch('/api/delivery-zones');
+      if (!res.ok) return [];
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Validate saved location whenever zones or saved loc changes
+  useEffect(() => {
+    if (!hasSavedLoc || zones.length === 0) {
+      setSavedZoneValid(true);
+      return;
+    }
+    const inZone = zones.some(
+      z => haversineKm(user!.latitude!, user!.longitude!, z.centerLat, z.centerLng) <= z.radiusKm
+    );
+    setSavedZoneValid(inZone);
+  }, [zones, hasSavedLoc, user]);
+
+  const zoneValid = useSaved ? savedZoneValid : mapZoneValid;
 
   if (cart.length === 0) {
     setLocation('/cart');
@@ -113,21 +158,29 @@ export default function Checkout() {
               )}
 
               {useSaved && hasSavedLoc ? (
-                <div className="bg-muted/30 border border-border/50 rounded-xl p-4 flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                  <div>
-                    <p className="font-medium text-foreground">{t('savedAddress')}</p>
-                    <p className="text-sm text-muted-foreground">{user?.address || t('locationPinned')}</p>
+                <>
+                  <div className="bg-muted/30 border border-border/50 rounded-xl p-4 flex items-start gap-3">
+                    <MapPin className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <p className="font-medium text-foreground">{t('savedAddress')}</p>
+                      <p className="text-sm text-muted-foreground">{user?.address || t('locationPinned')}</p>
+                    </div>
                   </div>
-                </div>
+                  {!savedZoneValid && (
+                    <div className="flex items-start gap-3 bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-destructive">
+                      <AlertTriangle className="w-5 h-5 mt-0.5 shrink-0" />
+                      <p className="text-sm font-medium">{t('outsideDeliveryZoneDesc')}</p>
+                    </div>
+                  )}
+                </>
               ) : (
                 <>
                   <MapPicker
                     location={mapLoc}
                     onChange={(lat, lng) => setMapLoc({latitude: lat, longitude: lng})}
-                    onZoneValidation={setZoneValid}
+                    onZoneValidation={setMapZoneValid}
                   />
-                  {!zoneValid && mapLoc && (
+                  {!mapZoneValid && mapLoc && (
                     <div className="flex items-start gap-3 bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-destructive">
                       <AlertTriangle className="w-5 h-5 mt-0.5 shrink-0" />
                       <p className="text-sm font-medium">{t('outsideDeliveryZoneDesc')}</p>
@@ -175,7 +228,7 @@ export default function Checkout() {
             <Button
               type="submit"
               form="checkout-form"
-              disabled={isPending || (!useSaved && !!mapLoc && !zoneValid)}
+              disabled={isPending || !zoneValid}
               size="lg"
               className="w-full rounded-xl h-14 text-lg font-bold shadow-lg shadow-primary/20"
             >

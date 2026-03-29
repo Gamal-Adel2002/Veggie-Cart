@@ -68,7 +68,7 @@ export default function DeliveryZones() {
       toast({ title: t('adminZoneCreated') });
       resetForm();
     },
-    onError: (e: Error) => toast({ title: 'Failed to create zone', description: e.message, variant: 'destructive' }),
+    onError: (e: Error) => toast({ title: t('adminZoneFailCreate'), description: e.message, variant: 'destructive' }),
   });
 
   const updateMutation = useMutation({
@@ -80,7 +80,7 @@ export default function DeliveryZones() {
       toast({ title: t('adminZoneUpdated') });
       resetForm();
     },
-    onError: (e: Error) => toast({ title: 'Failed to update zone', description: e.message, variant: 'destructive' }),
+    onError: (e: Error) => toast({ title: t('adminZoneFailUpdate'), description: e.message, variant: 'destructive' }),
   });
 
   const deleteMutation = useMutation({
@@ -90,7 +90,7 @@ export default function DeliveryZones() {
       queryClient.invalidateQueries({ queryKey: ['delivery-zones'] });
       toast({ title: t('adminZoneDeleted') });
     },
-    onError: (e: Error) => toast({ title: 'Failed to delete zone', description: e.message, variant: 'destructive' }),
+    onError: (e: Error) => toast({ title: t('adminZoneFailDelete'), description: e.message, variant: 'destructive' }),
   });
 
   const toggleMutation = useMutation({
@@ -100,7 +100,7 @@ export default function DeliveryZones() {
       queryClient.invalidateQueries({ queryKey: ['admin-delivery-zones'] });
       queryClient.invalidateQueries({ queryKey: ['delivery-zones'] });
     },
-    onError: (e: Error) => toast({ title: 'Failed to update zone', description: e.message, variant: 'destructive' }),
+    onError: (e: Error) => toast({ title: t('adminZoneFailUpdate'), description: e.message, variant: 'destructive' }),
   });
 
   function resetForm() {
@@ -131,8 +131,8 @@ export default function DeliveryZones() {
       radiusKm: Number(form.radiusKm),
       active: form.active,
     };
-    if (!payload.name || !payload.centerLat || !payload.centerLng || !payload.radiusKm) {
-      toast({ title: 'Please fill all fields and pin a location on the map', variant: 'destructive' });
+    if (!payload.name || !Number.isFinite(payload.centerLat) || !Number.isFinite(payload.centerLng) || !Number.isFinite(payload.radiusKm) || payload.radiusKm <= 0) {
+      toast({ title: t('adminZoneFillAll'), variant: 'destructive' });
       return;
     }
     if (editingId) {
@@ -201,7 +201,7 @@ export default function DeliveryZones() {
                 />
                 <div className="grid grid-cols-2 gap-3 mt-2">
                   <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Latitude</Label>
+                    <Label className="text-xs text-muted-foreground">{t('adminZoneLatLabel')}</Label>
                     <Input
                       type="number"
                       step="0.00001"
@@ -217,7 +217,7 @@ export default function DeliveryZones() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Longitude</Label>
+                    <Label className="text-xs text-muted-foreground">{t('adminZoneLngLabel')}</Label>
                     <Input
                       type="number"
                       step="0.00001"
@@ -282,7 +282,7 @@ export default function DeliveryZones() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-semibold truncate">{zone.name}</p>
                       <Badge variant={zone.active ? 'default' : 'secondary'} className="text-xs">
-                        {zone.active ? 'Active' : 'Inactive'}
+                        {zone.active ? t('adminZoneStatusActive') : t('adminZoneStatusInactive')}
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
