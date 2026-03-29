@@ -64,7 +64,6 @@ export function MapPicker({ location, onChange, className }: MapPickerProps) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lng: number } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -83,9 +82,10 @@ export function MapPicker({ location, onChange, className }: MapPickerProps) {
     setLoading(true);
     setShowDropdown(false);
     try {
+      const lang = navigator.language || 'en';
       const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=0`;
       const res = await fetch(url, {
-        headers: { 'Accept-Language': 'en', 'User-Agent': 'FreshVeg/1.0' }
+        headers: { 'Accept-Language': lang, 'User-Agent': 'FreshVeg/1.0' }
       });
       const data: NominatimResult[] = await res.json();
       setResults(data);
@@ -132,7 +132,6 @@ export function MapPicker({ location, onChange, className }: MapPickerProps) {
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Input
-              ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -167,7 +166,7 @@ export function MapPicker({ location, onChange, className }: MapPickerProps) {
                   <li key={r.place_id}>
                     <button
                       type="button"
-                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition-colors border-b border-border last:border-b-0 truncate"
+                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition-colors border-b border-border last:border-b-0 whitespace-normal break-words"
                       onClick={() => handleSelect(r)}
                     >
                       {r.display_name}
