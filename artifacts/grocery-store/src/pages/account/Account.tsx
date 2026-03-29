@@ -46,6 +46,7 @@ export default function Account() {
   const [previewImage, setPreviewImage] = useState<string>('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [mapLoc, setMapLoc] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [mapAddress, setMapAddress] = useState<string>('');
 
   const startEditing = () => {
     if (!user) return;
@@ -59,6 +60,7 @@ export default function Account() {
     setPreviewImage(user.profileImage || '');
     setImageFile(null);
     setMapLoc(user.latitude && user.longitude ? { latitude: user.latitude, longitude: user.longitude } : null);
+    setMapAddress(user.address || '');
     setEditing(true);
   };
 
@@ -95,13 +97,19 @@ export default function Account() {
       }
 
       const updated = await updateMe({ data: payload });
+      // Update store immediately after profile save so UI reflects changes
+      setAuth(token, updated);
 
-      // Update location separately if changed
+      // Update location separately if coordinates changed
       if (mapLoc && (mapLoc.latitude !== user?.latitude || mapLoc.longitude !== user?.longitude)) {
-        const locUpdated = await updateLocation({ data: { latitude: mapLoc.latitude, longitude: mapLoc.longitude } });
+        const locUpdated = await updateLocation({
+          data: {
+            latitude: mapLoc.latitude,
+            longitude: mapLoc.longitude,
+            address: mapAddress || undefined,
+          }
+        });
         setAuth(token, locUpdated);
-      } else {
-        setAuth(token, updated);
       }
 
       toast({ title: t('profileUpdated'), description: t('profileUpdatedDesc') });
