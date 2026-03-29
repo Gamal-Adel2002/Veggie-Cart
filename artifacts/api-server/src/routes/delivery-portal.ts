@@ -86,12 +86,12 @@ router.get("/me", authenticate(), requireDelivery, async (req: AuthRequest, res)
 });
 
 // GET /delivery/orders — active orders assigned to this delivery person
-// Statuses: accepted | preparing | with_delivery | completed (for today's history)
+// Statuses: accepted | preparing | with_delivery only
 router.get("/orders", authenticate(), requireDelivery, async (req: AuthRequest, res) => {
-  // Fetch all active statuses assigned to this driver
+  // Only active statuses — delivery person acts on these
   const activeFilters = ACTIVE_STATUSES.map(s => eq(ordersTable.status, s));
 
-  const assigned = await db
+  const all = await db
     .select()
     .from(ordersTable)
     .where(
@@ -100,19 +100,6 @@ router.get("/orders", authenticate(), requireDelivery, async (req: AuthRequest, 
         or(...activeFilters)
       )
     );
-
-  // Also include recently completed for today's history
-  const completedToday = await db
-    .select()
-    .from(ordersTable)
-    .where(
-      and(
-        eq(ordersTable.deliveryPersonId, req.userId!),
-        eq(ordersTable.status, "completed")
-      )
-    );
-
-  const all = [...assigned, ...completedToday];
 
   if (all.length === 0) {
     res.json([]);

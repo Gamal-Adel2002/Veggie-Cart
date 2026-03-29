@@ -38,6 +38,8 @@ interface DeliveryOrder {
 interface OrderGroup {
   zoneName: string | null;
   orders: DeliveryOrder[];
+  centroidLat: number | null;
+  centroidLng: number | null;
 }
 
 function deliveryFetch(path: string, token: string, options?: RequestInit) {
@@ -52,30 +54,98 @@ function deliveryFetch(path: string, token: string, options?: RequestInit) {
   });
 }
 
-function groupOrdersByZone(orders: DeliveryOrder[]): OrderGroup[] {
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function computeCentroid(orders: DeliveryOrder[]): { lat: number; lng: number } | null {
+  const geoOrders = orders.filter(o => o.latitude != null && o.longitude != null);
+  if (geoOrders.length === 0) return null;
+  const lat = geoOrders.reduce((s, o) => s + o.latitude!, 0) / geoOrders.length;
+  const lng = geoOrders.reduce((s, o) => s + o.longitude!, 0) / geoOrders.length;
+  return { lat, lng };
+}
+
+function groupOrdersByZoneAndProximity(orders: DeliveryOrder[], thresholdKm = 2): OrderGroup[] {
+  // Step 1: Split by named zone (from server)
   const zoneMap = new Map<string, DeliveryOrder[]>();
+  const noZoneOrders: DeliveryOrder[] = [];
 
   for (const order of orders) {
-    const key = order.zoneName ?? '__nozone__';
-    if (!zoneMap.has(key)) zoneMap.set(key, []);
-    zoneMap.get(key)!.push(order);
+    if (order.zoneName) {
+      if (!zoneMap.has(order.zoneName)) zoneMap.set(order.zoneName, []);
+      zoneMap.get(order.zoneName)!.push(order);
+    } else {
+      noZoneOrders.push(order);
+    }
   }
 
   const groups: OrderGroup[] = [];
 
-  // Named zones first, sorted by nearest centroid distance
-  for (const [key, zoneOrders] of zoneMap.entries()) {
-    if (key === '__nozone__') continue;
-    const sorted = [...zoneOrders].sort((a, b) =>
-      (a.distanceFromZoneCentroid ?? Infinity) - (b.distanceFromZoneCentroid ?? Infinity)
-    );
-    groups.push({ zoneName: key, orders: sorted });
+  // Step 2: For each named zone, compute centroid and sort orders by distance to it
+  for (const [zoneName, zoneOrders] of zoneMap.entries()) {
+    const centroid = computeCentroid(zoneOrders);
+    const sorted = centroid
+      ? [...zoneOrders].sort((a, b) => {
+          const dA = a.latitude != null && a.longitude != null
+            ? haversineKm(a.latitude, a.longitude, centroid.lat, centroid.lng)
+            : Infinity;
+          const dB = b.latitude != null && b.longitude != null
+            ? haversineKm(b.latitude, b.longitude, centroid.lat, centroid.lng)
+            : Infinity;
+          return dA - dB;
+        })
+      : zoneOrders;
+    groups.push({ zoneName, orders: sorted, centroidLat: centroid?.lat ?? null, centroidLng: centroid?.lng ?? null });
   }
 
-  // Ungrouped orders at the end
-  const noZone = zoneMap.get('__nozone__');
-  if (noZone && noZone.length > 0) {
-    groups.push({ zoneName: null, orders: noZone });
+  // Step 3: Cluster no-zone orders by ~2km Haversine proximity
+  const geoNoZone = noZoneOrders.filter(o => o.latitude != null && o.longitude != null);
+  const textNoZone = noZoneOrders.filter(o => o.latitude == null || o.longitude == null);
+
+  const assigned = new Set<number>();
+  const proximityClusters: DeliveryOrder[][] = [];
+
+  for (const order of geoNoZone) {
+    if (assigned.has(order.id)) continue;
+    const cluster = [order];
+    assigned.add(order.id);
+    for (const other of geoNoZone) {
+      if (assigned.has(other.id)) continue;
+      if (haversineKm(order.latitude!, order.longitude!, other.latitude!, other.longitude!) <= thresholdKm) {
+        cluster.push(other);
+        assigned.add(other.id);
+      }
+    }
+    proximityClusters.push(cluster);
+  }
+
+  for (const cluster of proximityClusters) {
+    const centroid = computeCentroid(cluster);
+    const sorted = centroid
+      ? [...cluster].sort((a, b) => {
+          const dA = haversineKm(a.latitude!, a.longitude!, centroid.lat, centroid.lng);
+          const dB = haversineKm(b.latitude!, b.longitude!, centroid.lat, centroid.lng);
+          return dA - dB;
+        })
+      : cluster;
+    groups.push({ zoneName: null, orders: sorted, centroidLat: centroid?.lat ?? null, centroidLng: centroid?.lng ?? null });
+  }
+
+  // Text-only orders appended to last no-zone group or their own group
+  if (textNoZone.length > 0) {
+    const lastNoZone = groups.find(g => g.zoneName === null);
+    if (lastNoZone) {
+      lastNoZone.orders.push(...textNoZone);
+    } else {
+      groups.push({ zoneName: null, orders: textNoZone, centroidLat: null, centroidLng: null });
+    }
   }
 
   return groups;
@@ -251,7 +321,7 @@ export default function DeliveryDashboard() {
 
   const activeOrders = orders.filter(o => o.status !== 'completed');
   const completedOrders = orders.filter(o => o.status === 'completed');
-  const groups = groupOrdersByZone(activeOrders);
+  const groups = groupOrdersByZoneAndProximity(activeOrders);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
