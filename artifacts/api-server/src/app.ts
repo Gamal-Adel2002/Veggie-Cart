@@ -35,4 +35,12 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use("/api/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/api", router);
 
+if (process.env.NODE_ENV === "production") {
+  const frontendDist = path.join(process.cwd(), "artifacts/grocery-store/dist/public");
+  app.use(express.static(frontendDist));
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(frontendDist, "index.html"));
+  });
+}
+
 export default app;
