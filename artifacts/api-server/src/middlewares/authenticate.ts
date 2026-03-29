@@ -48,3 +48,11 @@ export function requireAdmin(req: AuthRequest, res: Response, next: NextFunction
   }
   next();
 }
+
+export function requireDelivery(req: AuthRequest, res: Response, next: NextFunction) {
+  if (req.userRole !== "delivery") {
+    res.status(403).json({ error: "Forbidden - Delivery only" });
+    return;
+  }
+  next();
+}

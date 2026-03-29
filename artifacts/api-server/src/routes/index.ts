@@ -7,6 +7,7 @@ import categoriesRouter from "./categories";
 import productsRouter from "./products";
 import ordersRouter from "./orders";
 import deliveryRouter from "./delivery";
+import deliveryPortalRouter from "./delivery-portal";
 import adminRouter from "./admin";
 import uploadRouter from "./upload";
 import zonesRouter from "./zones";
@@ -25,5 +26,6 @@ router.use("/delivery-zones", zonesRouter);
 router.use("/admin/delivery-persons", deliveryRouter);
 router.use("/admin", adminRouter);
 router.use("/upload", uploadRouter);
+router.use("/delivery", deliveryPortalRouter);
 
 export default router;

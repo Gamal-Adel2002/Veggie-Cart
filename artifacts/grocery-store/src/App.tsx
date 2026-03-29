@@ -25,6 +25,8 @@ import DeliveryPersons from "./pages/admin/DeliveryPersons";
 import AdminDeliveryZones from "./pages/admin/DeliveryZones";
 import Admins from "./pages/admin/Admins";
 import Customers from "./pages/admin/Customers";
+import DeliveryLogin from "./pages/delivery/DeliveryLogin";
+import DeliveryDashboard from "./pages/delivery/DeliveryDashboard";
 import NotFound from "./pages/not-found";
 
 const queryClient = new QueryClient({
@@ -64,6 +66,9 @@ function Router() {
       <Route path="/admin/delivery-zones" component={AdminDeliveryZones} />
       <Route path="/admin/admins" component={Admins} />
       <Route path="/admin/customers" component={Customers} />
+
+      <Route path="/delivery/login" component={DeliveryLogin} />
+      <Route path="/delivery/dashboard" component={DeliveryDashboard} />
 
       <Route component={NotFound} />
     </Switch>

@@ -8,12 +8,27 @@ export interface CartItem extends Product {
   cartQuantity: number;
 }
 
+export interface DeliveryPerson {
+  id: number;
+  name: string;
+  phone: string;
+  active: boolean;
+  username: string | null;
+  createdAt: string;
+}
+
 interface AppState {
   // Auth
   token: string | null;
   user: User | null;
   setAuth: (token: string | null, user: User | null) => void;
   logout: () => void;
+  
+  // Delivery auth
+  deliveryToken: string | null;
+  deliveryPerson: DeliveryPerson | null;
+  setDeliveryAuth: (token: string | null, person: DeliveryPerson | null) => void;
+  logoutDelivery: () => void;
   
   // Language
   lang: Language;
@@ -36,6 +51,12 @@ export const useStore = create<AppState>()(
       user: null,
       setAuth: (token, user) => set({ token, user }),
       logout: () => set({ token: null, user: null }),
+      
+      // Delivery auth
+      deliveryToken: null,
+      deliveryPerson: null,
+      setDeliveryAuth: (token, person) => set({ deliveryToken: token, deliveryPerson: person }),
+      logoutDelivery: () => set({ deliveryToken: null, deliveryPerson: null }),
       
       // Language
       lang: 'en',

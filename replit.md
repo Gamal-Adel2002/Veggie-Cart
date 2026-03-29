@@ -64,10 +64,14 @@ Express 5 API server for the FreshVeg grocery delivery app. Routes live in `src/
   - `/products` — GET/POST/PUT/DELETE products with image upload
   - `/orders` — Customer order CRUD (POST create, GET list, GET by ID)
   - `/admin/orders` — Admin order management (list all, update status, assign delivery)
-  - `/admin/delivery-persons` — Delivery staff CRUD
+  - `/admin/delivery-persons` — Delivery staff CRUD (now includes username/password for portal)
   - `/admin/stats` — Dashboard stats
   - `/upload` — Image upload (multer, stored in `./uploads/`)
   - `/uploads/*` — Static file serving for uploaded images
+  - `/delivery/login` — Delivery portal login (username + password → JWT with role='delivery')
+  - `/delivery/me` — Get current delivery person info (requireDelivery guard)
+  - `/delivery/orders` — Get orders assigned to this delivery person (requireDelivery guard)
+  - `/delivery/orders/:id/complete` — Mark an assigned order as completed (requireDelivery guard)
 - Auth: JWT via bcryptjs + jsonwebtoken, middleware in `src/middlewares/authenticate.ts`
 - WhatsApp: Twilio integration in `src/lib/whatsapp.ts` (sends message on delivery person assignment)
 - Depends on: `@workspace/db`, `@workspace/api-zod`
@@ -87,10 +91,11 @@ React + Vite storefront for the FreshVeg grocery delivery application.
   - Order confirmation page
   - Customer auth: phone-based signup (with profile image upload) and login
   - Account page with order history and location update
-  - Admin panel: login, dashboard, orders management, products CRUD, categories CRUD, delivery persons CRUD
+  - Admin panel: login, dashboard, orders management, products CRUD, categories CRUD, delivery persons CRUD (with portal credentials)
+  - Delivery portal: /delivery/login + /delivery/dashboard — drivers log in with username/password to see and complete assigned orders
   - EN/AR language toggle with RTL support
   - Green-themed, mobile-first design
-- State: Zustand store (`src/store.ts`) - auth token, user, cart, language
+- State: Zustand store (`src/store.ts`) - auth token, user, cart, language, deliveryToken, deliveryPerson
 - Routing: wouter
 - API: Generated React Query hooks from `@workspace/api-client-react`
 - All hooks wrapped in `src/hooks/use-auth-api.ts` for convenience re-exports

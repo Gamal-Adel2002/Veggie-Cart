@@ -7,6 +7,8 @@ export const deliveryPersonsTable = pgTable("delivery_persons", {
   name: text("name").notNull(),
   phone: text("phone").notNull(),
   active: boolean("active").notNull().default(true),
+  username: text("username").unique(),
+  password: text("password"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
