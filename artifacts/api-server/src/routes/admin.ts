@@ -6,6 +6,7 @@ import {
   productsTable,
   usersTable,
   deliveryPersonsTable,
+  deliveryZonesTable,
 } from "@workspace/db/schema";
 import { eq, sql, desc, lte, isNotNull, and } from "drizzle-orm";
 import { authenticate, requireAdmin, type AuthRequest } from "../middlewares/authenticate";
@@ -296,6 +297,58 @@ router.put("/admins/:id", authenticate(), requireAdmin, async (req: AuthRequest,
 
   const { password: _, ...safe } = updated;
   res.json(safe);
+});
+
+// ── Delivery Zones CRUD ───────────────────────────────────────────────────────
+
+router.get("/delivery-zones", authenticate(), requireAdmin, async (_req, res) => {
+  const zones = await db.select().from(deliveryZonesTable).orderBy(deliveryZonesTable.id);
+  res.json(zones);
+});
+
+router.post("/delivery-zones", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
+  const { name, centerLat, centerLng, radiusKm, active } = req.body;
+  if (!name || centerLat == null || centerLng == null || radiusKm == null) {
+    res.status(400).json({ error: "name, centerLat, centerLng, and radiusKm are required" });
+    return;
+  }
+  const [zone] = await db
+    .insert(deliveryZonesTable)
+    .values({
+      name: String(name),
+      centerLat: Number(centerLat),
+      centerLng: Number(centerLng),
+      radiusKm: Number(radiusKm),
+      active: active !== false,
+    })
+    .returning();
+  res.status(201).json(zone);
+});
+
+router.put("/delivery-zones/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
+  const id = parseInt(String(req.params.id));
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid zone ID" }); return; }
+
+  const [existing] = await db.select().from(deliveryZonesTable).where(eq(deliveryZonesTable.id, id)).limit(1);
+  if (!existing) { res.status(404).json({ error: "Zone not found" }); return; }
+
+  const { name, centerLat, centerLng, radiusKm, active } = req.body;
+  const updates: Partial<typeof deliveryZonesTable.$inferInsert> = {};
+  if (name != null) updates.name = String(name);
+  if (centerLat != null) updates.centerLat = Number(centerLat);
+  if (centerLng != null) updates.centerLng = Number(centerLng);
+  if (radiusKm != null) updates.radiusKm = Number(radiusKm);
+  if (active != null) updates.active = Boolean(active);
+
+  const [zone] = await db.update(deliveryZonesTable).set(updates).where(eq(deliveryZonesTable.id, id)).returning();
+  res.json(zone);
+});
+
+router.delete("/delivery-zones/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
+  const id = parseInt(String(req.params.id));
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid zone ID" }); return; }
+  await db.delete(deliveryZonesTable).where(eq(deliveryZonesTable.id, id));
+  res.status(204).end();
 });
 
 export default router;

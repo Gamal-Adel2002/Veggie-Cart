@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { MapPicker } from '@/components/MapPicker';
 import { useAppCreateOrder } from '@/hooks/use-auth-api';
 import { Badge } from '@/components/ui/badge';
-import { Clock, MapPin, CheckCircle2, Loader2 } from 'lucide-react';
+import { Clock, MapPin, CheckCircle2, Loader2, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/lib/utils';
 import type { CartItem } from '@/store';
@@ -36,6 +36,7 @@ export default function Checkout() {
   const hasSavedLoc = user && user.latitude && user.longitude;
   const [useSaved, setUseSaved] = useState(!!hasSavedLoc);
   const [mapLoc, setMapLoc] = useState<{latitude: number, longitude: number} | null>(null);
+  const [zoneValid, setZoneValid] = useState(true);
 
   if (cart.length === 0) {
     setLocation('/cart');
@@ -46,6 +47,10 @@ export default function Checkout() {
     e.preventDefault();
     if (!useSaved && !mapLoc) {
       toast({ title: t('selectLocationError'), variant: "destructive" });
+      return;
+    }
+    if (!zoneValid) {
+      toast({ title: t('outsideDeliveryZone'), variant: "destructive" });
       return;
     }
 
@@ -116,10 +121,19 @@ export default function Checkout() {
                   </div>
                 </div>
               ) : (
-                <MapPicker
-                  location={mapLoc}
-                  onChange={(lat, lng) => setMapLoc({latitude: lat, longitude: lng})}
-                />
+                <>
+                  <MapPicker
+                    location={mapLoc}
+                    onChange={(lat, lng) => setMapLoc({latitude: lat, longitude: lng})}
+                    onZoneValidation={setZoneValid}
+                  />
+                  {!zoneValid && mapLoc && (
+                    <div className="flex items-start gap-3 bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-destructive">
+                      <AlertTriangle className="w-5 h-5 mt-0.5 shrink-0" />
+                      <p className="text-sm font-medium">{t('outsideDeliveryZoneDesc')}</p>
+                    </div>
+                  )}
+                </>
               )}
 
               <div className="space-y-2">
@@ -158,7 +172,13 @@ export default function Checkout() {
               <span className="text-sm font-medium">{t('paymentCash')}</span>
             </div>
 
-            <Button type="submit" form="checkout-form" disabled={isPending} size="lg" className="w-full rounded-xl h-14 text-lg font-bold shadow-lg shadow-primary/20">
+            <Button
+              type="submit"
+              form="checkout-form"
+              disabled={isPending || (!useSaved && !!mapLoc && !zoneValid)}
+              size="lg"
+              className="w-full rounded-xl h-14 text-lg font-bold shadow-lg shadow-primary/20"
+            >
               {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : t('confirmOrder')}
             </Button>
           </div>

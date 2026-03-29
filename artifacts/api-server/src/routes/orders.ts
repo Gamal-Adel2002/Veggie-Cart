@@ -5,9 +5,20 @@ import {
   orderItemsTable,
   productsTable,
   deliveryPersonsTable,
+  deliveryZonesTable,
 } from "@workspace/db/schema";
 import { eq, desc, sql } from "drizzle-orm";
 import { authenticate, type AuthRequest } from "../middlewares/authenticate";
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 const router = Router();
 
@@ -50,6 +61,29 @@ router.post("/", authenticate(false), async (req: AuthRequest, res) => {
   if (!customerName || !customerPhone || !items || !Array.isArray(items) || items.length === 0) {
     res.status(400).json({ error: "customerName, customerPhone, and items are required" });
     return;
+  }
+
+  // Zone validation: only when latitude+longitude are provided and zones are configured
+  if (latitude != null && longitude != null) {
+    const activeZones = await db
+      .select()
+      .from(deliveryZonesTable)
+      .where(eq(deliveryZonesTable.active, true));
+
+    if (activeZones.length > 0) {
+      const lat = Number(latitude);
+      const lng = Number(longitude);
+      const inZone = activeZones.some(
+        (z) => haversineKm(lat, lng, z.centerLat, z.centerLng) <= z.radiusKm
+      );
+      if (!inZone) {
+        res.status(422).json({
+          error: "OUTSIDE_DELIVERY_ZONE",
+          message: "Delivery is not available at your selected location. Please choose an address within our delivery area.",
+        });
+        return;
+      }
+    }
   }
 
   // Pre-validate inputs and aggregate quantities by productId (no DB needed here)

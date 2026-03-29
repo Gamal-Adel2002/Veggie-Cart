@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Circle, useMapEvents, useMap } from 'react-leaflet';
+import { useQuery } from '@tanstack/react-query';
 import L from 'leaflet';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -17,10 +18,20 @@ let DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
+interface DeliveryZone {
+  id: number;
+  name: string;
+  centerLat: number;
+  centerLng: number;
+  radiusKm: number;
+  active: boolean;
+}
+
 interface MapPickerProps {
   location: { latitude: number; longitude: number } | null;
   onChange: (lat: number, lng: number) => void;
   onAddressChange?: (address: string) => void;
+  onZoneValidation?: (isValid: boolean) => void;
   className?: string;
 }
 
@@ -32,6 +43,16 @@ interface NominatimResult {
 }
 
 const DEFAULT_CENTER = { lat: 30.0444, lng: 31.2357 }; // Cairo
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 function LocationMarker({ position, onChange }: { position: { lat: number; lng: number } | null, onChange: (lat: number, lng: number) => void }) {
   const map = useMapEvents({
@@ -56,7 +77,7 @@ function FlyTo({ target }: { target: { lat: number; lng: number } | null }) {
   return null;
 }
 
-export function MapPicker({ location, onChange, onAddressChange, className }: MapPickerProps) {
+export function MapPicker({ location, onChange, onAddressChange, onZoneValidation, className }: MapPickerProps) {
   const position = location ? { lat: location.latitude, lng: location.longitude } : null;
 
   const [query, setQuery] = useState('');
@@ -65,6 +86,27 @@ export function MapPicker({ location, onChange, onAddressChange, className }: Ma
   const [showDropdown, setShowDropdown] = useState(false);
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lng: number } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const { data: zones = [] } = useQuery<DeliveryZone[]>({
+    queryKey: ['delivery-zones'],
+    queryFn: async () => {
+      const res = await fetch('/api/delivery-zones');
+      if (!res.ok) return [];
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Re-validate whenever location or zones change
+  useEffect(() => {
+    if (!onZoneValidation) return;
+    if (!location) { onZoneValidation(true); return; }
+    if (zones.length === 0) { onZoneValidation(true); return; }
+    const inZone = zones.some(
+      z => haversineKm(location.latitude, location.longitude, z.centerLat, z.centerLng) <= z.radiusKm
+    );
+    onZoneValidation(inZone);
+  }, [location, zones, onZoneValidation]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -204,6 +246,14 @@ export function MapPicker({ location, onChange, onAddressChange, className }: Ma
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
+            {zones.map(zone => (
+              <Circle
+                key={zone.id}
+                center={[zone.centerLat, zone.centerLng]}
+                radius={zone.radiusKm * 1000}
+                pathOptions={{ color: '#16a34a', fillColor: '#16a34a', fillOpacity: 0.1, weight: 2 }}
+              />
+            ))}
             <LocationMarker position={position} onChange={onChange} />
             <FlyTo target={flyTarget} />
           </MapContainer>

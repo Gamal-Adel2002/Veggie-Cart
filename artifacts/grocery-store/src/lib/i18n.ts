@@ -71,6 +71,8 @@ export const dictionary = {
     estimatedDelivery: "Estimated Delivery: 30-45 minutes",
     deliveryTime: "30-45 mins",
     chooseOnMap: "Choose on Map",
+    outsideDeliveryZone: "Location outside delivery area",
+    outsideDeliveryZoneDesc: "Sorry, we don't deliver to your selected location. Please choose an address within our delivery zones shown on the map.",
     selectLocationError: "Please select a delivery location.",
     orderPlacedError: "Failed to place order",
 
@@ -219,6 +221,8 @@ export const dictionary = {
     estimatedDelivery: "التوصيل المتوقع: 30-45 دقيقة",
     deliveryTime: "30-45 دقيقة",
     chooseOnMap: "اختر من الخريطة",
+    outsideDeliveryZone: "الموقع خارج نطاق التوصيل",
+    outsideDeliveryZoneDesc: "عذراً، لا نوصل إلى موقعك المحدد. الرجاء اختيار عنوان داخل مناطق التوصيل الموضحة على الخريطة.",
     selectLocationError: "يرجى تحديد موقع التوصيل.",
     orderPlacedError: "فشل تقديم الطلب",
 

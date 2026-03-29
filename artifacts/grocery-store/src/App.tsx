@@ -22,6 +22,7 @@ import Orders from "./pages/admin/Orders";
 import Products from "./pages/admin/Products";
 import Categories from "./pages/admin/Categories";
 import DeliveryPersons from "./pages/admin/DeliveryPersons";
+import AdminDeliveryZones from "./pages/admin/DeliveryZones";
 import Admins from "./pages/admin/Admins";
 import NotFound from "./pages/not-found";
 
@@ -59,6 +60,7 @@ function Router() {
       <Route path="/admin/products" component={Products} />
       <Route path="/admin/categories" component={Categories} />
       <Route path="/admin/delivery" component={DeliveryPersons} />
+      <Route path="/admin/delivery-zones" component={AdminDeliveryZones} />
       <Route path="/admin/admins" component={Admins} />
 
       <Route component={NotFound} />

@@ -9,6 +9,7 @@ import ordersRouter from "./orders";
 import deliveryRouter from "./delivery";
 import adminRouter from "./admin";
 import uploadRouter from "./upload";
+import zonesRouter from "./zones";
 
 const router = Router();
 
@@ -20,6 +21,7 @@ router.use("/auth", authRouter);
 router.use("/categories", categoriesRouter);
 router.use("/products", productsRouter);
 router.use("/orders", ordersRouter);
+router.use("/delivery-zones", zonesRouter);
 router.use("/admin/delivery-persons", deliveryRouter);
 router.use("/admin", adminRouter);
 router.use("/upload", uploadRouter);
