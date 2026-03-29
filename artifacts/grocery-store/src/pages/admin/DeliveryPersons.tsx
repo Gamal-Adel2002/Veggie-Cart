@@ -13,7 +13,7 @@ import { Plus, Trash2, Edit } from 'lucide-react';
 import type { DeliveryPerson } from '@workspace/api-client-react';
 
 export default function DeliveryPersons() {
-  const { data: persons } = useAppDeliveryPersons();
+  const { data: persons, isLoading: personsLoading } = useAppDeliveryPersons();
   const { mutateAsync: createDP } = useAppCreateDeliveryPerson();
   const { mutateAsync: updateDP } = useAppUpdateDeliveryPerson();
   const { mutateAsync: deleteDP } = useAppDeleteDeliveryPerson();
@@ -75,14 +75,19 @@ export default function DeliveryPersons() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 && (
+            {personsLoading && (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">{t('adminLoading')}</TableCell>
+              </TableRow>
+            )}
+            {!personsLoading && filtered.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
                   {search ? t('adminNoMatchDeliveryStaff') : t('adminEmptyDeliveryStaff')}
                 </TableCell>
               </TableRow>
             )}
-            {filtered.map(p => (
+            {!personsLoading && filtered.map(p => (
               <TableRow key={p.id}>
                 <TableCell className="font-medium">{p.name}</TableCell>
                 <TableCell>{p.phone}</TableCell>

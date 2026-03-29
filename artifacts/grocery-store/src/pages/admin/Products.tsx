@@ -32,7 +32,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function Products() {
-  const { data: products } = useAppProducts();
+  const { data: products, isLoading: productsLoading } = useAppProducts();
   const { data: categories } = useAppCategories();
   const [search, setSearch] = useState('');
   const { t } = useTranslation();
@@ -151,14 +151,19 @@ export default function Products() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 && (
+            {productsLoading && (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">{t('adminLoading')}</TableCell>
+              </TableRow>
+            )}
+            {!productsLoading && filtered.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   {search ? t('adminNoMatchProducts') : t('adminEmptyProducts')}
                 </TableCell>
               </TableRow>
             )}
-            {filtered.map(p => (
+            {!productsLoading && filtered.map(p => (
               <TableRow key={p.id}>
                 <TableCell><img src={p.image || ''} className="w-10 h-10 object-contain rounded bg-muted" alt="" /></TableCell>
                 <TableCell>{p.name} <br/><span className="text-muted-foreground text-xs">{p.nameAr}</span></TableCell>

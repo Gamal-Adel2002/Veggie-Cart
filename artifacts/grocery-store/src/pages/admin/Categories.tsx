@@ -12,7 +12,7 @@ import { Plus, Trash2, Edit } from 'lucide-react';
 import type { Category } from '@workspace/api-client-react';
 
 export default function Categories() {
-  const { data: categories } = useAppCategories();
+  const { data: categories, isLoading: categoriesLoading } = useAppCategories();
   const { mutateAsync: createC } = useAppCreateCategory();
   const { mutateAsync: updateC } = useAppUpdateCategory();
   const { mutateAsync: deleteC } = useAppDeleteCategory();
@@ -75,14 +75,19 @@ export default function Categories() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 && (
+            {categoriesLoading && (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">{t('adminLoading')}</TableCell>
+              </TableRow>
+            )}
+            {!categoriesLoading && filtered.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   {search ? t('adminNoMatchCategories') : t('adminEmptyCategories')}
                 </TableCell>
               </TableRow>
             )}
-            {filtered.map(c => (
+            {!categoriesLoading && filtered.map(c => (
               <TableRow key={c.id}>
                 <TableCell className="text-2xl">{c.icon}</TableCell>
                 <TableCell>{c.name}</TableCell>
