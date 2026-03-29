@@ -8,6 +8,7 @@ import {
 } from "@workspace/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { authenticate, type AuthRequest } from "../middlewares/authenticate";
+import { randomBytes } from "crypto";
 
 const router = Router();
 
@@ -74,10 +75,15 @@ router.post("/", authenticate(false), async (req: AuthRequest, res) => {
     });
   }
 
+  // For guest orders (no authenticated user), generate a secure random token
+  // so only someone with the token can later look up the order
+  const guestToken = req.userId ? null : randomBytes(32).toString("hex");
+
   const [order] = await db
     .insert(ordersTable)
     .values({
       userId: req.userId || null,
+      guestToken,
       customerName,
       customerPhone,
       deliveryAddress: deliveryAddress || null,
@@ -94,11 +100,18 @@ router.post("/", authenticate(false), async (req: AuthRequest, res) => {
   }
 
   const full = await getFullOrder(order.id);
-  res.status(201).json(full);
+  // Include guestToken in response so the guest can track their order
+  res.status(201).json({ ...full, guestToken });
 });
 
+// Authenticated users look up by order ID
+// Guest users look up by order ID + guestToken query param
 router.get("/:id", authenticate(false), async (req: AuthRequest, res) => {
   const id = parseInt(String(req.params.id));
+  if (isNaN(id)) {
+    res.status(400).json({ error: "Invalid order ID" });
+    return;
+  }
   const order = await getFullOrder(id);
   if (!order) {
     res.status(404).json({ error: "Order not found" });
@@ -106,12 +119,24 @@ router.get("/:id", authenticate(false), async (req: AuthRequest, res) => {
   }
   const isAdmin = req.userRole === "admin";
   const isOwner = order.userId !== null && order.userId === req.userId;
-  const isGuestOrder = order.userId === null;
-  if (!isAdmin && !isOwner && !isGuestOrder) {
+
+  // Guest order tracking: requires the guestToken that was returned at order creation
+  const providedToken = req.query.token as string | undefined;
+  const isValidGuestAccess =
+    order.userId === null &&
+    order.guestToken !== null &&
+    order.guestToken !== "" &&
+    providedToken !== undefined &&
+    providedToken === order.guestToken;
+
+  if (!isAdmin && !isOwner && !isValidGuestAccess) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
-  res.json(order);
+
+  // Never expose the guestToken in the response body after initial creation
+  const { guestToken: _hidden, ...safeOrder } = order;
+  res.json(safeOrder);
 });
 
 export default router;

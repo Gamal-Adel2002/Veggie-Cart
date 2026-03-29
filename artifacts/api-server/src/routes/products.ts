@@ -12,11 +12,27 @@ const router = Router();
 const uploadDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
+const ALLOWED_IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadDir),
-  filename: (_req, file, cb) => cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}-${file.originalname}`),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase().replace(/[^.a-z0-9]/g, "");
+    const safeName = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
+    cb(null, safeName);
+  },
 });
-const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (ALLOWED_IMAGE_MIMES.has(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only JPEG, PNG, WebP, and GIF images are allowed"));
+    }
+  },
+});
 
 async function getProductWithCategory(id: number) {
   const [product] = await db.select({
@@ -141,7 +157,7 @@ router.delete("/:id", authenticate(), requireAdmin, async (req: AuthRequest, res
   res.json({ success: true, message: "Product deleted" });
 });
 
-router.post("/upload-image", upload.single("file"), async (req, res) => {
+router.post("/upload-image", authenticate(), requireAdmin, upload.single("file"), async (req, res) => {
   if (!req.file) {
     res.status(400).json({ error: "No file uploaded" });
     return;

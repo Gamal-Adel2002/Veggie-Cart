@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Sprout, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getErrorMessage } from '@/lib/utils';
 
 const schema = z.object({
   phone: z.string().min(10, "Valid phone required"),
@@ -28,8 +29,8 @@ export default function Login() {
       const res = await login({ data });
       setAuth(res.token, res.user);
       setLocation('/');
-    } catch (e: any) {
-      toast({ title: "Login failed", description: e.message || "Invalid credentials", variant: "destructive" });
+    } catch (e: unknown) {
+      toast({ title: "Login failed", description: getErrorMessage(e) || "Invalid credentials", variant: "destructive" });
     }
   };
 

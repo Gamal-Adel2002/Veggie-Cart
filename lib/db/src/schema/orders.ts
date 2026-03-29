@@ -13,9 +13,12 @@ export const orderStatusEnum = pgEnum("order_status", [
   "completed",
 ]);
 
+export type OrderStatus = "waiting" | "accepted" | "rejected" | "preparing" | "with_delivery" | "completed";
+
 export const ordersTable = pgTable("orders", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => usersTable.id),
+  guestToken: text("guest_token"),
   customerName: text("customer_name").notNull(),
   customerPhone: text("customer_phone").notNull(),
   deliveryAddress: text("delivery_address"),

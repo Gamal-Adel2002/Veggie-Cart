@@ -9,10 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { format } from 'date-fns';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-import type { Order } from '@workspace/api-client-react';
+import { type Order, UpdateOrderStatusInputStatus } from '@workspace/api-client-react';
 import { ExternalLink } from 'lucide-react';
+import { getErrorMessage } from '@/lib/utils';
 
-const statuses = ['waiting', 'accepted', 'rejected', 'preparing', 'with_delivery', 'completed'] as const;
+const updatableStatuses = Object.values(UpdateOrderStatusInputStatus) as Array<typeof UpdateOrderStatusInputStatus[keyof typeof UpdateOrderStatusInputStatus]>;
 
 export default function Orders() {
   const { data: orders } = useAppAdminOrders();
@@ -23,7 +24,7 @@ export default function Orders() {
   const { toast } = useToast();
   
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [newStatus, setNewStatus] = useState<any>('');
+  const [newStatus, setNewStatus] = useState<typeof updatableStatuses[number] | ''>('');
   const [deliveryId, setDeliveryId] = useState<string>('');
   const [waMessage, setWaMessage] = useState<{phone: string, text: string}|null>(null);
 
@@ -34,8 +35,8 @@ export default function Orders() {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/orders'] });
       toast({ title: "Status Updated" });
       setSelectedOrder(null);
-    } catch (e: any) {
-      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } catch (e: unknown) {
+      toast({ title: "Error", description: getErrorMessage(e), variant: "destructive" });
     }
   };
 
@@ -50,8 +51,8 @@ export default function Orders() {
         setWaMessage({ phone: dp.phone, text: res.whatsappMessage });
       }
       setSelectedOrder(null);
-    } catch (e: any) {
-      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } catch (e: unknown) {
+      toast({ title: "Error", description: getErrorMessage(e), variant: "destructive" });
     }
   };
 
@@ -80,7 +81,7 @@ export default function Orders() {
                 <TableCell>
                   <Button variant="secondary" size="sm" onClick={() => {
                     setSelectedOrder(order);
-                    setNewStatus(order.status);
+                    setNewStatus(updatableStatuses.includes(order.status as typeof updatableStatuses[number]) ? order.status as typeof updatableStatuses[number] : '');
                     setDeliveryId(order.deliveryPersonId?.toString() || '');
                   }}>Manage</Button>
                 </TableCell>
@@ -98,10 +99,10 @@ export default function Orders() {
             <div className="space-y-2">
               <label className="text-sm font-semibold">Update Status</label>
               <div className="flex gap-2">
-                <Select value={newStatus} onValueChange={setNewStatus}>
+                <Select value={newStatus} onValueChange={(v) => setNewStatus(v as typeof updatableStatuses[number])}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {statuses.map(s => <SelectItem key={s} value={s}>{s.replace('_', ' ')}</SelectItem>)}
+                    {updatableStatuses.map(s => <SelectItem key={s} value={s}>{s.replace('_', ' ')}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Button onClick={handleUpdateStatus}>Update</Button>

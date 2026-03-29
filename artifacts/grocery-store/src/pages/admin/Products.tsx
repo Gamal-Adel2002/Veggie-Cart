@@ -41,7 +41,12 @@ export default function Products() {
   const openEdit = (p: Product | 'new') => {
     setEditing(p);
     if (p === 'new') form.reset({ name:'', nameAr:'', price:1, unit:'kg', categoryId:categories?.[0]?.id||1, featured:false, inStock:true });
-    else form.reset({ name:p.name, nameAr:p.nameAr, price:p.price, unit:p.unit as any, categoryId:p.categoryId||1, featured:p.featured, inStock:p.inStock });
+    else {
+      const unit = (["kg", "piece", "bundle"] as const).includes(p.unit as "kg" | "piece" | "bundle")
+        ? (p.unit as "kg" | "piece" | "bundle")
+        : "kg";
+      form.reset({ name:p.name, nameAr:p.nameAr, price:p.price, unit, categoryId:p.categoryId||1, featured:p.featured, inStock:p.inStock });
+    }
   };
 
   const onSubmit = async (data: z.infer<typeof schema>) => {

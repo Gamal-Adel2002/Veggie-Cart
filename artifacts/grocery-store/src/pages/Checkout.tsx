@@ -12,6 +12,7 @@ import { useAppCreateOrder } from '@/hooks/use-auth-api';
 import { Badge } from '@/components/ui/badge';
 import { Clock, MapPin, CheckCircle2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getErrorMessage } from '@/lib/utils';
 
 export default function Checkout() {
   const { t } = useTranslation();
@@ -60,8 +61,8 @@ export default function Checkout() {
       });
       clearCart();
       setLocation(`/order-confirmed/${order.id}`);
-    } catch (err: any) {
-      toast({ title: "Failed to place order", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      toast({ title: "Failed to place order", description: getErrorMessage(err), variant: "destructive" });
     }
   };
 

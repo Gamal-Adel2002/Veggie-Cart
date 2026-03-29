@@ -12,6 +12,7 @@ import { MapPicker } from '@/components/MapPicker';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Sprout, Loader2, Camera } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getErrorMessage } from '@/lib/utils';
 
 const schema = z.object({
   name: z.string().min(2, "Name required"),
@@ -60,9 +61,9 @@ export default function Signup() {
       });
       setAuth(res.token, res.user);
       setLocation('/');
-    } catch (e: any) {
+    } catch (e: unknown) {
       setUploading(false);
-      toast({ title: "Signup failed", description: e.message || "Error creating account", variant: "destructive" });
+      toast({ title: "Signup failed", description: getErrorMessage(e) || "Error creating account", variant: "destructive" });
     }
   };
 

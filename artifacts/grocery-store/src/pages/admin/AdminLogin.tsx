@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
 import { Shield, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getErrorMessage } from '@/lib/utils';
 
 const schema = z.object({
   phone: z.string().min(1, "Required"),
@@ -29,8 +30,8 @@ export default function AdminLogin() {
       if (res.user.role !== 'admin') throw new Error("Unauthorized");
       setAuth(res.token, res.user);
       setLocation('/admin');
-    } catch (e: any) {
-      toast({ title: "Access Denied", description: e.message || "Invalid admin credentials", variant: "destructive" });
+    } catch (e: unknown) {
+      toast({ title: "Access Denied", description: getErrorMessage(e) || "Invalid admin credentials", variant: "destructive" });
     }
   };
 

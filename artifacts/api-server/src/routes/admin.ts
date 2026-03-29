@@ -9,6 +9,7 @@ import {
 } from "@workspace/db/schema";
 import { eq, sql, desc } from "drizzle-orm";
 import { authenticate, requireAdmin, type AuthRequest } from "../middlewares/authenticate";
+import type { OrderStatus } from "@workspace/db/schema";
 import { buildWhatsAppMessage, sendWhatsAppMessage } from "../lib/whatsapp";
 
 const router = Router();
@@ -78,10 +79,16 @@ router.get("/orders", authenticate(), requireAdmin, async (req: AuthRequest, res
   const { status } = req.query;
   let orders;
   if (status) {
+    const validStatuses: OrderStatus[] = ["waiting", "accepted", "rejected", "preparing", "with_delivery", "completed"];
+    const statusValue = String(status) as OrderStatus;
+    if (!validStatuses.includes(statusValue)) {
+      res.status(400).json({ error: `Invalid status '${status}'` });
+      return;
+    }
     orders = await db
       .select()
       .from(ordersTable)
-      .where(eq(ordersTable.status, status as any))
+      .where(eq(ordersTable.status, statusValue))
       .orderBy(desc(ordersTable.createdAt));
   } else {
     orders = await db.select().from(ordersTable).orderBy(desc(ordersTable.createdAt));
