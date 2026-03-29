@@ -13,6 +13,8 @@ export function authenticate(required = true) {
 
     if (req.cookies?.token) {
       token = req.cookies.token as string;
+    } else if (req.cookies?.delivery_token) {
+      token = req.cookies.delivery_token as string;
     } else {
       const authHeader = req.headers.authorization;
       token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;

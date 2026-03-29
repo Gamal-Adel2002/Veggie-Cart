@@ -41,7 +41,172 @@ function deliveryFetch(path: string, token: string, options?: RequestInit) {
       Authorization: `Bearer ${token}`,
       ...(options?.headers || {}),
     },
+    credentials: 'include',
   });
+}
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+interface OrderGroup {
+  label: string;
+  orders: DeliveryOrder[];
+}
+
+function groupOrdersByProximity(orders: DeliveryOrder[], thresholdKm = 2): OrderGroup[] {
+  const geoOrders = orders.filter(o => o.latitude != null && o.longitude != null);
+  const noGeoOrders = orders.filter(o => o.latitude == null || o.longitude == null);
+
+  const clusters: DeliveryOrder[][] = [];
+  const assigned = new Set<number>();
+
+  for (const order of geoOrders) {
+    if (assigned.has(order.id)) continue;
+    const cluster = [order];
+    assigned.add(order.id);
+
+    for (const other of geoOrders) {
+      if (assigned.has(other.id)) continue;
+      const dist = haversineKm(
+        order.latitude!,
+        order.longitude!,
+        other.latitude!,
+        other.longitude!
+      );
+      if (dist <= thresholdKm) {
+        cluster.push(other);
+        assigned.add(other.id);
+      }
+    }
+    clusters.push(cluster);
+  }
+
+  const groups: OrderGroup[] = clusters.map((cluster, i) => ({
+    label: `Zone ${i + 1}`,
+    orders: cluster,
+  }));
+
+  if (noGeoOrders.length > 0) {
+    groups.push({ label: 'Other', orders: noGeoOrders });
+  }
+
+  return groups;
+}
+
+function getMapLink(order: DeliveryOrder): string | null {
+  if (order.latitude != null && order.longitude != null) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${order.latitude},${order.longitude}`;
+  }
+  if (order.deliveryAddress) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.deliveryAddress)}`;
+  }
+  return null;
+}
+
+function OrderCard({ order, lang, t, onComplete, isCompleting }: {
+  order: DeliveryOrder;
+  lang: string;
+  t: (key: string) => any;
+  onComplete: (id: number) => void;
+  isCompleting: boolean;
+}) {
+  const mapLink = getMapLink(order);
+  const isActive = order.status !== 'completed';
+
+  return (
+    <div className={`bg-zinc-900 border border-zinc-800 rounded-2xl p-4 space-y-4 ${!isActive ? 'opacity-60' : ''}`}>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="font-bold text-lg">{t('deliveryOrderId')(order.id)}</p>
+          <p className="text-zinc-400 text-xs">{format(new Date(order.createdAt), 'dd MMM yyyy, HH:mm')}</p>
+        </div>
+        <Badge className={`text-xs shrink-0 ${isActive ? 'bg-primary/20 text-primary border-primary/30' : 'bg-green-500/20 text-green-400 border-green-500/30'}`}>
+          {order.status}
+        </Badge>
+      </div>
+
+      <div className="space-y-2 text-sm">
+        <div className="flex gap-2">
+          <span className="text-zinc-500 shrink-0">{t('deliveryCustomer')}:</span>
+          <div>
+            <p className="font-medium">{order.customerName}</p>
+            <a href={`tel:${order.customerPhone}`} className="text-primary text-xs flex items-center gap-1 mt-0.5">
+              <Phone className="w-3 h-3" />
+              {order.customerPhone}
+            </a>
+          </div>
+        </div>
+
+        {order.deliveryAddress && (
+          <div className="flex gap-2">
+            <span className="text-zinc-500 shrink-0">{t('deliveryAddress')}:</span>
+            <span className="text-zinc-300">{order.deliveryAddress}</span>
+          </div>
+        )}
+
+        {order.notes && (
+          <div className="bg-zinc-800 rounded-lg px-3 py-2 text-zinc-400 text-xs">{order.notes}</div>
+        )}
+      </div>
+
+      <div className="border-t border-zinc-800 pt-3">
+        <p className="text-zinc-500 text-xs mb-2">{t('deliveryItems')}:</p>
+        <ul className="space-y-1">
+          {order.items.map(item => (
+            <li key={item.id} className="flex justify-between text-sm">
+              <span className="text-zinc-300">
+                {lang === 'ar' && item.productNameAr ? item.productNameAr : item.productName}
+                {' × '}{item.quantity} {item.unit}
+              </span>
+              <span className="text-zinc-400">{item.subtotal} EGP</span>
+            </li>
+          ))}
+        </ul>
+        <div className="flex justify-between font-bold text-sm mt-2 pt-2 border-t border-zinc-800">
+          <span>{t('deliveryTotal')}</span>
+          <span className="text-primary">{order.totalPrice} EGP</span>
+        </div>
+      </div>
+
+      {isActive && (
+        <div className="flex gap-2 pt-1">
+          {mapLink && (
+            <a href={mapLink} target="_blank" rel="noopener noreferrer" className="flex-1">
+              <Button variant="outline" size="sm" className="w-full border-zinc-700 text-zinc-300 hover:bg-zinc-800">
+                <MapPin className="w-4 h-4 me-2" />
+                {t('deliveryOpenMap')}
+              </Button>
+            </a>
+          )}
+          <Button
+            size="sm"
+            className="flex-1 bg-primary hover:bg-primary/90"
+            disabled={isCompleting}
+            onClick={() => onComplete(order.id)}
+          >
+            {isCompleting
+              ? <><Loader2 className="w-4 h-4 me-2 animate-spin" />{t('deliveryCompleting')}</>
+              : <><CheckCircle2 className="w-4 h-4 me-2" />{t('deliveryCompleteBtn')}</>
+            }
+          </Button>
+        </div>
+      )}
+
+      {!isActive && (
+        <div className="flex items-center gap-2 text-green-400 text-sm pt-1">
+          <CheckCircle2 className="w-4 h-4" />
+          <span>{t('deliveryCompleted')}</span>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function DeliveryDashboard() {
@@ -56,14 +221,22 @@ export default function DeliveryDashboard() {
 
   React.useEffect(() => {
     if (!deliveryToken) setLocation('/delivery/login');
-  }, [deliveryToken, setLocation]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deliveryToken]);
 
   const { data: orders = [], isLoading } = useQuery<DeliveryOrder[]>({
     queryKey: ['/api/delivery/orders'],
     queryFn: async () => {
       if (!deliveryToken) throw new Error('No token');
       const res = await deliveryFetch('/api/delivery/orders', deliveryToken);
-      if (!res.ok) throw new Error('Failed to load');
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          logoutDelivery();
+          setLocation('/delivery/login');
+          throw new Error('Session expired');
+        }
+        throw new Error('Failed to load');
+      }
       return res.json();
     },
     enabled: !!deliveryToken,
@@ -98,18 +271,9 @@ export default function DeliveryDashboard() {
     setLocation('/delivery/login');
   };
 
-  const getMapLink = (order: DeliveryOrder) => {
-    if (order.latitude && order.longitude) {
-      return `https://www.google.com/maps?q=${order.latitude},${order.longitude}`;
-    }
-    if (order.deliveryAddress) {
-      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.deliveryAddress)}`;
-    }
-    return null;
-  };
-
   const activeOrders = orders.filter(o => o.status !== 'completed');
   const completedOrders = orders.filter(o => o.status === 'completed');
+  const groups = groupOrdersByProximity(activeOrders);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
@@ -146,115 +310,54 @@ export default function DeliveryDashboard() {
           </div>
         )}
 
-        {activeOrders.length > 0 && (
-          <div className="space-y-4 mb-8">
-            {activeOrders.map(order => {
-              const mapLink = getMapLink(order);
-              const isCompleting = completingId === order.id || completeMutation.isPending && completingId === order.id;
-              return (
-                <div key={order.id} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 space-y-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-bold text-lg">{t('deliveryOrderId')(order.id)}</p>
-                      <p className="text-zinc-400 text-xs">{format(new Date(order.createdAt), 'dd MMM yyyy, HH:mm')}</p>
-                    </div>
-                    <Badge className="bg-primary/20 text-primary border-primary/30 text-xs shrink-0">
-                      {order.status}
-                    </Badge>
+        {groups.length > 0 && (
+          <div className="space-y-8 mb-8">
+            {groups.map((group) => (
+              <div key={group.label}>
+                {groups.length > 1 && (
+                  <div className="flex items-center gap-3 mb-3">
+                    <MapPin className="w-4 h-4 text-primary" />
+                    <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide">{group.label}</h2>
+                    <div className="flex-1 h-px bg-zinc-800" />
+                    <span className="text-xs text-zinc-500">{group.orders.length} order{group.orders.length !== 1 ? 's' : ''}</span>
                   </div>
-
-                  <div className="space-y-2 text-sm">
-                    <div className="flex gap-2">
-                      <span className="text-zinc-500 shrink-0">{t('deliveryCustomer')}:</span>
-                      <div>
-                        <p className="font-medium">{order.customerName}</p>
-                        <a
-                          href={`tel:${order.customerPhone}`}
-                          className="text-primary text-xs flex items-center gap-1 mt-0.5"
-                        >
-                          <Phone className="w-3 h-3" />
-                          {order.customerPhone}
-                        </a>
-                      </div>
-                    </div>
-
-                    {order.deliveryAddress && (
-                      <div className="flex gap-2">
-                        <span className="text-zinc-500 shrink-0">{t('deliveryAddress')}:</span>
-                        <span className="text-zinc-300">{order.deliveryAddress}</span>
-                      </div>
-                    )}
-
-                    {order.notes && (
-                      <div className="bg-zinc-800 rounded-lg px-3 py-2 text-zinc-400 text-xs">
-                        {order.notes}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="border-t border-zinc-800 pt-3">
-                    <p className="text-zinc-500 text-xs mb-2">{t('deliveryItems')}:</p>
-                    <ul className="space-y-1">
-                      {order.items.map(item => (
-                        <li key={item.id} className="flex justify-between text-sm">
-                          <span className="text-zinc-300">
-                            {lang === 'ar' && item.productNameAr ? item.productNameAr : item.productName}
-                            {' × '}{item.quantity} {item.unit}
-                          </span>
-                          <span className="text-zinc-400">{item.subtotal} EGP</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="flex justify-between font-bold text-sm mt-2 pt-2 border-t border-zinc-800">
-                      <span>{t('deliveryTotal')}</span>
-                      <span className="text-primary">{order.totalPrice} EGP</span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 pt-1">
-                    {mapLink && (
-                      <a href={mapLink} target="_blank" rel="noopener noreferrer" className="flex-1">
-                        <Button variant="outline" size="sm" className="w-full border-zinc-700 text-zinc-300 hover:bg-zinc-800">
-                          <MapPin className="w-4 h-4 me-2" />
-                          {t('deliveryOpenMap')}
-                        </Button>
-                      </a>
-                    )}
-                    <Button
-                      size="sm"
-                      className="flex-1 bg-primary hover:bg-primary/90"
-                      disabled={isCompleting}
-                      onClick={() => completeMutation.mutate(order.id)}
-                    >
-                      {isCompleting
-                        ? <><Loader2 className="w-4 h-4 me-2 animate-spin" />{t('deliveryCompleting')}</>
-                        : <><CheckCircle2 className="w-4 h-4 me-2" />{t('deliveryCompleteBtn')}</>
-                      }
-                    </Button>
-                  </div>
+                )}
+                <div className="space-y-4">
+                  {group.orders.map(order => (
+                    <OrderCard
+                      key={order.id}
+                      order={order}
+                      lang={lang}
+                      t={t}
+                      onComplete={(id) => completeMutation.mutate(id)}
+                      isCompleting={completingId === order.id}
+                    />
+                  ))}
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         )}
 
         {completedOrders.length > 0 && (
           <div>
-            <h2 className="text-zinc-500 text-sm font-semibold mb-3 uppercase tracking-wide">
-              {t('deliveryCompleted')} ({completedOrders.length})
-            </h2>
+            <div className="flex items-center gap-3 mb-3">
+              <CheckCircle2 className="w-4 h-4 text-green-500" />
+              <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide">
+                {t('deliveryCompleted')} ({completedOrders.length})
+              </h2>
+              <div className="flex-1 h-px bg-zinc-800" />
+            </div>
             <div className="space-y-2">
               {completedOrders.map(order => (
-                <div key={order.id} className="bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 flex items-center justify-between opacity-60">
-                  <div>
-                    <p className="font-medium text-sm">{t('deliveryOrderId')(order.id)}</p>
-                    <p className="text-zinc-500 text-xs">{order.customerName}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-zinc-400 text-sm">{order.totalPrice} EGP</span>
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
-                  </div>
-                </div>
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  lang={lang}
+                  t={t}
+                  onComplete={(id) => completeMutation.mutate(id)}
+                  isCompleting={false}
+                />
               ))}
             </div>
           </div>

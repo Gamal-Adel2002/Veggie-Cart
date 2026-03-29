@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { deliveryPersonsTable, ordersTable, orderItemsTable } from "@workspace/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, and, ne } from "drizzle-orm";
 import { authenticate, requireDelivery, type AuthRequest } from "../middlewares/authenticate";
 import { hashPassword, comparePassword, generateToken } from "../lib/auth";
 
@@ -39,6 +39,14 @@ router.post("/login", async (req, res) => {
   const token = generateToken({ userId: person.id, role: "delivery" });
   const { password: _pw, ...safePerson } = person;
 
+  const cookieMaxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
+  res.cookie("delivery_token", token, {
+    httpOnly: true,
+    sameSite: "lax",
+    maxAge: cookieMaxAge,
+    secure: process.env.NODE_ENV === "production",
+  });
+
   res.json({ token, person: safePerson });
 });
 
@@ -58,12 +66,17 @@ router.get("/me", authenticate(), requireDelivery, async (req: AuthRequest, res)
   res.json(safePerson);
 });
 
-// GET /delivery/orders — orders assigned to this delivery person that are 'with_delivery'
+// GET /delivery/orders — active + recently completed orders assigned to this delivery person
 router.get("/orders", authenticate(), requireDelivery, async (req: AuthRequest, res) => {
   const assigned = await db
     .select()
     .from(ordersTable)
-    .where(eq(ordersTable.deliveryPersonId, req.userId!));
+    .where(
+      and(
+        eq(ordersTable.deliveryPersonId, req.userId!),
+        ne(ordersTable.status, "rejected")
+      )
+    );
 
   if (assigned.length === 0) {
     res.json([]);

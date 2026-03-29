@@ -69,6 +69,7 @@ function Router() {
 
       <Route path="/delivery/login" component={DeliveryLogin} />
       <Route path="/delivery/dashboard" component={DeliveryDashboard} />
+      <Route path="/delivery" component={DeliveryDashboard} />
 
       <Route component={NotFound} />
     </Switch>

@@ -19,7 +19,7 @@ export default function DeliveryLogin() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (deliveryToken) setLocation('/delivery/dashboard');
+    if (deliveryToken) setLocation('/delivery');
   }, [deliveryToken, setLocation]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -38,7 +38,7 @@ export default function DeliveryLogin() {
       }
       const data = await res.json();
       setDeliveryAuth(data.token, data.person);
-      setLocation('/delivery/dashboard');
+      setLocation('/delivery');
     } catch {
       toast({ title: t('deliveryLoginFailed'), description: t('deliveryInvalidCredentials'), variant: 'destructive' });
     } finally {
