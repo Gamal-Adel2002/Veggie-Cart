@@ -319,6 +319,10 @@ export const dictionary = {
     deliveryStatus: "Status",
     deliveryLogout: "Logout",
     deliveryLoading: "Loading deliveries…",
+    deliveryZoneOther: "Other (No Zone)",
+    deliveryZoneLabel: (name: string) => `Zone: ${name}`,
+    deliveryOrderCount: (n: number) => `${n} order${n !== 1 ? 's' : ''}`,
+    deliveryCurrencySymbol: "EGP",
 
     // Not found
     pageNotFound: "404 Page Not Found",
@@ -645,6 +649,10 @@ export const dictionary = {
     deliveryStatus: "الحالة",
     deliveryLogout: "تسجيل الخروج",
     deliveryLoading: "جاري تحميل التوصيلات…",
+    deliveryZoneOther: "أخرى (خارج المناطق)",
+    deliveryZoneLabel: (name: string) => `منطقة: ${name}`,
+    deliveryOrderCount: (n: number) => `${n} طلب${n !== 1 ? 'ات' : ''}`,
+    deliveryCurrencySymbol: "ج.م",
 
     // Not found
     pageNotFound: "404 الصفحة غير موجودة",

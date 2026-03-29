@@ -1,11 +1,24 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { deliveryPersonsTable, ordersTable, orderItemsTable } from "@workspace/db/schema";
-import { eq, inArray, and, ne } from "drizzle-orm";
+import { deliveryPersonsTable, ordersTable, orderItemsTable, deliveryZonesTable } from "@workspace/db/schema";
+import { eq, inArray, and, or } from "drizzle-orm";
 import { authenticate, requireDelivery, type AuthRequest } from "../middlewares/authenticate";
-import { hashPassword, comparePassword, generateToken } from "../lib/auth";
+import { comparePassword, generateToken } from "../lib/auth";
 
 const router = Router();
+
+// Active delivery statuses — shown on dashboard; completed preserved for history
+const ACTIVE_STATUSES = ["accepted", "preparing", "with_delivery"] as const;
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 // POST /delivery/login
 router.post("/login", async (req, res) => {
@@ -50,6 +63,12 @@ router.post("/login", async (req, res) => {
   res.json({ token, person: safePerson });
 });
 
+// POST /delivery/logout
+router.post("/logout", (_req, res) => {
+  res.clearCookie("delivery_token");
+  res.json({ success: true });
+});
+
 // GET /delivery/me — return current delivery person info
 router.get("/me", authenticate(), requireDelivery, async (req: AuthRequest, res) => {
   const [person] = await db
@@ -66,24 +85,41 @@ router.get("/me", authenticate(), requireDelivery, async (req: AuthRequest, res)
   res.json(safePerson);
 });
 
-// GET /delivery/orders — active + recently completed orders assigned to this delivery person
+// GET /delivery/orders — active orders assigned to this delivery person
+// Statuses: accepted | preparing | with_delivery | completed (for today's history)
 router.get("/orders", authenticate(), requireDelivery, async (req: AuthRequest, res) => {
+  // Fetch all active statuses assigned to this driver
+  const activeFilters = ACTIVE_STATUSES.map(s => eq(ordersTable.status, s));
+
   const assigned = await db
     .select()
     .from(ordersTable)
     .where(
       and(
         eq(ordersTable.deliveryPersonId, req.userId!),
-        ne(ordersTable.status, "rejected")
+        or(...activeFilters)
       )
     );
 
-  if (assigned.length === 0) {
+  // Also include recently completed for today's history
+  const completedToday = await db
+    .select()
+    .from(ordersTable)
+    .where(
+      and(
+        eq(ordersTable.deliveryPersonId, req.userId!),
+        eq(ordersTable.status, "completed")
+      )
+    );
+
+  const all = [...assigned, ...completedToday];
+
+  if (all.length === 0) {
     res.json([]);
     return;
   }
 
-  const orderIds = assigned.map(o => o.id);
+  const orderIds = all.map(o => o.id);
   const items = await db
     .select()
     .from(orderItemsTable)
@@ -95,9 +131,35 @@ router.get("/orders", authenticate(), requireDelivery, async (req: AuthRequest, 
     itemsByOrder.get(item.orderId)!.push(item);
   }
 
-  const result = assigned.map(o => {
+  // Fetch active zones for zone-name grouping
+  const zones = await db
+    .select()
+    .from(deliveryZonesTable)
+    .where(eq(deliveryZonesTable.active, true));
+
+  const result = all.map(o => {
     const { guestToken: _gt, ...safe } = o;
-    return { ...safe, items: itemsByOrder.get(o.id) || [] };
+
+    // Find which zone this order belongs to (by lat/lng proximity to zone center)
+    let zoneName: string | null = null;
+    let distanceFromZoneCentroid: number | null = null;
+    if (o.latitude != null && o.longitude != null && zones.length > 0) {
+      let closest: { name: string; dist: number } | null = null;
+      for (const z of zones) {
+        const dist = haversineKm(o.latitude, o.longitude, z.centerLat, z.centerLng);
+        if (dist <= z.radiusKm) {
+          if (!closest || dist < closest.dist) {
+            closest = { name: z.name, dist };
+          }
+        }
+      }
+      if (closest) {
+        zoneName = closest.name;
+        distanceFromZoneCentroid = closest.dist;
+      }
+    }
+
+    return { ...safe, items: itemsByOrder.get(o.id) || [], zoneName, distanceFromZoneCentroid };
   });
 
   res.json(result);
@@ -119,6 +181,11 @@ router.put("/orders/:id/complete", authenticate(), requireDelivery, async (req: 
 
   if (order.deliveryPersonId !== req.userId) {
     res.status(403).json({ error: "This order is not assigned to you" });
+    return;
+  }
+
+  if (!ACTIVE_STATUSES.includes(order.status as typeof ACTIVE_STATUSES[number])) {
+    res.status(400).json({ error: "Order is not in a completable state" });
     return;
   }
 

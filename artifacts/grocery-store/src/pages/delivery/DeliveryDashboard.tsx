@@ -31,6 +31,13 @@ interface DeliveryOrder {
   status: string;
   createdAt: string;
   items: OrderItem[];
+  zoneName: string | null;
+  distanceFromZoneCentroid: number | null;
+}
+
+interface OrderGroup {
+  zoneName: string | null;
+  orders: DeliveryOrder[];
 }
 
 function deliveryFetch(path: string, token: string, options?: RequestInit) {
@@ -45,56 +52,30 @@ function deliveryFetch(path: string, token: string, options?: RequestInit) {
   });
 }
 
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
+function groupOrdersByZone(orders: DeliveryOrder[]): OrderGroup[] {
+  const zoneMap = new Map<string, DeliveryOrder[]>();
 
-interface OrderGroup {
-  label: string;
-  orders: DeliveryOrder[];
-}
-
-function groupOrdersByProximity(orders: DeliveryOrder[], thresholdKm = 2): OrderGroup[] {
-  const geoOrders = orders.filter(o => o.latitude != null && o.longitude != null);
-  const noGeoOrders = orders.filter(o => o.latitude == null || o.longitude == null);
-
-  const clusters: DeliveryOrder[][] = [];
-  const assigned = new Set<number>();
-
-  for (const order of geoOrders) {
-    if (assigned.has(order.id)) continue;
-    const cluster = [order];
-    assigned.add(order.id);
-
-    for (const other of geoOrders) {
-      if (assigned.has(other.id)) continue;
-      const dist = haversineKm(
-        order.latitude!,
-        order.longitude!,
-        other.latitude!,
-        other.longitude!
-      );
-      if (dist <= thresholdKm) {
-        cluster.push(other);
-        assigned.add(other.id);
-      }
-    }
-    clusters.push(cluster);
+  for (const order of orders) {
+    const key = order.zoneName ?? '__nozone__';
+    if (!zoneMap.has(key)) zoneMap.set(key, []);
+    zoneMap.get(key)!.push(order);
   }
 
-  const groups: OrderGroup[] = clusters.map((cluster, i) => ({
-    label: `Zone ${i + 1}`,
-    orders: cluster,
-  }));
+  const groups: OrderGroup[] = [];
 
-  if (noGeoOrders.length > 0) {
-    groups.push({ label: 'Other', orders: noGeoOrders });
+  // Named zones first, sorted by nearest centroid distance
+  for (const [key, zoneOrders] of zoneMap.entries()) {
+    if (key === '__nozone__') continue;
+    const sorted = [...zoneOrders].sort((a, b) =>
+      (a.distanceFromZoneCentroid ?? Infinity) - (b.distanceFromZoneCentroid ?? Infinity)
+    );
+    groups.push({ zoneName: key, orders: sorted });
+  }
+
+  // Ungrouped orders at the end
+  const noZone = zoneMap.get('__nozone__');
+  if (noZone && noZone.length > 0) {
+    groups.push({ zoneName: null, orders: noZone });
   }
 
   return groups;
@@ -119,6 +100,7 @@ function OrderCard({ order, lang, t, onComplete, isCompleting }: {
 }) {
   const mapLink = getMapLink(order);
   const isActive = order.status !== 'completed';
+  const currency = t('deliveryCurrencySymbol');
 
   return (
     <div className={`bg-zinc-900 border border-zinc-800 rounded-2xl p-4 space-y-4 ${!isActive ? 'opacity-60' : ''}`}>
@@ -165,13 +147,13 @@ function OrderCard({ order, lang, t, onComplete, isCompleting }: {
                 {lang === 'ar' && item.productNameAr ? item.productNameAr : item.productName}
                 {' × '}{item.quantity} {item.unit}
               </span>
-              <span className="text-zinc-400">{item.subtotal} EGP</span>
+              <span className="text-zinc-400">{item.subtotal} {currency}</span>
             </li>
           ))}
         </ul>
         <div className="flex justify-between font-bold text-sm mt-2 pt-2 border-t border-zinc-800">
           <span>{t('deliveryTotal')}</span>
-          <span className="text-primary">{order.totalPrice} EGP</span>
+          <span className="text-primary">{order.totalPrice} {currency}</span>
         </div>
       </div>
 
@@ -219,11 +201,6 @@ export default function DeliveryDashboard() {
   const queryClient = useQueryClient();
   const [completingId, setCompletingId] = useState<number | null>(null);
 
-  React.useEffect(() => {
-    if (!deliveryToken) setLocation('/delivery/login');
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deliveryToken]);
-
   const { data: orders = [], isLoading } = useQuery<DeliveryOrder[]>({
     queryKey: ['/api/delivery/orders'],
     queryFn: async () => {
@@ -267,13 +244,14 @@ export default function DeliveryDashboard() {
   });
 
   const handleLogout = () => {
+    fetch('/api/delivery/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
     logoutDelivery();
     setLocation('/delivery/login');
   };
 
   const activeOrders = orders.filter(o => o.status !== 'completed');
   const completedOrders = orders.filter(o => o.status === 'completed');
-  const groups = groupOrdersByProximity(activeOrders);
+  const groups = groupOrdersByZone(activeOrders);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
@@ -312,14 +290,16 @@ export default function DeliveryDashboard() {
 
         {groups.length > 0 && (
           <div className="space-y-8 mb-8">
-            {groups.map((group) => (
-              <div key={group.label}>
-                {groups.length > 1 && (
+            {groups.map((group, idx) => (
+              <div key={group.zoneName ?? `nozone-${idx}`}>
+                {(groups.length > 1 || group.zoneName) && (
                   <div className="flex items-center gap-3 mb-3">
                     <MapPin className="w-4 h-4 text-primary" />
-                    <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide">{group.label}</h2>
+                    <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide">
+                      {group.zoneName ? t('deliveryZoneLabel')(group.zoneName) : t('deliveryZoneOther')}
+                    </h2>
                     <div className="flex-1 h-px bg-zinc-800" />
-                    <span className="text-xs text-zinc-500">{group.orders.length} order{group.orders.length !== 1 ? 's' : ''}</span>
+                    <span className="text-xs text-zinc-500">{t('deliveryOrderCount')(group.orders.length)}</span>
                   </div>
                 )}
                 <div className="space-y-4">

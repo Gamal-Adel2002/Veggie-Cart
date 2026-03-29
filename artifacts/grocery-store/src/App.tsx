@@ -27,6 +27,7 @@ import Admins from "./pages/admin/Admins";
 import Customers from "./pages/admin/Customers";
 import DeliveryLogin from "./pages/delivery/DeliveryLogin";
 import DeliveryDashboard from "./pages/delivery/DeliveryDashboard";
+import { RequireDelivery } from "./components/delivery/RequireDelivery";
 import NotFound from "./pages/not-found";
 
 const queryClient = new QueryClient({
@@ -68,8 +69,12 @@ function Router() {
       <Route path="/admin/customers" component={Customers} />
 
       <Route path="/delivery/login" component={DeliveryLogin} />
-      <Route path="/delivery/dashboard" component={DeliveryDashboard} />
-      <Route path="/delivery" component={DeliveryDashboard} />
+      <Route path="/delivery/dashboard">
+        <RequireDelivery><DeliveryDashboard /></RequireDelivery>
+      </Route>
+      <Route path="/delivery">
+        <RequireDelivery><DeliveryDashboard /></RequireDelivery>
+      </Route>
 
       <Route component={NotFound} />
     </Switch>

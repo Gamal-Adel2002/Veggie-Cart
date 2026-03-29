@@ -8,30 +8,35 @@ export interface AuthRequest extends Request {
 
 export function authenticate(required = true) {
   return async (req: AuthRequest, res: Response, next: NextFunction) => {
-    // Check httpOnly cookie first, then fall back to Bearer header
-    let token: string | null = null;
+    // Collect all candidate tokens in priority order:
+    // 1. Authorization header (most explicit — client chose to send it)
+    // 2. delivery_token cookie (scoped to delivery portal)
+    // 3. token cookie (customer/admin session)
+    const candidates: string[] = [];
 
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith("Bearer ")) {
+      candidates.push(authHeader.slice(7));
+    }
+    if (req.cookies?.delivery_token) {
+      candidates.push(req.cookies.delivery_token as string);
+    }
     if (req.cookies?.token) {
-      token = req.cookies.token as string;
-    } else if (req.cookies?.delivery_token) {
-      token = req.cookies.delivery_token as string;
-    } else {
-      const authHeader = req.headers.authorization;
-      token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+      candidates.push(req.cookies.token as string);
     }
 
-    if (!token) {
-      if (required) {
-        res.status(401).json({ error: "Unauthorized" });
-        return;
+    let payload: { userId: number; role: string } | null = null;
+    for (const candidate of candidates) {
+      const p = verifyToken(candidate);
+      if (p) {
+        payload = p;
+        break;
       }
-      return next();
     }
 
-    const payload = verifyToken(token);
     if (!payload) {
       if (required) {
-        res.status(401).json({ error: "Invalid token" });
+        res.status(401).json({ error: "Unauthorized" });
         return;
       }
       return next();
