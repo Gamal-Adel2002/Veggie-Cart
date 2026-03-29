@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useStore } from '@/store';
 
 interface DeliveryPerson {
   id: number;
@@ -28,10 +29,12 @@ interface FormData {
   password: string;
 }
 
-async function apiFetch(path: string, options?: RequestInit) {
+async function apiFetch(path: string, adminToken: string | null, options?: RequestInit) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (adminToken) headers['Authorization'] = `Bearer ${adminToken}`;
   const res = await fetch(path, {
     ...options,
-    headers: { 'Content-Type': 'application/json', ...(options?.headers || {}) },
+    headers: { ...headers, ...(options?.headers || {}) },
     credentials: 'include',
   });
   if (!res.ok) {
@@ -45,6 +48,7 @@ export default function DeliveryPersons() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
   const { toast } = useToast();
+  const adminToken = useStore(s => s.token);
 
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<DeliveryPerson | 'new' | null>(null);
@@ -52,24 +56,24 @@ export default function DeliveryPersons() {
 
   const { data: persons = [], isLoading: personsLoading } = useQuery<DeliveryPerson[]>({
     queryKey: ['/api/admin/delivery-persons'],
-    queryFn: () => apiFetch('/api/admin/delivery-persons'),
+    queryFn: () => apiFetch('/api/admin/delivery-persons', adminToken),
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: FormData) => apiFetch('/api/admin/delivery-persons', { method: 'POST', body: JSON.stringify(data) }),
+    mutationFn: (data: FormData) => apiFetch('/api/admin/delivery-persons', adminToken, { method: 'POST', body: JSON.stringify(data) }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['/api/admin/delivery-persons'] }); setEditing(null); },
     onError: (e: Error) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: FormData }) =>
-      apiFetch(`/api/admin/delivery-persons/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+      apiFetch(`/api/admin/delivery-persons/${id}`, adminToken, { method: 'PUT', body: JSON.stringify(data) }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['/api/admin/delivery-persons'] }); setEditing(null); },
     onError: (e: Error) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => apiFetch(`/api/admin/delivery-persons/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: number) => apiFetch(`/api/admin/delivery-persons/${id}`, adminToken, { method: 'DELETE' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/admin/delivery-persons'] }),
     onError: (e: Error) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
   });

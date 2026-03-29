@@ -7,6 +7,13 @@ import { hashPassword } from "../lib/auth";
 
 const router = Router();
 
+function isUniqueConstraintError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const e = err as { code?: string; cause?: { code?: string }; message?: string };
+  return e.code === "23505" || e.cause?.code === "23505" ||
+    (typeof e.message === "string" && e.message.includes("unique constraint"));
+}
+
 router.get("/", authenticate(), requireAdmin, async (_req, res) => {
   const persons = await db.select({
     id: deliveryPersonsTable.id,
@@ -26,21 +33,30 @@ router.post("/", authenticate(), requireAdmin, async (req: AuthRequest, res) => 
     return;
   }
   const hashedPassword = password ? await hashPassword(password) : null;
-  const [person] = await db.insert(deliveryPersonsTable).values({
-    name,
-    phone,
-    active: active ?? true,
-    username: username || null,
-    password: hashedPassword,
-  }).returning({
-    id: deliveryPersonsTable.id,
-    name: deliveryPersonsTable.name,
-    phone: deliveryPersonsTable.phone,
-    active: deliveryPersonsTable.active,
-    username: deliveryPersonsTable.username,
-    createdAt: deliveryPersonsTable.createdAt,
-  });
-  res.status(201).json(person);
+  try {
+    const [person] = await db.insert(deliveryPersonsTable).values({
+      name,
+      phone,
+      active: active ?? true,
+      username: username || null,
+      password: hashedPassword,
+    }).returning({
+      id: deliveryPersonsTable.id,
+      name: deliveryPersonsTable.name,
+      phone: deliveryPersonsTable.phone,
+      active: deliveryPersonsTable.active,
+      username: deliveryPersonsTable.username,
+      createdAt: deliveryPersonsTable.createdAt,
+    });
+    res.status(201).json(person);
+  } catch (err: unknown) {
+    const isUniqueViolation = isUniqueConstraintError(err);
+    if (isUniqueViolation) {
+      res.status(409).json({ error: "Username already taken" });
+      return;
+    }
+    throw err;
+  }
 });
 
 router.put("/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
@@ -52,22 +68,30 @@ router.put("/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) =
     updateData.password = await hashPassword(password);
   }
 
-  const [person] = await db.update(deliveryPersonsTable)
-    .set(updateData)
-    .where(eq(deliveryPersonsTable.id, id))
-    .returning({
-      id: deliveryPersonsTable.id,
-      name: deliveryPersonsTable.name,
-      phone: deliveryPersonsTable.phone,
-      active: deliveryPersonsTable.active,
-      username: deliveryPersonsTable.username,
-      createdAt: deliveryPersonsTable.createdAt,
-    });
-  if (!person) {
-    res.status(404).json({ error: "Delivery person not found" });
-    return;
+  try {
+    const [person] = await db.update(deliveryPersonsTable)
+      .set(updateData)
+      .where(eq(deliveryPersonsTable.id, id))
+      .returning({
+        id: deliveryPersonsTable.id,
+        name: deliveryPersonsTable.name,
+        phone: deliveryPersonsTable.phone,
+        active: deliveryPersonsTable.active,
+        username: deliveryPersonsTable.username,
+        createdAt: deliveryPersonsTable.createdAt,
+      });
+    if (!person) {
+      res.status(404).json({ error: "Delivery person not found" });
+      return;
+    }
+    res.json(person);
+  } catch (err: unknown) {
+    if (isUniqueConstraintError(err)) {
+      res.status(409).json({ error: "Username already taken" });
+      return;
+    }
+    throw err;
   }
-  res.json(person);
 });
 
 router.delete("/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
