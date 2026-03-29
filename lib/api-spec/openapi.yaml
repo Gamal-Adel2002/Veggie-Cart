@@ -123,8 +123,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-
-  /auth/me:
     put:
       operationId: updateMe
       tags: [auth]
