@@ -13,9 +13,10 @@ import { Badge } from '@/components/ui/badge';
 import { Clock, MapPin, CheckCircle2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/lib/utils';
+import type { CartItem } from '@/store';
 
 export default function Checkout() {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
 
@@ -92,7 +93,7 @@ export default function Checkout() {
             <div className="bg-card border border-border/50 p-6 rounded-3xl shadow-sm space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold">{t('deliveryLocation')}</h2>
-                <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 gap-1 px-3 py-1 text-sm"><Clock className="w-3 h-3" /> 30-45 mins</Badge>
+                <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 gap-1 px-3 py-1 text-sm"><Clock className="w-3 h-3" /> {t('deliveryTime')}</Badge>
               </div>
 
               {hasSavedLoc && (
@@ -138,9 +139,9 @@ export default function Checkout() {
           <div className="bg-card border border-border/50 rounded-3xl p-6 sticky top-24 shadow-lg shadow-black/5">
             <h3 className="font-bold text-xl mb-6">{t('orderSummary')}</h3>
             <div className="space-y-4 mb-6">
-              {cart.map(item => (
+              {cart.map((item: CartItem) => (
                 <div key={item.id} className="flex justify-between text-sm">
-                  <span className="text-muted-foreground truncate pe-4">{item.cartQuantity}x {item.name}</span>
+                  <span className="text-muted-foreground truncate pe-4">{item.cartQuantity}x {lang === 'ar' ? item.nameAr : item.name}</span>
                   <span className="font-medium shrink-0">{(item.price * item.cartQuantity).toFixed(2)}</span>
                 </div>
               ))}

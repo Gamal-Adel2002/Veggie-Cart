@@ -13,13 +13,14 @@ import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 
-const schema = z.object({
-  phone: z.string().min(10, "Valid phone required"),
-  password: z.string().min(4, "Password required")
-});
-
 export default function Login() {
   const { t } = useTranslation();
+
+  const schema = z.object({
+    phone: z.string().min(10, t('validPhoneRequired')),
+    password: z.string().min(4, t('passwordRequired'))
+  });
+
   const form = useForm({ resolver: zodResolver(schema), defaultValues: { phone: '', password: '' } });
   const { mutateAsync: login, isPending } = useAppLogin();
   const setAuth = useStore(s => s.setAuth);

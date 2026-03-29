@@ -69,6 +69,7 @@ export const dictionary = {
     paymentCash: "Payment: Cash on Delivery",
     confirmOrder: "Confirm Order",
     estimatedDelivery: "Estimated Delivery: 30-45 minutes",
+    deliveryTime: "30-45 mins",
     chooseOnMap: "Choose on Map",
     selectLocationError: "Please select a delivery location.",
     orderPlacedError: "Failed to place order",
@@ -82,6 +83,12 @@ export const dictionary = {
     trackOrder: "Track Order Status",
     continueShopping: "Continue Shopping",
     orderNotFound: "Order not found",
+
+    // Validation errors
+    validPhoneRequired: "Valid phone required",
+    passwordRequired: "Password required",
+    nameRequired: "Name required",
+    passwordMinLength: "Password must be at least 6 characters",
 
     // Auth - Login
     welcomeBack: "Welcome Back",
@@ -196,6 +203,7 @@ export const dictionary = {
     paymentCash: "الدفع: نقداً عند الاستلام",
     confirmOrder: "تأكيد الطلب",
     estimatedDelivery: "التوصيل المتوقع: 30-45 دقيقة",
+    deliveryTime: "30-45 دقيقة",
     chooseOnMap: "اختر من الخريطة",
     selectLocationError: "يرجى تحديد موقع التوصيل.",
     orderPlacedError: "فشل تقديم الطلب",
@@ -209,6 +217,12 @@ export const dictionary = {
     trackOrder: "تتبع حالة الطلب",
     continueShopping: "مواصلة التسوق",
     orderNotFound: "الطلب غير موجود",
+
+    // Validation errors
+    validPhoneRequired: "رقم الهاتف غير صحيح",
+    passwordRequired: "كلمة المرور مطلوبة",
+    nameRequired: "الاسم مطلوب",
+    passwordMinLength: "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
 
     // Auth - Login
     welcomeBack: "مرحباً بعودتك",
@@ -254,17 +268,24 @@ export const dictionary = {
   }
 };
 
+function resolveDotted(obj: any, key: string): any {
+  const keys = key.split('.');
+  let current = obj;
+  for (const k of keys) {
+    if (current === undefined || current === null) return undefined;
+    current = current[k];
+  }
+  return current;
+}
+
 export function useTranslation() {
   const lang = useStore(state => state.lang);
 
   function t(key: string): any {
-    const keys = key.split('.');
-    let current: any = dictionary[lang];
-    for (const k of keys) {
-      if (current === undefined || current === null) return key;
-      current = current[k];
-    }
-    return current ?? (dictionary['en'] as any)[key] ?? key;
+    const val = resolveDotted(dictionary[lang], key);
+    if (val !== undefined) return val;
+    const fallback = resolveDotted(dictionary['en'], key);
+    return fallback !== undefined ? fallback : key;
   }
 
   return { t, lang };

@@ -15,15 +15,16 @@ import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 
-const schema = z.object({
-  name: z.string().min(2, "Name required"),
-  phone: z.string().min(10, "Valid phone required"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  address: z.string().optional()
-});
-
 export default function Signup() {
   const { t } = useTranslation();
+
+  const schema = z.object({
+    name: z.string().min(2, t('nameRequired')),
+    phone: z.string().min(10, t('validPhoneRequired')),
+    password: z.string().min(6, t('passwordMinLength')),
+    address: z.string().optional()
+  });
+
   const form = useForm({ resolver: zodResolver(schema), defaultValues: { name: '', phone: '', password: '', address: '' } });
   const { mutateAsync: signup, isPending } = useAppSignup();
   const { mutateAsync: uploadImage } = useAppUploadImage();
