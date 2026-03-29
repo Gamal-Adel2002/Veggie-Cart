@@ -176,6 +176,8 @@ export const dictionary = {
     adminZoneStatusInactive: "Inactive",
     adminZoneLatLabel: "Latitude",
     adminZoneLngLabel: "Longitude",
+    latLabel: "Lat",
+    lngLabel: "Lng",
 
     // Not found
     pageNotFound: "404 Page Not Found",
@@ -359,6 +361,8 @@ export const dictionary = {
     adminZoneStatusInactive: "غير نشطة",
     adminZoneLatLabel: "خط العرض",
     adminZoneLngLabel: "خط الطول",
+    latLabel: "خ.ع",
+    lngLabel: "خ.ط",
 
     // Not found
     pageNotFound: "404 الصفحة غير موجودة",

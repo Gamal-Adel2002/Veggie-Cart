@@ -197,6 +197,11 @@ export default function DeliveryZones() {
                 <MapPicker
                   location={mapLoc}
                   onChange={handleMapChange}
+                  previewCircle={
+                    form.centerLat !== '' && form.centerLng !== '' && form.radiusKm !== ''
+                      ? { lat: Number(form.centerLat), lng: Number(form.centerLng), radiusKm: Number(form.radiusKm) }
+                      : null
+                  }
                   className="mt-1"
                 />
                 <div className="grid grid-cols-2 gap-3 mt-2">

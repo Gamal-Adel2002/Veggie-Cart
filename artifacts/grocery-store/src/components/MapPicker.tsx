@@ -27,11 +27,18 @@ interface DeliveryZone {
   active: boolean;
 }
 
+interface PreviewCircle {
+  lat: number;
+  lng: number;
+  radiusKm: number;
+}
+
 interface MapPickerProps {
   location: { latitude: number; longitude: number } | null;
   onChange: (lat: number, lng: number) => void;
   onAddressChange?: (address: string) => void;
   onZoneValidation?: (isValid: boolean) => void;
+  previewCircle?: PreviewCircle | null;
   className?: string;
 }
 
@@ -77,7 +84,7 @@ function FlyTo({ target }: { target: { lat: number; lng: number } | null }) {
   return null;
 }
 
-export function MapPicker({ location, onChange, onAddressChange, onZoneValidation, className }: MapPickerProps) {
+export function MapPicker({ location, onChange, onAddressChange, onZoneValidation, previewCircle, className }: MapPickerProps) {
   const position = location ? { lat: location.latitude, lng: location.longitude } : null;
 
   const [query, setQuery] = useState('');
@@ -254,6 +261,14 @@ export function MapPicker({ location, onChange, onAddressChange, onZoneValidatio
                 pathOptions={{ color: '#16a34a', fillColor: '#16a34a', fillOpacity: 0.1, weight: 2 }}
               />
             ))}
+            {previewCircle && Number.isFinite(previewCircle.lat) && Number.isFinite(previewCircle.lng) && previewCircle.radiusKm > 0 && (
+              <Circle
+                key="preview"
+                center={[previewCircle.lat, previewCircle.lng]}
+                radius={previewCircle.radiusKm * 1000}
+                pathOptions={{ color: '#2563eb', fillColor: '#2563eb', fillOpacity: 0.12, weight: 2, dashArray: '6 4' }}
+              />
+            )}
             <LocationMarker position={position} onChange={onChange} />
             <FlyTo target={flyTarget} />
           </MapContainer>

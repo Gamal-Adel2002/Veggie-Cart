@@ -258,7 +258,7 @@ export default function Account() {
                 {/* Manual coordinate inputs */}
                 <div className="grid grid-cols-2 gap-2 mt-1">
                   <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Lat</Label>
+                    <Label className="text-xs text-muted-foreground">{t('latLabel')}</Label>
                     <Input
                       type="number"
                       step="0.00001"
@@ -272,7 +272,7 @@ export default function Account() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Lng</Label>
+                    <Label className="text-xs text-muted-foreground">{t('lngLabel')}</Label>
                     <Input
                       type="number"
                       step="0.00001"
