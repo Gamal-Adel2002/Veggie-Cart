@@ -1,9 +1,9 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-const jwtSecret = process.env.JWT_SECRET;
+const jwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET;
 if (!jwtSecret && process.env.NODE_ENV === "production") {
-  throw new Error("JWT_SECRET environment variable is required in production");
+  throw new Error("JWT_SECRET or SESSION_SECRET environment variable is required in production");
 }
 const JWT_SECRET = jwtSecret || "grocery-app-secret-key-dev-only";
 
