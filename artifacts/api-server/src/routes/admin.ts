@@ -194,7 +194,9 @@ router.post("/orders/:id/assign", authenticate(), requireAdmin, async (req: Auth
       });
       await sendPushToDeliveryPerson(Number(deliveryPersonId), {
         title: "FreshVeg — New Delivery",
+        titleAr: "فريش فيج — توصيل جديد",
         body: `Order #${id} · ${order.deliveryAddress || order.customerName}`,
+        bodyAr: `طلب #${id} · ${order.deliveryAddress || order.customerName}`,
         url: `/delivery/dashboard`,
       });
     } catch {}

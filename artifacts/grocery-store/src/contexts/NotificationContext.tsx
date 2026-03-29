@@ -275,10 +275,9 @@ export function NotificationProvider({ children, role, token, onNotification }: 
         eventSourceRef.current.close();
       }
 
-      const authParam = encodeURIComponent(token);
-      const url = `/api/notifications/stream?auth=${authParam}`;
-
-      const es = new EventSource(url, { withCredentials: true });
+      // Authentication via httpOnly cookies (token / delivery_token) sent automatically
+      // by withCredentials: true — no bearer token in query string
+      const es = new EventSource("/api/notifications/stream", { withCredentials: true });
       eventSourceRef.current = es;
 
       const handleEvent = (eventType: 'new_order' | 'order_assigned') => (e: MessageEvent) => {

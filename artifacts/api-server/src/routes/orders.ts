@@ -240,7 +240,9 @@ router.post("/", authenticate(false), async (req: AuthRequest, res) => {
       });
       await sendPushToAdmins({
         title: "FreshVeg — New Order",
+        titleAr: "فريش فيج — طلب جديد",
         body: `${full?.customerName || customerName} · EGP ${(full?.totalPrice || 0).toFixed(2)}`,
+        bodyAr: `${full?.customerName || customerName} · ${(full?.totalPrice || 0).toFixed(2)} ج.م`,
         url: `/admin/orders?orderId=${orderId}`,
       });
     } catch {}

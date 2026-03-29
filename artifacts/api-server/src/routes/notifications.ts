@@ -10,16 +10,42 @@ import pino from "pino";
 const logger = pino({ level: "info" });
 const router = Router();
 
-const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || "";
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "";
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:admin@freshveggies.app";
 
-const vapidReady = !!(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY);
-if (vapidReady) {
-  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
-} else {
-  logger.warn("VAPID keys not fully configured — Web Push notifications will be disabled. Set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY.");
+// Runtime VAPID state — populated either from env or auto-generated
+let VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || "";
+let vapidReady = false;
+
+function initVapid() {
+  const privKey = process.env.VAPID_PRIVATE_KEY || "";
+  if (VAPID_PUBLIC_KEY && privKey) {
+    try {
+      webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, privKey);
+      vapidReady = true;
+      logger.info("VAPID keys loaded from environment — Web Push enabled.");
+    } catch (err) {
+      logger.error({ err }, "Failed to set VAPID details — check key format.");
+    }
+  } else {
+    // Auto-generate a VAPID key pair for this session
+    logger.warn("VAPID_PUBLIC_KEY or VAPID_PRIVATE_KEY not set — generating a temporary pair.");
+    try {
+      const keys = webpush.generateVAPIDKeys();
+      VAPID_PUBLIC_KEY = keys.publicKey;
+      webpush.setVapidDetails(VAPID_SUBJECT, keys.publicKey, keys.privateKey);
+      vapidReady = true;
+      logger.warn(
+        `Generated temporary VAPID keys (session-only). ` +
+        `To make push persistent, set VAPID_PUBLIC_KEY="${keys.publicKey}" ` +
+        `and VAPID_PRIVATE_KEY (secret) in your Replit Secrets.`
+      );
+    } catch (err) {
+      logger.error({ err }, "Failed to auto-generate VAPID keys — Web Push disabled.");
+    }
+  }
 }
+
+initVapid();
 
 // SSE client registry
 interface SseClient {
@@ -51,10 +77,10 @@ export function broadcastToDeliveryPerson(deliveryPersonId: number, event: strin
 
 async function sendPushToSubs(
   subs: Array<{ id: number; endpoint: string; keys: string }>,
-  payload: { title: string; body: string; url?: string }
+  payload: object
 ) {
   if (!vapidReady) {
-    logger.warn("Skipping push send — VAPID keys not configured.");
+    logger.warn("Skipping push send — VAPID not ready.");
     return;
   }
   await Promise.allSettled(
@@ -78,8 +104,12 @@ async function sendPushToSubs(
   );
 }
 
-export async function sendPushToAdmins(payload: { title: string; body: string; url?: string }) {
-  // Join push_subscriptions with users to ensure only admin-role users receive admin push
+export async function sendPushToAdmins(payload: {
+  title: string; titleAr: string;
+  body: string; bodyAr: string;
+  url?: string;
+}) {
+  // Join push_subscriptions with users to enforce admin role — prevents data leakage to customers
   const adminSubs = await db
     .select({
       id: pushSubscriptionsTable.id,
@@ -99,7 +129,11 @@ export async function sendPushToAdmins(payload: { title: string; body: string; u
   await sendPushToSubs(adminSubs, payload);
 }
 
-export async function sendPushToDeliveryPerson(deliveryPersonId: number, payload: { title: string; body: string; url?: string }) {
+export async function sendPushToDeliveryPerson(deliveryPersonId: number, payload: {
+  title: string; titleAr: string;
+  body: string; bodyAr: string;
+  url?: string;
+}) {
   const subs = await db
     .select({
       id: pushSubscriptionsTable.id,
@@ -123,14 +157,9 @@ router.get("/vapid-public-key", (_req, res) => {
 });
 
 // GET /notifications/stream — SSE endpoint
-// EventSource doesn't support Authorization header, so we also accept ?auth=<token>
-router.get("/stream", (req: AuthRequest, res, next) => {
-  const queryToken = req.query.auth as string | undefined;
-  if (queryToken && !req.headers.authorization) {
-    req.headers.authorization = `Bearer ${queryToken}`;
-  }
-  next();
-}, authenticate(false), (req: AuthRequest, res) => {
+// Authentication via httpOnly cookies (token or delivery_token) sent automatically
+// by EventSource with withCredentials: true. No bearer token in query string.
+router.get("/stream", authenticate(false), (req: AuthRequest, res) => {
   if (!req.userId) {
     res.status(401).json({ error: "Unauthorized" });
     return;
@@ -164,8 +193,7 @@ router.get("/stream", (req: AuthRequest, res, next) => {
   });
 });
 
-// POST /notifications/subscribe — save a push subscription
-// Only admin and delivery roles can subscribe (enforced by checking role)
+// POST /notifications/subscribe — save a push subscription (admin and delivery only)
 router.post("/subscribe", authenticate(false), async (req: AuthRequest, res) => {
   if (!req.userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -186,8 +214,7 @@ router.post("/subscribe", authenticate(false), async (req: AuthRequest, res) => 
 
   const isDelivery = role === "delivery";
 
-  // Upsert by endpoint: delete the old row for this specific endpoint (if any), then insert
-  // This supports multi-device: each device/browser gets its own subscription row
+  // Upsert by endpoint: supports multi-device (each device/browser has its own row)
   await db
     .delete(pushSubscriptionsTable)
     .where(eq(pushSubscriptionsTable.endpoint, endpoint));
@@ -202,7 +229,7 @@ router.post("/subscribe", authenticate(false), async (req: AuthRequest, res) => 
   res.json({ success: true });
 });
 
-// DELETE /notifications/unsubscribe — remove all subscriptions for the current user
+// DELETE /notifications/unsubscribe — clear all subscriptions for the current user
 router.delete("/unsubscribe", authenticate(false), async (req: AuthRequest, res) => {
   if (!req.userId) {
     res.status(401).json({ error: "Unauthorized" });

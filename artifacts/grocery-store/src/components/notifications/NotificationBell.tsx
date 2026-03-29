@@ -4,9 +4,16 @@ import { useNotifications, NotificationItem } from '@/contexts/NotificationConte
 import { useTranslation } from '@/lib/i18n';
 import { useLocation } from 'wouter';
 
-function timeAgo(ts: number): string {
+function timeAgo(ts: number, lang: string): string {
   const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
+  if (lang === 'ar') {
+    if (mins < 1) return 'الآن';
+    if (mins < 60) return `منذ ${mins} د`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `منذ ${hrs} س`;
+    return `منذ ${Math.floor(hrs / 24)} ي`;
+  }
   if (mins < 1) return 'just now';
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
@@ -17,7 +24,7 @@ function timeAgo(ts: number): string {
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const { notifications, unreadCount, markAllRead, markRead, clear } = useNotifications();
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const [, navigate] = useLocation();
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -97,7 +104,7 @@ export function NotificationBell() {
                       <span className="text-sm font-medium truncate">{item.title}</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{item.body}</p>
-                    <span className="text-xs text-muted-foreground/60 mt-1">{timeAgo(item.timestamp)}</span>
+                    <span className="text-xs text-muted-foreground/60 mt-1">{timeAgo(item.timestamp, lang)}</span>
                   </div>
                   {item.url && <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />}
                 </button>
