@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { pushSubscriptionsTable } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { authenticate, type AuthRequest } from "../middlewares/authenticate";
 import webpush from "web-push";
 import type { Response } from "express";
@@ -154,13 +154,11 @@ router.post("/subscribe", authenticate(false), async (req: AuthRequest, res) => 
 
   const isDelivery = req.userRole === "delivery";
 
+  // Upsert by endpoint: delete the old row for this specific endpoint (if any), then insert
+  // This supports multi-device: each device/browser gets its own subscription row
   await db
     .delete(pushSubscriptionsTable)
-    .where(
-      isDelivery
-        ? eq(pushSubscriptionsTable.deliveryPersonId, req.userId)
-        : eq(pushSubscriptionsTable.userId, req.userId)
-    );
+    .where(eq(pushSubscriptionsTable.endpoint, endpoint));
 
   await db.insert(pushSubscriptionsTable).values({
     userId: isDelivery ? null : req.userId,

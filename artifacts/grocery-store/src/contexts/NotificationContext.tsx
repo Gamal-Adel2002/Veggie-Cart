@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { useStore } from '@/store';
+import { Bell, VolumeX, X } from 'lucide-react';
 
 export interface NotificationItem {
   id: string;
@@ -18,6 +19,9 @@ interface NotificationContextType {
   markAllRead: () => void;
   markRead: (id: string) => void;
   clear: () => void;
+  permissionState: NotificationPermission | 'unsupported';
+  soundMuted: boolean;
+  unmuteSound: () => void;
 }
 
 const NotificationContext = createContext<NotificationContextType>({
@@ -26,6 +30,9 @@ const NotificationContext = createContext<NotificationContextType>({
   markAllRead: () => {},
   markRead: () => {},
   clear: () => {},
+  permissionState: 'default',
+  soundMuted: false,
+  unmuteSound: () => {},
 });
 
 export function useNotifications() {
@@ -61,36 +68,35 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return outputArray;
 }
 
-const chimeAudioContext = { current: null as AudioContext | null };
+const audioCtxRef = { current: null as AudioContext | null };
+let audioBlocked = false;
 
-function playChime() {
+function tryPlayChime() {
   try {
-    if (!chimeAudioContext.current) {
-      chimeAudioContext.current = new AudioContext();
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new AudioContext();
     }
-    const ctx = chimeAudioContext.current;
+    const ctx = audioCtxRef.current;
     if (ctx.state === 'suspended') {
+      audioBlocked = true;
       ctx.resume().catch(() => {});
+      return;
     }
+    audioBlocked = false;
 
     const now = ctx.currentTime;
     const freqs = [523.25, 659.25, 783.99];
-
     freqs.forEach((freq, i) => {
-      const oscillator = ctx.createOscillator();
-      const gainNode = ctx.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(ctx.destination);
-
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(freq, now + i * 0.12);
-
-      gainNode.gain.setValueAtTime(0.3, now + i * 0.12);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.4);
-
-      oscillator.start(now + i * 0.12);
-      oscillator.stop(now + i * 0.12 + 0.4);
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + i * 0.12);
+      gain.gain.setValueAtTime(0.3, now + i * 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.4);
+      osc.start(now + i * 0.12);
+      osc.stop(now + i * 0.12 + 0.4);
     });
   } catch {}
 }
@@ -102,13 +108,62 @@ interface NotificationProviderProps {
   onNotification?: (item: NotificationItem) => void;
 }
 
+function getLocalizedText(
+  eventType: 'new_order' | 'order_assigned',
+  data: Record<string, unknown>,
+  lang: string
+): { title: string; body: string } {
+  if (eventType === 'new_order') {
+    const orderId = data.orderId as number;
+    const customerName = data.customerName as string;
+    const price = Number(data.totalPrice).toFixed(2);
+    if (lang === 'ar') {
+      return {
+        title: 'طلب جديد',
+        body: `طلب #${orderId} من ${customerName} — ${price} ج.م`,
+      };
+    }
+    return {
+      title: 'New Order',
+      body: `Order #${orderId} from ${customerName} — EGP ${price}`,
+    };
+  } else {
+    const orderId = data.orderId as number;
+    const address = (data.deliveryAddress || data.customerName) as string;
+    if (lang === 'ar') {
+      return {
+        title: 'توصيل جديد',
+        body: `طلب #${orderId} · ${address}`,
+      };
+    }
+    return {
+      title: 'New Delivery Assignment',
+      body: `Order #${orderId} · ${address}`,
+    };
+  }
+}
+
 export function NotificationProvider({ children, role, token, onNotification }: NotificationProviderProps) {
+  const lang = useStore(s => s.lang);
   const [notifications, setNotifications] = useState<NotificationItem[]>(loadStored);
   const [swRegistration, setSwRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const [permissionState, setPermissionState] = useState<NotificationPermission | 'unsupported'>('default');
+  const [soundMuted, setSoundMuted] = useState(false);
+  const [showUnmutePrompt, setShowUnmutePrompt] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
   const hasInteracted = useRef(false);
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  const unmuteSound = useCallback(() => {
+    setSoundMuted(false);
+    setShowUnmutePrompt(false);
+    if (audioCtxRef.current?.state === 'suspended') {
+      audioCtxRef.current.resume().then(() => {
+        audioBlocked = false;
+      }).catch(() => {});
+    }
+  }, []);
 
   const addNotification = useCallback((item: NotificationItem) => {
     setNotifications(prev => {
@@ -116,9 +171,14 @@ export function NotificationProvider({ children, role, token, onNotification }: 
       saveStored(updated);
       return updated;
     });
-    playChime();
+    if (!soundMuted) {
+      tryPlayChime();
+      if (audioBlocked && hasInteracted.current) {
+        setShowUnmutePrompt(true);
+      }
+    }
     onNotification?.(item);
-  }, [onNotification]);
+  }, [onNotification, soundMuted]);
 
   const markAllRead = useCallback(() => {
     setNotifications(prev => {
@@ -141,7 +201,6 @@ export function NotificationProvider({ children, role, token, onNotification }: 
     saveStored([]);
   }, []);
 
-  // Track user interaction so chime can play
   useEffect(() => {
     const handler = () => { hasInteracted.current = true; };
     window.addEventListener('click', handler, { once: true });
@@ -152,7 +211,14 @@ export function NotificationProvider({ children, role, token, onNotification }: 
     };
   }, []);
 
-  // Register service worker
+  useEffect(() => {
+    if (!('Notification' in window)) {
+      setPermissionState('unsupported');
+      return;
+    }
+    setPermissionState(Notification.permission);
+  }, []);
+
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
     navigator.serviceWorker
@@ -161,13 +227,14 @@ export function NotificationProvider({ children, role, token, onNotification }: 
       .catch(() => {});
   }, []);
 
-  // Request push permission + subscribe after SW is ready
   useEffect(() => {
     if (!token || !swRegistration) return;
 
     const setupPush = async () => {
       try {
+        if (!('Notification' in window)) return;
         const permResult = await Notification.requestPermission();
+        setPermissionState(permResult);
         if (permResult !== 'granted') return;
 
         const vapidRes = await fetch('/api/notifications/vapid-public-key');
@@ -200,7 +267,6 @@ export function NotificationProvider({ children, role, token, onNotification }: 
     setupPush();
   }, [token, swRegistration]);
 
-  // Open SSE stream
   useEffect(() => {
     if (!token) return;
 
@@ -218,16 +284,7 @@ export function NotificationProvider({ children, role, token, onNotification }: 
       const handleEvent = (eventType: 'new_order' | 'order_assigned') => (e: MessageEvent) => {
         try {
           const data = JSON.parse(e.data);
-          let title = '';
-          let body = '';
-
-          if (eventType === 'new_order') {
-            title = 'New Order';
-            body = `Order #${data.orderId} from ${data.customerName} — EGP ${Number(data.totalPrice).toFixed(2)}`;
-          } else {
-            title = 'New Delivery Assignment';
-            body = `Order #${data.orderId} · ${data.deliveryAddress || data.customerName}`;
-          }
+          const { title, body } = getLocalizedText(eventType, data, lang);
 
           addNotification({
             id: `${eventType}-${data.orderId}-${Date.now()}`,
@@ -257,19 +314,52 @@ export function NotificationProvider({ children, role, token, onNotification }: 
       eventSourceRef.current?.close();
       eventSourceRef.current = null;
     };
-  }, [token, addNotification]);
+  }, [token, addNotification, lang]);
 
-  // Auth token for SSE — handle token-in-URL pattern via query param
-  // The SSE stream endpoint reads the 'auth' query param as fallback
-  useEffect(() => {
-    return () => {
-      eventSourceRef.current?.close();
-    };
-  }, []);
+  const permDeniedBannerText = lang === 'ar'
+    ? 'فعّل الإشعارات للحصول على تنبيهات بالطلبات الجديدة.'
+    : 'Enable notifications to get alerts for new orders.';
+  const permDeniedBtnText = lang === 'ar' ? 'تفعيل' : 'Enable';
+  const unmuteText = lang === 'ar'
+    ? 'الصوت محظور بواسطة المتصفح. انقر للتشغيل.'
+    : 'Sound blocked by browser. Click to unmute.';
 
   return (
-    <NotificationContext.Provider value={{ notifications, unreadCount, markAllRead, markRead, clear }}>
+    <NotificationContext.Provider value={{ notifications, unreadCount, markAllRead, markRead, clear, permissionState, soundMuted, unmuteSound }}>
       {children}
+
+      {permissionState === 'denied' && (
+        <div
+          className="fixed bottom-4 start-4 end-4 md:start-auto md:end-4 md:w-80 z-[200] bg-amber-900/90 border border-amber-600 text-amber-100 rounded-xl px-4 py-3 flex items-center gap-3 shadow-lg"
+          dir={lang === 'ar' ? 'rtl' : 'ltr'}
+        >
+          <Bell className="w-5 h-5 flex-shrink-0" />
+          <p className="text-sm flex-1">{permDeniedBannerText}</p>
+          <button
+            onClick={() => window.open('about:preferences#privacy', '_blank')}
+            className="text-xs font-semibold underline flex-shrink-0"
+          >
+            {permDeniedBtnText}
+          </button>
+        </div>
+      )}
+
+      {showUnmutePrompt && (
+        <div
+          className="fixed bottom-4 start-4 end-4 md:start-auto md:end-4 md:w-80 z-[200] bg-zinc-800 border border-zinc-600 text-zinc-100 rounded-xl px-4 py-3 flex items-center gap-3 shadow-lg cursor-pointer"
+          dir={lang === 'ar' ? 'rtl' : 'ltr'}
+          onClick={unmuteSound}
+        >
+          <VolumeX className="w-5 h-5 flex-shrink-0 text-zinc-400" />
+          <p className="text-sm flex-1">{unmuteText}</p>
+          <button
+            onClick={(e) => { e.stopPropagation(); setShowUnmutePrompt(false); }}
+            className="text-zinc-400 hover:text-white flex-shrink-0"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </NotificationContext.Provider>
   );
 }
