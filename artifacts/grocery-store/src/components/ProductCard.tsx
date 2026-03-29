@@ -16,41 +16,41 @@ export function ProductCard({ product }: { product: Product }) {
 
   const isOutOfStock = !product.inStock || (product.quantity !== null && product.quantity !== undefined && product.quantity <= 0);
 
+  const name = lang === 'ar' ? product.nameAr : product.name;
+
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (isOutOfStock) return;
     addToCart(product, 1);
     toast({
-      title: "Added to Cart",
-      description: `${lang === 'ar' ? product.nameAr : product.name} added successfully.`
+      title: t('addedToCart'),
+      description: t('addedToCartDesc')(1, name)
     });
   };
 
-  const name = lang === 'ar' ? product.nameAr : product.name;
-  
   return (
     <Link href={`/product/${product.id}`}>
       <Card className="h-full flex flex-col group cursor-pointer overflow-hidden border-border/50 hover:border-primary/30 transition-all duration-500 hover:shadow-xl hover:shadow-primary/5 bg-card">
         <div className="relative aspect-[4/3] bg-muted/30 p-6 flex items-center justify-center overflow-hidden">
           {product.image ? (
-            <img 
-              src={product.image} 
+            <img
+              src={product.image}
               alt={name}
               className={`w-full h-full object-contain transition-transform duration-700 ease-out ${isOutOfStock ? 'grayscale opacity-60' : 'group-hover:scale-110'}`}
             />
           ) : (
             <div className="w-full h-full bg-secondary rounded-xl flex items-center justify-center text-muted-foreground">
-              No Image
+              {t('noImage')}
             </div>
           )}
           {isOutOfStock ? (
             <Badge className="absolute top-3 start-3 bg-destructive text-destructive-foreground border-none">
-              Out of Stock
+              {t('outOfStock')}
             </Badge>
           ) : product.featured ? (
             <Badge className="absolute top-3 start-3 bg-accent text-accent-foreground border-none">
-              Featured
+              {t('featured')}
             </Badge>
           ) : null}
         </div>
@@ -63,11 +63,11 @@ export function ProductCard({ product }: { product: Product }) {
           </h3>
           <p className="text-muted-foreground font-medium mt-auto text-lg flex items-baseline gap-1">
             <span className="text-foreground">{product.price}</span>
-            <span className="text-sm">EGP / {product.unit}</span>
+            <span className="text-sm">EGP / {t('unitLabel')(product.unit)}</span>
           </p>
         </CardContent>
         <div className="px-5 pb-5 pt-0">
-          <Button 
+          <Button
             onClick={handleAdd}
             disabled={isOutOfStock}
             className={`w-full rounded-xl font-bold shadow-none transition-all duration-300 group/btn ${
@@ -77,7 +77,7 @@ export function ProductCard({ product }: { product: Product }) {
             }`}
           >
             {isOutOfStock ? (
-              t('outOfStock') || 'Out of Stock'
+              t('outOfStock')
             ) : (
               <>
                 <Plus className="w-4 h-4 me-2 group-hover/btn:rotate-90 transition-transform duration-300" />

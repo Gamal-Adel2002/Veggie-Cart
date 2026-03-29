@@ -19,7 +19,7 @@ export default function ProductDetail() {
   const { toast } = useToast();
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
-  if (!product) return <div>Product not found</div>;
+  if (!product) return <div>{t('productNotFound')}</div>;
 
   const name = lang === 'ar' ? product.nameAr : product.name;
   const description = lang === 'ar' ? product.descriptionAr : product.description;
@@ -30,16 +30,16 @@ export default function ProductDetail() {
   const handleAdd = () => {
     if (isOutOfStock) return;
     addToCart(product, qty);
-    toast({ title: "Added to Cart", description: `${qty} x ${name} added.` });
+    toast({ title: t('addedToCart'), description: t('addedToCartDesc')(qty, name) });
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      
+
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-12">
         <Button variant="ghost" className="mb-8" onClick={() => window.history.back()}>
-          <ArrowLeft className="w-4 h-4 me-2" /> Back
+          <ArrowLeft className="w-4 h-4 me-2" /> {t('back')}
         </Button>
 
         <div className="bg-card rounded-3xl border border-border/50 shadow-xl shadow-black/5 overflow-hidden flex flex-col md:flex-row">
@@ -52,29 +52,31 @@ export default function ProductDetail() {
               />
             ) : (
               <div className="w-full aspect-square bg-secondary rounded-2xl flex items-center justify-center text-muted-foreground">
-                No Image
+                {t('noImage')}
               </div>
             )}
             {isOutOfStock ? (
-              <Badge className="absolute top-6 start-6 bg-destructive border-none text-destructive-foreground px-3 py-1">Out of Stock</Badge>
+              <Badge className="absolute top-6 start-6 bg-destructive border-none text-destructive-foreground px-3 py-1">{t('outOfStock')}</Badge>
             ) : product.featured ? (
-              <Badge className="absolute top-6 start-6 bg-accent border-none text-accent-foreground px-3 py-1">Featured</Badge>
+              <Badge className="absolute top-6 start-6 bg-accent border-none text-accent-foreground px-3 py-1">{t('featured')}</Badge>
             ) : null}
           </div>
 
           <div className="md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
             <Badge variant="outline" className="w-fit mb-4 text-primary border-primary/20 bg-primary/5">{categoryName}</Badge>
             <h1 className="text-4xl md:text-5xl font-display font-extrabold text-foreground mb-4">{name}</h1>
-            <p className="text-3xl font-bold text-primary mb-6">{product.price} <span className="text-lg text-muted-foreground font-medium">EGP / {product.unit}</span></p>
-            
+            <p className="text-3xl font-bold text-primary mb-6">
+              {product.price} <span className="text-lg text-muted-foreground font-medium">EGP / {t('unitLabel')(product.unit)}</span>
+            </p>
+
             <p className="text-muted-foreground text-lg mb-10 leading-relaxed border-t border-border/50 pt-6">
-              {description || "Fresh and locally sourced. Perfect for your daily cooking needs."}
+              {description || t('freshDefault')}
             </p>
 
             {isOutOfStock ? (
               <div className="mt-auto">
                 <Button disabled size="lg" className="h-14 w-full rounded-xl text-lg font-bold opacity-60 cursor-not-allowed">
-                  {t('outOfStock') || 'Out of Stock'}
+                  {t('outOfStock')}
                 </Button>
               </div>
             ) : (

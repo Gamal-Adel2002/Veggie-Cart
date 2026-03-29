@@ -16,7 +16,7 @@ export default function Cart() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      
+
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-12">
         <h1 className="text-3xl font-display font-bold mb-8">{t('cart')}</h1>
 
@@ -36,7 +36,7 @@ export default function Cart() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-lg truncate">{lang === 'ar' ? item.nameAr : item.name}</h3>
-                    <p className="text-muted-foreground">{item.price} EGP / {item.unit}</p>
+                    <p className="text-muted-foreground">{item.price} EGP / {t('unitLabel')(item.unit)}</p>
                   </div>
                   <div className="flex flex-col items-end gap-3 shrink-0">
                     <div className="flex items-center border border-border rounded-lg h-10 bg-background">
@@ -49,7 +49,7 @@ export default function Cart() {
                       </button>
                     </div>
                     <button onClick={() => remove(item.id)} className="text-xs text-destructive flex items-center hover:underline">
-                      <Trash2 className="w-3 h-3 me-1" /> Remove
+                      <Trash2 className="w-3 h-3 me-1" /> {t('remove')}
                     </button>
                   </div>
                 </div>
@@ -58,19 +58,19 @@ export default function Cart() {
 
             <div className="w-full lg:w-80 shrink-0">
               <div className="bg-card border border-border/50 rounded-3xl p-6 sticky top-24 shadow-lg shadow-black/5">
-                <h3 className="font-bold text-xl mb-6">Order Summary</h3>
+                <h3 className="font-bold text-xl mb-6">{t('orderSummary')}</h3>
                 <div className="space-y-3 mb-6 pb-6 border-b border-border/50">
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Subtotal</span>
+                    <span>{t('subtotal')}</span>
                     <span>{total.toFixed(2)} EGP</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Delivery</span>
-                    <span className="text-primary font-medium">Free</span>
+                    <span>{t('delivery')}</span>
+                    <span className="text-primary font-medium">{t('free')}</span>
                   </div>
                 </div>
                 <div className="flex justify-between text-2xl font-bold mb-8">
-                  <span>Total</span>
+                  <span>{t('total')}</span>
                   <span>{total.toFixed(2)} EGP</span>
                 </div>
                 <Link href="/checkout">

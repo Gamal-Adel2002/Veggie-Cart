@@ -16,36 +16,35 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      
+
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative pt-12 pb-24 overflow-hidden">
           <div className="absolute inset-0 z-0">
-            {/* landing page hero scenic vegetable fresh food photography */}
-            <img 
+            <img
               src={`${import.meta.env.BASE_URL}images/hero-bg.png`}
               alt="Fresh vegetables"
               className="w-full h-full object-cover object-center"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-transparent dark:from-background/95 dark:via-background/90" />
           </div>
-          
+
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-16 lg:pt-32">
-            <motion.div 
+            <motion.div
               initial={{ x: -30, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.7, ease: "easeOut" }}
               className="max-w-2xl"
             >
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary font-semibold text-sm mb-6">
-                <Leaf className="w-4 h-4" /> Farm Fresh Daily
+                <Leaf className="w-4 h-4" /> {t('farmFreshDaily')}
               </div>
               <h1 className="text-5xl lg:text-7xl font-display font-extrabold text-foreground leading-[1.1] mb-6">
-                Fresh Greens,<br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">Delivered</span>
+                {t('heroTitle1')}<br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">{t('heroTitle2')}</span>
               </h1>
               <p className="text-lg text-muted-foreground mb-8 max-w-lg leading-relaxed">
-                Skip the lines. Get farm-fresh vegetables and fruits delivered straight to your door in 45 minutes or less.
+                {t('heroSubtitle')}
               </p>
               <Link href="/shop">
                 <Button size="lg" className="rounded-full text-base px-8 h-14 shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/30 hover:-translate-y-1 transition-all duration-300">
@@ -62,14 +61,14 @@ export default function Home() {
             <div className="flex items-end justify-between mb-10">
               <h2 className="text-3xl font-display font-bold text-foreground">{t('categories')}</h2>
             </div>
-            
+
             {catLoading ? (
               <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
                 {categories?.map((cat, i) => (
                   <Link key={cat.id} href={`/shop?category=${cat.id}`}>
-                    <motion.div 
+                    <motion.div
                       initial={{ y: 20, opacity: 0 }}
                       whileInView={{ y: 0, opacity: 1 }}
                       viewport={{ once: true }}
@@ -82,7 +81,7 @@ export default function Home() {
                       <h3 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">
                         {lang === 'ar' ? cat.nameAr : cat.name}
                       </h3>
-                      <p className="text-sm text-muted-foreground mt-1">{cat.productCount} items</p>
+                      <p className="text-sm text-muted-foreground mt-1">{cat.productCount} {t('items')}</p>
                     </motion.div>
                   </Link>
                 ))}
@@ -97,16 +96,16 @@ export default function Home() {
             <div className="flex items-end justify-between mb-10">
               <h2 className="text-3xl font-display font-bold text-foreground">{t('featuredProducts')}</h2>
               <Link href="/shop" className="text-primary font-semibold hover:underline">
-                View All
+                {t('viewAll')}
               </Link>
             </div>
-            
+
             {prodLoading ? (
               <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {products?.map((product, i) => (
-                  <motion.div 
+                  <motion.div
                     key={product.id}
                     initial={{ y: 20, opacity: 0 }}
                     whileInView={{ y: 0, opacity: 1 }}

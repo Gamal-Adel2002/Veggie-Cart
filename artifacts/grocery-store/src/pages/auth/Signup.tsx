@@ -13,6 +13,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '
 import { Sprout, Loader2, Camera } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/lib/utils';
+import { useTranslation } from '@/lib/i18n';
 
 const schema = z.object({
   name: z.string().min(2, "Name required"),
@@ -22,13 +23,14 @@ const schema = z.object({
 });
 
 export default function Signup() {
+  const { t } = useTranslation();
   const form = useForm({ resolver: zodResolver(schema), defaultValues: { name: '', phone: '', password: '', address: '' } });
   const { mutateAsync: signup, isPending } = useAppSignup();
   const { mutateAsync: uploadImage } = useAppUploadImage();
   const setAuth = useStore(s => s.setAuth);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  
+
   const [mapLoc, setMapLoc] = useState<{latitude: number, longitude: number} | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>('');
@@ -63,7 +65,7 @@ export default function Signup() {
       setLocation('/');
     } catch (e: unknown) {
       setUploading(false);
-      toast({ title: "Signup failed", description: getErrorMessage(e) || "Error creating account", variant: "destructive" });
+      toast({ title: t('signupFailed'), description: getErrorMessage(e) || t('errorCreatingAccount'), variant: "destructive" });
     }
   };
 
@@ -75,7 +77,7 @@ export default function Signup() {
             <Sprout className="w-8 h-8" />
             <span className="font-display font-bold text-2xl text-foreground">FreshVeg</span>
           </Link>
-          <h1 className="text-3xl font-display font-bold">Create Account</h1>
+          <h1 className="text-3xl font-display font-bold">{t('createAccount')}</h1>
         </div>
 
         <Form {...form}>
@@ -94,33 +96,33 @@ export default function Signup() {
 
             <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="name" render={({ field }) => (
-                <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>{t('name')}</FormLabel><FormControl><Input {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name="phone" render={({ field }) => (
-                <FormItem><FormLabel>Phone</FormLabel><FormControl><Input {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>{t('phone')}</FormLabel><FormControl><Input {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
 
             <FormField control={form.control} name="password" render={({ field }) => (
-              <FormItem><FormLabel>Password</FormLabel><FormControl><Input type="password" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
+              <FormItem><FormLabel>{t('password')}</FormLabel><FormControl><Input type="password" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
             )} />
 
             <div className="space-y-3">
-              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Delivery Location</label>
+              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{t('deliveryLocationLabel')}</label>
               <MapPicker location={mapLoc} onChange={(lat, lng) => setMapLoc({latitude: lat, longitude: lng})} />
             </div>
 
             <FormField control={form.control} name="address" render={({ field }) => (
-              <FormItem><FormLabel>Apartment / Floor Details (Optional)</FormLabel><FormControl><Textarea {...field} className="rounded-xl resize-none" /></FormControl><FormMessage /></FormItem>
+              <FormItem><FormLabel>{t('apartmentDetails')}</FormLabel><FormControl><Textarea {...field} className="rounded-xl resize-none" /></FormControl><FormMessage /></FormItem>
             )} />
 
             <Button type="submit" disabled={isPending || uploading} className="w-full h-14 rounded-xl text-lg font-bold shadow-lg shadow-primary/20">
-              {isPending || uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign Up"}
+              {isPending || uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : t('signUp')}
             </Button>
           </form>
         </Form>
         <p className="text-center text-muted-foreground mt-4">
-          Already have an account? <Link href="/auth/login" className="text-primary font-bold hover:underline">Log in</Link>
+          {t('alreadyHaveAccount')} <Link href="/auth/login" className="text-primary font-bold hover:underline">{t('login')}</Link>
         </p>
       </div>
     </div>
