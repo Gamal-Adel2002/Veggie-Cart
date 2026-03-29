@@ -1,6 +1,6 @@
 import { 
   useGetProducts, useGetProduct, useGetCategories,
-  useSignup, useLogin, useLogout, useGetMe, useUpdateLocation,
+  useSignup, useLogin, useLogout, useGetMe, useUpdateLocation, useUpdateMe,
   useAdminLogin, useCreateCategory, useUpdateCategory, useDeleteCategory,
   useCreateProduct, useUpdateProduct, useDeleteProduct,
   useGetOrders, useCreateOrder, useGetOrder,
@@ -20,6 +20,7 @@ export function useAppLogin() { return useLogin(); }
 export function useAppLogout() { return useLogout(); }
 export function useAppMe() { return useGetMe(); }
 export function useAppUpdateLocation() { return useUpdateLocation(); }
+export function useAppUpdateMe() { return useUpdateMe(); }
 
 export function useAppAdminLogin() { return useAdminLogin(); }
 export function useAppOrders() { return useGetOrders(); }

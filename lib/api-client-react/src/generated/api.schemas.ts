@@ -280,3 +280,11 @@ export type AdminGetOrdersParams = {
 export type UploadImageBody = {
   file?: Blob;
 };
+
+export interface UpdateMeInput {
+  name?: string;
+  phone?: string;
+  profileImage?: string;
+  currentPassword?: string;
+  newPassword?: string;
+}

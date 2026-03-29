@@ -124,6 +124,37 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /auth/me:
+    put:
+      operationId: updateMe
+      tags: [auth]
+      summary: Update current user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMeInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Bad request (e.g. current password incorrect)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Phone already in use
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /auth/me/location:
     put:
       operationId: updateLocation
@@ -760,6 +791,20 @@ components:
       required:
         - latitude
         - longitude
+
+    UpdateMeInput:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        profileImage:
+          type: string
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
 
     AuthResponse:
       type: object

@@ -110,6 +110,20 @@ export const dictionary = {
     errorCreatingAccount: "Error creating account",
     alreadyHaveAccount: "Already have an account?",
 
+    // Account / Edit Profile
+    editProfile: "Edit Profile",
+    saveChanges: "Save Changes",
+    cancel: "Cancel",
+    profileUpdated: "Profile updated!",
+    profileUpdatedDesc: "Your changes have been saved successfully.",
+    currentPassword: "Current Password",
+    newPassword: "New Password",
+    confirmNewPassword: "Confirm New Password",
+    passwordsDoNotMatch: "Passwords do not match",
+    leaveBlankNoChange: "Leave blank to keep current password",
+    changePhoto: "Change Photo",
+    updateFailed: "Update failed",
+
     // Account
     savedLocation: "Saved Location",
     orderHistory: "Order History",
@@ -243,6 +257,20 @@ export const dictionary = {
     signupFailed: "فشل إنشاء الحساب",
     errorCreatingAccount: "حدث خطأ أثناء إنشاء الحساب",
     alreadyHaveAccount: "لديك حساب بالفعل؟",
+
+    // Account / Edit Profile
+    editProfile: "تعديل الملف الشخصي",
+    saveChanges: "حفظ التغييرات",
+    cancel: "إلغاء",
+    profileUpdated: "تم تحديث الملف!",
+    profileUpdatedDesc: "تم حفظ تغييراتك بنجاح.",
+    currentPassword: "كلمة المرور الحالية",
+    newPassword: "كلمة المرور الجديدة",
+    confirmNewPassword: "تأكيد كلمة المرور الجديدة",
+    passwordsDoNotMatch: "كلمتا المرور غير متطابقتين",
+    leaveBlankNoChange: "اتركه فارغاً للإبقاء على كلمة المرور الحالية",
+    changePhoto: "تغيير الصورة",
+    updateFailed: "فشل التحديث",
 
     // Account
     savedLocation: "الموقع المحفوظ",

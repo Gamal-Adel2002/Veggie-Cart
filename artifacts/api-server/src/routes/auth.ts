@@ -93,6 +93,51 @@ router.get("/me", authenticate(), async (req: AuthRequest, res) => {
   res.json(sanitizeUser(user));
 });
 
+router.put("/me", authenticate(), async (req: AuthRequest, res) => {
+  const { name, phone, profileImage, currentPassword, newPassword } = req.body;
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId!)).limit(1);
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  // If changing password, verify current password
+  if (newPassword) {
+    if (!currentPassword) {
+      res.status(400).json({ error: "Current password is required to set a new password" });
+      return;
+    }
+    const valid = await comparePassword(currentPassword, user.password);
+    if (!valid) {
+      res.status(400).json({ error: "Current password is incorrect" });
+      return;
+    }
+  }
+
+  // If changing phone, check uniqueness
+  if (phone && phone !== user.phone) {
+    const existing = await db.select().from(usersTable).where(eq(usersTable.phone, phone)).limit(1);
+    if (existing.length > 0) {
+      res.status(409).json({ error: "Phone already in use" });
+      return;
+    }
+  }
+
+  const updates: Partial<typeof usersTable.$inferInsert> = {};
+  if (name) updates.name = name;
+  if (phone) updates.phone = phone;
+  if (profileImage !== undefined) updates.profileImage = profileImage || null;
+  if (newPassword) updates.password = await hashPassword(newPassword);
+
+  const [updated] = await db.update(usersTable)
+    .set(updates)
+    .where(eq(usersTable.id, req.userId!))
+    .returning();
+
+  res.json(sanitizeUser(updated));
+});
+
 router.put("/me/location", authenticate(), async (req: AuthRequest, res) => {
   const { latitude, longitude, address } = req.body;
   if (latitude === undefined || longitude === undefined) {
