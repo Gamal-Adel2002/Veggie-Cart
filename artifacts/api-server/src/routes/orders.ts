@@ -6,7 +6,7 @@ import {
   productsTable,
   deliveryPersonsTable,
 } from "@workspace/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { authenticate, type AuthRequest } from "../middlewares/authenticate";
 
 const router = Router();
@@ -52,8 +52,10 @@ router.post("/", authenticate(false), async (req: AuthRequest, res) => {
     return;
   }
 
-  // Validate item fields and aggregate quantities by productId
+  // Pre-validate inputs and aggregate quantities by productId (no DB needed here)
   const aggregatedQtys = new Map<number, number>();
+  const rawItems: Array<{ productId: number; quantity: number }> = [];
+
   for (const item of items) {
     const productId = parseInt(String(item.productId));
     const quantity = Number(item.quantity);
@@ -68,98 +70,122 @@ router.post("/", authenticate(false), async (req: AuthRequest, res) => {
     }
 
     aggregatedQtys.set(productId, (aggregatedQtys.get(productId) ?? 0) + quantity);
+    rawItems.push({ productId, quantity });
   }
 
-  // Fetch all products and check stock (using aggregated quantities)
-  const productCache = new Map<number, typeof productsTable.$inferSelect>();
-  for (const [productId, totalQty] of aggregatedQtys.entries()) {
-    const [product] = await db
-      .select()
-      .from(productsTable)
-      .where(eq(productsTable.id, productId))
-      .limit(1);
-    if (!product) {
-      res.status(400).json({ error: `Product ${productId} not found` });
+  // Perform everything inside a single serializable transaction with row locking
+  let orderId: number;
+  let stockError: string | null = null;
+
+  try {
+    await db.transaction(async (tx) => {
+      const productCache = new Map<number, typeof productsTable.$inferSelect>();
+
+      // Lock each product row, validate stock with current values (FOR UPDATE prevents concurrent oversell)
+      for (const [productId, totalQty] of aggregatedQtys.entries()) {
+        const [product] = await tx
+          .select()
+          .from(productsTable)
+          .where(eq(productsTable.id, productId))
+          .for("update"); // Row-level lock acquired here
+
+        if (!product) {
+          stockError = `Product ${productId} not found`;
+          tx.rollback();
+          return;
+        }
+
+        // Check aggregate quantity against current (locked) stock
+        if (product.quantity !== null && product.quantity !== undefined) {
+          if (product.quantity < totalQty) {
+            stockError = `Insufficient stock for "${product.name}". Available: ${product.quantity} ${product.unit}, requested: ${totalQty} ${product.unit}`;
+            tx.rollback();
+            return;
+          }
+        }
+
+        productCache.set(productId, product);
+      }
+
+      // Build enriched order items
+      let totalPrice = 0;
+      const enrichedItems: Array<{
+        productId: number;
+        productName: string;
+        productNameAr: string;
+        quantity: number;
+        unit: string;
+        price: number;
+        subtotal: number;
+      }> = [];
+
+      for (const { productId, quantity } of rawItems) {
+        const product = productCache.get(productId)!;
+        const subtotal = product.price * quantity;
+        totalPrice += subtotal;
+        enrichedItems.push({
+          productId: product.id,
+          productName: product.name,
+          productNameAr: product.nameAr,
+          quantity,
+          unit: product.unit,
+          price: product.price,
+          subtotal,
+        });
+      }
+
+      // Insert order
+      const [order] = await tx
+        .insert(ordersTable)
+        .values({
+          userId: req.userId || null,
+          customerName,
+          customerPhone,
+          deliveryAddress: deliveryAddress || null,
+          latitude: latitude ? Number(latitude) : null,
+          longitude: longitude ? Number(longitude) : null,
+          notes: notes || null,
+          status: "waiting",
+          totalPrice,
+        })
+        .returning();
+
+      orderId = order.id;
+
+      // Insert order items
+      for (const item of enrichedItems) {
+        await tx.insert(orderItemsTable).values({ ...item, orderId: order.id });
+      }
+
+      // Atomically deduct stock using SQL expression (avoids stale cache issues)
+      for (const [productId, totalQty] of aggregatedQtys.entries()) {
+        const product = productCache.get(productId)!;
+        if (product.quantity !== null && product.quantity !== undefined) {
+          // Atomic update: SET quantity = quantity - N, in_stock = (quantity - N) > 0
+          await tx
+            .update(productsTable)
+            .set({
+              quantity: sql<number>`${productsTable.quantity} - ${totalQty}`,
+              inStock: sql<boolean>`(${productsTable.quantity} - ${totalQty}) > 0`,
+            })
+            .where(eq(productsTable.id, productId));
+        }
+      }
+    });
+  } catch (err: unknown) {
+    // Transaction was rolled back - check if it's a stock error or a real DB error
+    if (stockError) {
+      res.status(400).json({ error: stockError });
       return;
     }
-
-    // Stock check against the aggregated total requested quantity
-    if (product.quantity !== null && product.quantity !== undefined) {
-      if (product.quantity < totalQty) {
-        res.status(400).json({
-          error: `Insufficient stock for "${product.name}". Available: ${product.quantity} ${product.unit}, requested: ${totalQty} ${product.unit}`,
-        });
-        return;
-      }
-    }
-
-    productCache.set(productId, product);
+    // Re-throw unexpected errors
+    throw err;
   }
 
-  // Build enriched items (all validation passed)
-  let totalPrice = 0;
-  const enrichedItems: Array<{
-    productId: number;
-    productName: string;
-    productNameAr: string;
-    quantity: number;
-    unit: string;
-    price: number;
-    subtotal: number;
-  }> = [];
-  for (const item of items) {
-    const productId = parseInt(String(item.productId));
-    const quantity = Number(item.quantity);
-    const product = productCache.get(productId)!;
-    const subtotal = product.price * quantity;
-    totalPrice += subtotal;
-    enrichedItems.push({
-      productId: product.id,
-      productName: product.name,
-      productNameAr: product.nameAr,
-      quantity,
-      unit: product.unit,
-      price: product.price,
-      subtotal,
-    });
+  if (stockError) {
+    res.status(400).json({ error: stockError });
+    return;
   }
-
-  // Insert order + items + deduct stock atomically
-  let orderId: number;
-  await db.transaction(async (tx) => {
-    const [order] = await tx
-      .insert(ordersTable)
-      .values({
-        userId: req.userId || null,
-        customerName,
-        customerPhone,
-        deliveryAddress: deliveryAddress || null,
-        latitude: latitude ? Number(latitude) : null,
-        longitude: longitude ? Number(longitude) : null,
-        notes: notes || null,
-        status: "waiting",
-        totalPrice,
-      })
-      .returning();
-
-    orderId = order.id;
-
-    for (const item of enrichedItems) {
-      await tx.insert(orderItemsTable).values({ ...item, orderId: order.id });
-    }
-
-    // Deduct aggregated quantities from stock within the same transaction
-    for (const [productId, totalQty] of aggregatedQtys.entries()) {
-      const product = productCache.get(productId)!;
-      if (product.quantity !== null && product.quantity !== undefined) {
-        const newQty = Math.max(0, product.quantity - totalQty);
-        await tx
-          .update(productsTable)
-          .set({ quantity: newQty, inStock: newQty > 0 })
-          .where(eq(productsTable.id, productId));
-      }
-    }
-  });
 
   const full = await getFullOrder(orderId!);
   res.status(201).json(full);
