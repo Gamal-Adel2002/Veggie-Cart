@@ -95,8 +95,8 @@ export default function Admins() {
   return (
     <AdminLayout>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Admin Accounts</h2>
-        <Button onClick={openNew}><Plus className="w-4 h-4 me-2" /> Add Admin</Button>
+        <h2 className="text-xl font-bold">{t('adminAdminAccounts')}</h2>
+        <Button onClick={openNew}><Plus className="w-4 h-4 me-2" /> {t('adminAddAdmin')}</Button>
       </div>
 
       <div className="relative mb-4">
@@ -113,16 +113,16 @@ export default function Admins() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>{t('adminNameCol')}</TableHead>
+              <TableHead>{t('adminPhoneCol')}</TableHead>
+              <TableHead>{t('adminCreatedCol')}</TableHead>
+              <TableHead>{t('adminActionsCol')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Loading…</TableCell>
+                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">{t('adminLoading')}</TableCell>
               </TableRow>
             )}
             {!isLoading && filteredAdmins.length === 0 && (
@@ -151,42 +151,42 @@ export default function Admins() {
       <Dialog open={mode !== null} onOpenChange={(open) => !open && closeDialog()}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{mode === 'new' ? 'Add New Admin' : `Edit Admin — ${editTarget?.name}`}</DialogTitle>
+            <DialogTitle>{mode === 'new' ? t('adminAddNewAdmin') : t('adminEditAdmin')(editTarget?.name || '')}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 pt-2">
             <div>
-              <label className="text-sm font-semibold block mb-1">Name</label>
+              <label className="text-sm font-semibold block mb-1">{t('adminNameLabel')}</label>
               <Input
                 value={formData.name}
-                placeholder="Full name"
+                placeholder={t('adminNamePlaceholder')}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
             </div>
 
             <div>
-              <label className="text-sm font-semibold block mb-1">Phone</label>
+              <label className="text-sm font-semibold block mb-1">{t('adminPhoneLabel')}</label>
               <Input
                 value={formData.phone}
-                placeholder="e.g. 01012345678"
+                placeholder={t('adminPhonePlaceholder')}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               />
             </div>
 
             <div>
               <label className="text-sm font-semibold block mb-1">
-                Password{mode === 'edit' && <span className="text-muted-foreground font-normal"> (leave blank to keep current)</span>}
+                {t('adminPasswordLabel')}{mode === 'edit' && <span className="text-muted-foreground font-normal"> {t('adminPasswordKeepBlank')}</span>}
               </label>
               <Input
                 type="password"
                 value={formData.password}
-                placeholder={mode === 'new' ? 'Password' : 'New password (optional)'}
+                placeholder={mode === 'new' ? t('adminPasswordPlaceholder') : t('adminNewPasswordPlaceholder')}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />
             </div>
 
             <Button onClick={handleSave} className="w-full" disabled={saving}>
-              {saving ? 'Saving…' : mode === 'new' ? 'Create Admin' : 'Save Changes'}
+              {saving ? t('adminSaving') : mode === 'new' ? t('adminCreateAdmin') : t('adminSaveChanges')}
             </Button>
           </div>
         </DialogContent>

@@ -47,10 +47,10 @@ export default function Orders() {
     try {
       await updateStatus({ id: selectedOrder.id, data: { status: newStatus } });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/orders'] });
-      toast({ title: "Status Updated" });
+      toast({ title: t('adminOrderStatusUpdated') });
       setSelectedOrder(null);
     } catch (e: unknown) {
-      toast({ title: "Error", description: getErrorMessage(e), variant: "destructive" });
+      toast({ title: t('adminOrderError'), description: getErrorMessage(e), variant: "destructive" });
     }
   };
 
@@ -62,18 +62,18 @@ export default function Orders() {
       setSelectedOrder(null);
 
       if (res.whatsappSent) {
-        toast({ title: "Delivery Assigned", description: "WhatsApp message sent to delivery person." });
+        toast({ title: t('adminOrderDeliveryAssigned'), description: t('adminOrderDeliveryWhatsApp') });
       } else if (res.smsSent) {
-        toast({ title: "Delivery Assigned", description: "Message sent via SMS to delivery person." });
+        toast({ title: t('adminOrderDeliveryAssigned'), description: t('adminOrderDeliverySMS') });
       } else {
         toast({
-          title: "Delivery Assigned",
-          description: "Order assigned, but notification could not be sent.",
+          title: t('adminOrderDeliveryAssigned'),
+          description: t('adminOrderDeliveryNoNotif'),
           variant: "default",
         });
       }
     } catch (e: unknown) {
-      toast({ title: "Error", description: getErrorMessage(e), variant: "destructive" });
+      toast({ title: t('adminOrderError'), description: getErrorMessage(e), variant: "destructive" });
     }
   };
 
@@ -93,19 +93,19 @@ export default function Orders() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Action</TableHead>
+              <TableHead>{t('adminOrderIdCol')}</TableHead>
+              <TableHead>{t('adminOrderCustomerCol')}</TableHead>
+              <TableHead>{t('adminOrderDateCol')}</TableHead>
+              <TableHead>{t('adminOrderTotalCol')}</TableHead>
+              <TableHead>{t('adminOrderStatusCol')}</TableHead>
+              <TableHead>{t('adminOrderActionCol')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                  {search ? 'No orders match your search.' : 'No orders yet.'}
+                  {search ? t('adminOrderNoMatch') : t('adminOrderEmpty')}
                 </TableCell>
               </TableRow>
             )}
@@ -121,7 +121,7 @@ export default function Orders() {
                     setSelectedOrder(order);
                     setNewStatus(updatableStatuses.includes(order.status as typeof updatableStatuses[number]) ? order.status as typeof updatableStatuses[number] : '');
                     setDeliveryId(order.deliveryPersonId?.toString() || '');
-                  }}>Manage</Button>
+                  }}>{t('adminOrderManage')}</Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -131,11 +131,11 @@ export default function Orders() {
 
       <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
         <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>Manage Order #{selectedOrder?.id}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{selectedOrder ? t('adminOrderManageTitle')(selectedOrder.id) : ''}</DialogTitle></DialogHeader>
           
           <div className="space-y-6 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Update Status</label>
+              <label className="text-sm font-semibold">{t('adminOrderUpdateStatus')}</label>
               <div className="flex gap-2">
                 <Select value={newStatus} onValueChange={(v) => setNewStatus(v as typeof updatableStatuses[number])}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -143,28 +143,28 @@ export default function Orders() {
                     {updatableStatuses.map(s => <SelectItem key={s} value={s}>{s.replace('_', ' ')}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <Button onClick={handleUpdateStatus}>Update</Button>
+                <Button onClick={handleUpdateStatus}>{t('adminOrderUpdate')}</Button>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Assign Delivery</label>
+              <label className="text-sm font-semibold">{t('adminOrderAssignDelivery')}</label>
               <div className="flex gap-2">
                 <Select value={deliveryId} onValueChange={setDeliveryId}>
-                  <SelectTrigger><SelectValue placeholder="Select Staff" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('adminOrderSelectStaff')} /></SelectTrigger>
                   <SelectContent>
                     {deliveryPersons?.filter(d => d.active).map(d => (
                       <SelectItem key={d.id} value={d.id.toString()}>{d.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <Button variant="secondary" onClick={handleAssign}>Assign</Button>
+                <Button variant="secondary" onClick={handleAssign}>{t('adminOrderAssign')}</Button>
               </div>
             </div>
 
             <div className="bg-muted p-4 rounded-xl text-sm space-y-1">
-              <p><strong>Customer:</strong> {selectedOrder?.customerName} ({selectedOrder?.customerPhone})</p>
-              <p><strong>Items:</strong> {selectedOrder?.items.map(i => `${i.quantity}x ${i.productName}`).join(', ')}</p>
+              <p><strong>{t('adminOrderCustomerLabel')}:</strong> {selectedOrder?.customerName} ({selectedOrder?.customerPhone})</p>
+              <p><strong>{t('adminOrderItemsLabel')}:</strong> {selectedOrder?.items.map(i => `${i.quantity}x ${i.productName}`).join(', ')}</p>
             </div>
           </div>
         </DialogContent>

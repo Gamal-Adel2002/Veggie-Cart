@@ -178,13 +178,13 @@ export default function Customers() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
+              <TableHead>{t('adminCustomerIdCol')}</TableHead>
               <TableHead>{t('adminCustomerName')}</TableHead>
               <TableHead>{t('adminCustomerPhone')}</TableHead>
               <TableHead>{t('adminCustomerAddress')}</TableHead>
               <TableHead>{t('adminCustomerOrders')}</TableHead>
               <TableHead>{t('adminCustomerJoined')}</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>{t('adminCustomerActionsCol')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -269,7 +269,7 @@ export default function Customers() {
               <Input
                 value={formData.phone}
                 onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="01012345678"
+                placeholder={t('adminCustomerPhonePlaceholder')}
               />
             </div>
             <div>
@@ -277,12 +277,12 @@ export default function Customers() {
               <Input
                 value={formData.address}
                 onChange={e => setFormData({ ...formData, address: e.target.value })}
-                placeholder="e.g. 123 Main St, Cairo"
+                placeholder={t('adminCustomerAddressPlaceholder')}
               />
             </div>
 
             <Button onClick={handleSaveProfile} disabled={savingProfile} className="w-full">
-              {savingProfile ? 'Saving…' : t('adminCustomerSave')}
+              {savingProfile ? t('adminCustomerSaving') : t('adminCustomerSave')}
             </Button>
 
             <div className="border-t border-border pt-4">
@@ -310,7 +310,7 @@ export default function Customers() {
                 disabled={savingPassword || !newPassword}
                 className="w-full mt-2"
               >
-                {savingPassword ? 'Resetting…' : t('adminCustomerResetPassword')}
+                {savingPassword ? t('adminCustomerResetting') : t('adminCustomerResetPassword')}
               </Button>
             </div>
 
@@ -342,7 +342,7 @@ export default function Customers() {
               {t('cancel')}
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting} className="flex-1">
-              {deleting ? 'Deleting…' : t('adminCustomerDelete')}
+              {deleting ? t('adminCustomerDeleting') : t('adminCustomerDelete')}
             </Button>
           </div>
         </DialogContent>
