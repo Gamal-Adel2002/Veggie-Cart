@@ -156,8 +156,8 @@ router.put("/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) =
   const [product] = await db.update(productsTable).set({
     name,
     nameAr,
-    description: description || null,
-    descriptionAr: descriptionAr || null,
+    description: description !== undefined ? (description || null) : undefined,
+    descriptionAr: descriptionAr !== undefined ? (descriptionAr || null) : undefined,
     price: price !== undefined ? Number(price) : undefined,
     unit: unit || undefined,
     image: image !== undefined ? image || null : undefined,
