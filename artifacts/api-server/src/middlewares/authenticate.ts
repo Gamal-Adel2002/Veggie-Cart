@@ -8,8 +8,15 @@ export interface AuthRequest extends Request {
 
 export function authenticate(required = true) {
   return async (req: AuthRequest, res: Response, next: NextFunction) => {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+    // Check httpOnly cookie first, then fall back to Bearer header
+    let token: string | null = null;
+
+    if (req.cookies?.token) {
+      token = req.cookies.token as string;
+    } else {
+      const authHeader = req.headers.authorization;
+      token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+    }
 
     if (!token) {
       if (required) {

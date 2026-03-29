@@ -7,6 +7,14 @@ import { authenticate, type AuthRequest } from "../middlewares/authenticate";
 
 const router = Router();
 
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  path: "/",
+};
+
 function sanitizeUser(user: typeof usersTable.$inferSelect) {
   const { password: _, ...safe } = user;
   return safe;
@@ -38,6 +46,7 @@ router.post("/signup", async (req, res) => {
   }).returning();
 
   const token = generateToken({ userId: user.id, role: user.role });
+  res.cookie("token", token, COOKIE_OPTIONS);
   res.status(201).json({ user: sanitizeUser(user), token });
 });
 
@@ -66,10 +75,12 @@ router.post("/login", async (req, res) => {
   }
 
   const token = generateToken({ userId: user.id, role: user.role });
+  res.cookie("token", token, COOKIE_OPTIONS);
   res.json({ user: sanitizeUser(user), token });
 });
 
 router.post("/logout", (_req, res) => {
+  res.clearCookie("token", { path: "/" });
   res.json({ success: true, message: "Logged out" });
 });
 
@@ -117,6 +128,7 @@ router.post("/admin/login", async (req, res) => {
   }
 
   const token = generateToken({ userId: user.id, role: user.role });
+  res.cookie("token", token, COOKIE_OPTIONS);
   res.json({ user: sanitizeUser(user), token });
 });
 

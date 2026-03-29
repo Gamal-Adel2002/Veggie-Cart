@@ -8,7 +8,6 @@ import {
 } from "@workspace/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { authenticate, type AuthRequest } from "../middlewares/authenticate";
-import { randomBytes } from "crypto";
 
 const router = Router();
 
@@ -27,9 +26,11 @@ async function getFullOrder(id: number) {
     deliveryPerson = dp || null;
   }
 
-  return { ...order, items, deliveryPerson };
+  const { guestToken: _hidden, ...safeOrder } = order;
+  return { ...safeOrder, items, deliveryPerson };
 }
 
+// Authenticated users get their own order list
 router.get("/", authenticate(), async (req: AuthRequest, res) => {
   const orders = await db
     .select()
@@ -41,6 +42,7 @@ router.get("/", authenticate(), async (req: AuthRequest, res) => {
   res.json(fullOrders.filter(Boolean));
 });
 
+// Accepts orders from both guests (no token) and authenticated users
 router.post("/", authenticate(false), async (req: AuthRequest, res) => {
   const { customerName, customerPhone, deliveryAddress, latitude, longitude, notes, items } =
     req.body;
@@ -75,15 +77,10 @@ router.post("/", authenticate(false), async (req: AuthRequest, res) => {
     });
   }
 
-  // For guest orders (no authenticated user), generate a secure random token
-  // so only someone with the token can later look up the order
-  const guestToken = req.userId ? null : randomBytes(32).toString("hex");
-
   const [order] = await db
     .insert(ordersTable)
     .values({
       userId: req.userId || null,
-      guestToken,
       customerName,
       customerPhone,
       deliveryAddress: deliveryAddress || null,
@@ -100,13 +97,11 @@ router.post("/", authenticate(false), async (req: AuthRequest, res) => {
   }
 
   const full = await getFullOrder(order.id);
-  // Include guestToken in response so the guest can track their order
-  res.status(201).json({ ...full, guestToken });
+  res.status(201).json(full);
 });
 
-// Authenticated users look up by order ID
-// Guest users look up by order ID + guestToken query param
-router.get("/:id", authenticate(false), async (req: AuthRequest, res) => {
+// View a specific order: requires auth (owner or admin)
+router.get("/:id", authenticate(), async (req: AuthRequest, res) => {
   const id = parseInt(String(req.params.id));
   if (isNaN(id)) {
     res.status(400).json({ error: "Invalid order ID" });
@@ -118,25 +113,14 @@ router.get("/:id", authenticate(false), async (req: AuthRequest, res) => {
     return;
   }
   const isAdmin = req.userRole === "admin";
-  const isOwner = order.userId !== null && order.userId === req.userId;
+  const isOwner = "userId" in order && order.userId !== null && order.userId === req.userId;
 
-  // Guest order tracking: requires the guestToken that was returned at order creation
-  const providedToken = req.query.token as string | undefined;
-  const isValidGuestAccess =
-    order.userId === null &&
-    order.guestToken !== null &&
-    order.guestToken !== "" &&
-    providedToken !== undefined &&
-    providedToken === order.guestToken;
-
-  if (!isAdmin && !isOwner && !isValidGuestAccess) {
+  if (!isAdmin && !isOwner) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
 
-  // Never expose the guestToken in the response body after initial creation
-  const { guestToken: _hidden, ...safeOrder } = order;
-  res.json(safeOrder);
+  res.json(order);
 });
 
 export default router;
