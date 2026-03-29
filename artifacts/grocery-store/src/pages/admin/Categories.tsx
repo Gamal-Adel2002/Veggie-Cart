@@ -78,7 +78,7 @@ export default function Categories() {
             {filtered.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  {search ? 'No categories match your search.' : 'No categories yet.'}
+                  {search ? t('adminNoMatchCategories') : t('adminEmptyCategories')}
                 </TableCell>
               </TableRow>
             )}

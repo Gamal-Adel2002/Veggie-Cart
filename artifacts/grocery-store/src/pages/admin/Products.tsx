@@ -154,7 +154,7 @@ export default function Products() {
             {filtered.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  {search ? 'No products match your search.' : 'No products yet.'}
+                  {search ? t('adminNoMatchProducts') : t('adminEmptyProducts')}
                 </TableCell>
               </TableRow>
             )}

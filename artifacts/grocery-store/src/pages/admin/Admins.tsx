@@ -128,7 +128,7 @@ export default function Admins() {
             {!isLoading && filteredAdmins.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                  {search ? 'No admins match your search.' : 'No admins found.'}
+                  {search ? t('adminNoMatchAdmins') : t('adminEmptyAdmins')}
                 </TableCell>
               </TableRow>
             )}

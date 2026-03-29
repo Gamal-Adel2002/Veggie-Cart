@@ -217,6 +217,17 @@ export const dictionary = {
     adminCustomerEmpty: "No customers have signed up yet.",
     adminCustomerLoading: "Loading customers...",
 
+    // Admin — shared empty/no-match states
+    adminNoMatchProducts: "No products match your search.",
+    adminEmptyProducts: "No products yet.",
+    adminNoMatchCategories: "No categories match your search.",
+    adminEmptyCategories: "No categories yet.",
+    adminNoMatchDeliveryStaff: "No staff match your search.",
+    adminEmptyDeliveryStaff: "No delivery staff yet.",
+    adminNoMatchDeliveryZones: "No zones match your search.",
+    adminNoMatchAdmins: "No admins match your search.",
+    adminEmptyAdmins: "No admins found.",
+
     // Not found
     pageNotFound: "404 Page Not Found",
     pageNotFoundDesc: "The page you are looking for does not exist.",
@@ -439,6 +450,17 @@ export const dictionary = {
     adminCustomerNoResults: "لا يوجد عملاء مطابقون",
     adminCustomerEmpty: "لم يشترك أي عميل بعد.",
     adminCustomerLoading: "جاري تحميل العملاء...",
+
+    // Admin — shared empty/no-match states
+    adminNoMatchProducts: "لا توجد منتجات تطابق بحثك.",
+    adminEmptyProducts: "لا توجد منتجات بعد.",
+    adminNoMatchCategories: "لا توجد فئات تطابق بحثك.",
+    adminEmptyCategories: "لا توجد فئات بعد.",
+    adminNoMatchDeliveryStaff: "لا يوجد موظفون يطابقون بحثك.",
+    adminEmptyDeliveryStaff: "لا يوجد موظفو توصيل بعد.",
+    adminNoMatchDeliveryZones: "لا توجد مناطق تطابق بحثك.",
+    adminNoMatchAdmins: "لا يوجد مشرفون يطابقون بحثك.",
+    adminEmptyAdmins: "لا يوجد مشرفون.",
 
     // Not found
     pageNotFound: "404 الصفحة غير موجودة",

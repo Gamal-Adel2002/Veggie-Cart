@@ -355,7 +355,11 @@ router.put("/customers/:id", authenticate(), requireAdmin, async (req: AuthReque
     updates.longitude = lng;
   }
 
-  if (Object.keys(updates).length === 0) { res.json(existing); return; }
+  if (Object.keys(updates).length === 0) {
+    const { password: _, ...safe } = existing;
+    res.json(safe);
+    return;
+  }
 
   const [updated] = await db.update(usersTable).set(updates).where(eq(usersTable.id, id)).returning();
   const { password: _, ...safe } = updated;
@@ -387,6 +391,7 @@ router.delete("/customers/:id", authenticate(), requireAdmin, async (req: AuthRe
   const [existing] = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
   if (!existing || existing.role !== "customer") { res.status(404).json({ error: "Customer not found" }); return; }
 
+  await db.update(ordersTable).set({ userId: null }).where(eq(ordersTable.userId, id));
   await db.delete(usersTable).where(eq(usersTable.id, id));
   res.status(204).end();
 });

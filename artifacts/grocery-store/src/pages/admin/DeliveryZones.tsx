@@ -289,7 +289,7 @@ export default function DeliveryZones() {
         <Card>
           <CardContent className="py-12 text-center">
             <MapPin className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-40" />
-            <p className="text-muted-foreground font-medium">{search ? 'No zones match your search.' : t('adminZoneEmpty')}</p>
+            <p className="text-muted-foreground font-medium">{search ? t('adminNoMatchDeliveryZones') : t('adminZoneEmpty')}</p>
             <p className="text-sm text-muted-foreground mt-1">{search ? '' : t('adminZoneEmptyDesc')}</p>
           </CardContent>
         </Card>

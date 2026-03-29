@@ -78,7 +78,7 @@ export default function DeliveryPersons() {
             {filtered.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                  {search ? 'No staff match your search.' : 'No delivery staff yet.'}
+                  {search ? t('adminNoMatchDeliveryStaff') : t('adminEmptyDeliveryStaff')}
                 </TableCell>
               </TableRow>
             )}
