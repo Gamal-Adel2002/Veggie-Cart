@@ -10,5 +10,6 @@ import type { Order } from "./order";
 export interface AssignDeliveryResponse {
   order: Order;
   whatsappSent: boolean;
+  smsSent: boolean;
   whatsappMessage?: string;
 }

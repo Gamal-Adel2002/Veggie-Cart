@@ -236,6 +236,7 @@ export interface AssignDeliveryInput {
 export interface AssignDeliveryResponse {
   order: Order;
   whatsappSent: boolean;
+  smsSent: boolean;
   whatsappMessage?: string;
 }
 

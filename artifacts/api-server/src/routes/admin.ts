@@ -10,7 +10,7 @@ import {
 import { eq, sql, desc, lte, isNotNull, and } from "drizzle-orm";
 import { authenticate, requireAdmin, type AuthRequest } from "../middlewares/authenticate";
 import type { OrderStatus } from "@workspace/db/schema";
-import { buildWhatsAppMessage, sendWhatsAppMessage } from "../lib/whatsapp";
+import { buildWhatsAppMessage, sendWhatsAppMessage, sendSmsMessage } from "../lib/whatsapp";
 import { hashPassword } from "../lib/auth";
 
 const router = Router();
@@ -171,11 +171,19 @@ router.post("/orders/:id/assign", authenticate(), requireAdmin, async (req: Auth
   });
 
   const waResult = await sendWhatsAppMessage(deliveryPerson.phone, whatsappMsg);
+
+  let smsSent = false;
+  if (!waResult.success) {
+    const smsResult = await sendSmsMessage(deliveryPerson.phone, whatsappMsg);
+    smsSent = smsResult.success;
+  }
+
   const full = await getFullOrder(id);
 
   res.json({
     order: full,
     whatsappSent: waResult.success,
+    smsSent,
     whatsappMessage: whatsappMsg,
   });
 });

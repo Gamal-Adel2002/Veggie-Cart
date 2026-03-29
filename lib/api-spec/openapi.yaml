@@ -1116,11 +1116,14 @@ components:
           $ref: "#/components/schemas/Order"
         whatsappSent:
           type: boolean
+        smsSent:
+          type: boolean
         whatsappMessage:
           type: string
       required:
         - order
         - whatsappSent
+        - smsSent
 
     DeliveryPerson:
       type: object

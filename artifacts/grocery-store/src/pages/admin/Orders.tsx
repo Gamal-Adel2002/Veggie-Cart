@@ -47,10 +47,12 @@ export default function Orders() {
 
       if (res.whatsappSent) {
         toast({ title: "Delivery Assigned", description: "WhatsApp message sent to delivery person." });
+      } else if (res.smsSent) {
+        toast({ title: "Delivery Assigned", description: "Message sent via SMS to delivery person." });
       } else {
         toast({
           title: "Delivery Assigned",
-          description: "Order assigned, but WhatsApp message was not sent (Twilio not configured).",
+          description: "Order assigned, but notification could not be sent.",
           variant: "default",
         });
       }

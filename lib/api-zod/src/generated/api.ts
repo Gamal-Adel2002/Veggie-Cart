@@ -604,6 +604,7 @@ export const AssignDeliveryResponse = zod.object({
     updatedAt: zod.coerce.date(),
   }),
   whatsappSent: zod.boolean(),
+  smsSent: zod.boolean(),
   whatsappMessage: zod.string().optional(),
 });
 
