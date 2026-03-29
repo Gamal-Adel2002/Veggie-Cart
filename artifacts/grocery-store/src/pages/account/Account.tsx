@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { useStore } from '@/store';
 import { useAppOrders, useAppUpdateMe, useAppUpdateLocation, useAppUploadImage } from '@/hooks/use-auth-api';
-import { MapPin, User as UserIcon, Package, Edit2, Camera, X, Loader2 } from 'lucide-react';
+import { MapPin, User as UserIcon, Package, Edit2, Camera, X, Loader2, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,6 +47,7 @@ export default function Account() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [mapLoc, setMapLoc] = useState<{ latitude: number; longitude: number } | null>(null);
   const [mapAddress, setMapAddress] = useState<string>('');
+  const [locationZoneValid, setLocationZoneValid] = useState(true);
 
   const startEditing = () => {
     if (!user) return;
@@ -61,6 +62,7 @@ export default function Account() {
     setImageFile(null);
     setMapLoc(user.latitude && user.longitude ? { latitude: user.latitude, longitude: user.longitude } : null);
     setMapAddress(user.address || '');
+    setLocationZoneValid(true);
     setEditing(true);
   };
 
@@ -251,7 +253,45 @@ export default function Account() {
                   location={mapLoc}
                   onChange={(lat, lng) => setMapLoc({ latitude: lat, longitude: lng })}
                   onAddressChange={(addr) => setMapAddress(addr)}
+                  onZoneValidation={setLocationZoneValid}
                 />
+                {/* Manual coordinate inputs */}
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Lat</Label>
+                    <Input
+                      type="number"
+                      step="0.00001"
+                      placeholder="30.04442"
+                      value={mapLoc?.latitude ?? ''}
+                      onChange={e => {
+                        const val = parseFloat(e.target.value);
+                        if (!isNaN(val)) setMapLoc(prev => ({ latitude: val, longitude: prev?.longitude ?? 0 }));
+                      }}
+                      className="h-8 text-xs rounded-lg"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Lng</Label>
+                    <Input
+                      type="number"
+                      step="0.00001"
+                      placeholder="31.23571"
+                      value={mapLoc?.longitude ?? ''}
+                      onChange={e => {
+                        const val = parseFloat(e.target.value);
+                        if (!isNaN(val)) setMapLoc(prev => ({ latitude: prev?.latitude ?? 0, longitude: val }));
+                      }}
+                      className="h-8 text-xs rounded-lg"
+                    />
+                  </div>
+                </div>
+                {!locationZoneValid && mapLoc && (
+                  <div className="flex items-start gap-2 bg-destructive/10 border border-destructive/30 rounded-xl p-3 text-destructive">
+                    <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                    <p className="text-xs font-medium">{t('outsideDeliveryZoneDesc')}</p>
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-2 pt-2">
@@ -268,7 +308,7 @@ export default function Account() {
                   type="submit"
                   size="sm"
                   className="flex-1 rounded-xl shadow-sm shadow-primary/20"
-                  disabled={isSaving || isUploading}
+                  disabled={isSaving || isUploading || (!!mapLoc && !locationZoneValid)}
                 >
                   {isSaving || isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : t('saveChanges')}
                 </Button>

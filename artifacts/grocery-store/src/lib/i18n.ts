@@ -144,6 +144,31 @@ export const dictionary = {
       completed: "Completed"
     },
 
+    // Admin — Delivery Zones
+    adminDeliveryZones: "Delivery Zones",
+    adminDeliveryZonesDesc: "Define areas where delivery is available. Orders outside all active zones will be rejected.",
+    adminZoneAddBtn: "Add Zone",
+    adminZoneCreate: "New Delivery Zone",
+    adminZoneEdit: "Edit Zone",
+    adminZoneName: "Zone Name",
+    adminZoneRadius: "Radius (km)",
+    adminZoneCenterLoc: "Center Location",
+    adminZoneCenterLocHint: "(click on map, search address, or enter coordinates)",
+    adminZoneActive: "Active (orders from this zone are accepted)",
+    adminZoneCreateBtn: "Create Zone",
+    adminZoneSaveBtn: "Save Changes",
+    adminZoneCancel: "Cancel",
+    adminZoneActivateBtn: "Activate",
+    adminZoneDeactivateBtn: "Deactivate",
+    adminZoneCreated: "Zone created successfully",
+    adminZoneUpdated: "Zone updated successfully",
+    adminZoneDeleted: "Zone deleted",
+    adminZoneEmpty: "No delivery zones configured",
+    adminZoneEmptyDesc: "Add a zone to restrict deliveries to specific areas. Without zones, all locations are accepted.",
+    adminZoneLoading: "Loading zones...",
+    adminZoneDeleteConfirm: (name: string) => `Delete zone "${name}"?`,
+    adminZoneRadiusInfo: (km: number) => `Radius: ${km} km`,
+
     // Not found
     pageNotFound: "404 Page Not Found",
     pageNotFoundDesc: "The page you are looking for does not exist.",
@@ -293,6 +318,31 @@ export const dictionary = {
       with_delivery: "مع المندوب",
       completed: "مكتمل"
     },
+
+    // Admin — Delivery Zones
+    adminDeliveryZones: "مناطق التوصيل",
+    adminDeliveryZonesDesc: "حدد المناطق التي يُتاح فيها التوصيل. سيتم رفض الطلبات الواقعة خارج جميع المناطق النشطة.",
+    adminZoneAddBtn: "إضافة منطقة",
+    adminZoneCreate: "منطقة توصيل جديدة",
+    adminZoneEdit: "تعديل المنطقة",
+    adminZoneName: "اسم المنطقة",
+    adminZoneRadius: "نطاق الدائرة (كم)",
+    adminZoneCenterLoc: "موقع المركز",
+    adminZoneCenterLocHint: "(اضغط على الخريطة، ابحث عن عنوان، أو أدخل الإحداثيات)",
+    adminZoneActive: "نشطة (تُقبل الطلبات من هذه المنطقة)",
+    adminZoneCreateBtn: "إنشاء المنطقة",
+    adminZoneSaveBtn: "حفظ التغييرات",
+    adminZoneCancel: "إلغاء",
+    adminZoneActivateBtn: "تفعيل",
+    adminZoneDeactivateBtn: "إيقاف",
+    adminZoneCreated: "تم إنشاء المنطقة بنجاح",
+    adminZoneUpdated: "تم تحديث المنطقة بنجاح",
+    adminZoneDeleted: "تم حذف المنطقة",
+    adminZoneEmpty: "لا توجد مناطق توصيل",
+    adminZoneEmptyDesc: "أضف منطقة لتقييد التوصيل بمناطق معينة. بدون مناطق، تُقبل جميع المواقع.",
+    adminZoneLoading: "جاري تحميل المناطق...",
+    adminZoneDeleteConfirm: (name: string) => `حذف المنطقة "${name}"؟`,
+    adminZoneRadiusInfo: (km: number) => `النطاق: ${km} كم`,
 
     // Not found
     pageNotFound: "404 الصفحة غير موجودة",

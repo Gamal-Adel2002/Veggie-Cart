@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { MapPicker } from '@/components/MapPicker';
 import { Plus, Pencil, Trash2, X, Check, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from '@/lib/i18n';
 
 interface DeliveryZone {
   id: number;
@@ -47,6 +48,7 @@ async function apiFetch(path: string, options?: RequestInit) {
 export default function DeliveryZones() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -63,7 +65,7 @@ export default function DeliveryZones() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-delivery-zones'] });
       queryClient.invalidateQueries({ queryKey: ['delivery-zones'] });
-      toast({ title: 'Zone created successfully' });
+      toast({ title: t('adminZoneCreated') });
       resetForm();
     },
     onError: (e: Error) => toast({ title: 'Failed to create zone', description: e.message, variant: 'destructive' }),
@@ -75,7 +77,7 @@ export default function DeliveryZones() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-delivery-zones'] });
       queryClient.invalidateQueries({ queryKey: ['delivery-zones'] });
-      toast({ title: 'Zone updated successfully' });
+      toast({ title: t('adminZoneUpdated') });
       resetForm();
     },
     onError: (e: Error) => toast({ title: 'Failed to update zone', description: e.message, variant: 'destructive' }),
@@ -86,7 +88,7 @@ export default function DeliveryZones() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-delivery-zones'] });
       queryClient.invalidateQueries({ queryKey: ['delivery-zones'] });
-      toast({ title: 'Zone deleted' });
+      toast({ title: t('adminZoneDeleted') });
     },
     onError: (e: Error) => toast({ title: 'Failed to delete zone', description: e.message, variant: 'destructive' }),
   });
@@ -146,12 +148,12 @@ export default function DeliveryZones() {
     <AdminLayout>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold">Delivery Zones</h2>
-          <p className="text-muted-foreground text-sm mt-1">Define areas where delivery is available. Orders outside all active zones will be rejected.</p>
+          <h2 className="text-2xl font-bold">{t('adminDeliveryZones')}</h2>
+          <p className="text-muted-foreground text-sm mt-1">{t('adminDeliveryZonesDesc')}</p>
         </div>
         {!showForm && (
           <Button onClick={() => setShowForm(true)} className="gap-2">
-            <Plus className="w-4 h-4" /> Add Zone
+            <Plus className="w-4 h-4" /> {t('adminZoneAddBtn')}
           </Button>
         )}
       </div>
@@ -159,13 +161,13 @@ export default function DeliveryZones() {
       {showForm && (
         <Card className="mb-6 border-primary/20">
           <CardHeader>
-            <CardTitle className="text-lg">{editingId ? 'Edit Zone' : 'New Delivery Zone'}</CardTitle>
+            <CardTitle className="text-lg">{editingId ? t('adminZoneEdit') : t('adminZoneCreate')}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Zone Name</Label>
+                  <Label>{t('adminZoneName')}</Label>
                   <Input
                     required
                     placeholder="e.g. Cairo Downtown"
@@ -174,7 +176,7 @@ export default function DeliveryZones() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Radius (km)</Label>
+                  <Label>{t('adminZoneRadius')}</Label>
                   <Input
                     required
                     type="number"
@@ -188,7 +190,10 @@ export default function DeliveryZones() {
               </div>
 
               <div className="space-y-2">
-                <Label>Center Location <span className="text-muted-foreground text-xs">(click on map, search address, or enter coordinates)</span></Label>
+                <Label>
+                  {t('adminZoneCenterLoc')}
+                  <span className="text-muted-foreground text-xs ms-1">{t('adminZoneCenterLocHint')}</span>
+                </Label>
                 <MapPicker
                   location={mapLoc}
                   onChange={handleMapChange}
@@ -238,15 +243,15 @@ export default function DeliveryZones() {
                   onChange={e => setForm(f => ({ ...f, active: e.target.checked }))}
                   className="w-4 h-4 rounded accent-primary"
                 />
-                <Label htmlFor="zone-active" className="cursor-pointer">Active (orders from this zone are accepted)</Label>
+                <Label htmlFor="zone-active" className="cursor-pointer">{t('adminZoneActive')}</Label>
               </div>
 
               <div className="flex gap-3 pt-2">
                 <Button type="submit" disabled={isPending} className="gap-2">
-                  <Check className="w-4 h-4" /> {editingId ? 'Save Changes' : 'Create Zone'}
+                  <Check className="w-4 h-4" /> {editingId ? t('adminZoneSaveBtn') : t('adminZoneCreateBtn')}
                 </Button>
                 <Button type="button" variant="outline" onClick={resetForm} className="gap-2">
-                  <X className="w-4 h-4" /> Cancel
+                  <X className="w-4 h-4" /> {t('adminZoneCancel')}
                 </Button>
               </div>
             </form>
@@ -255,13 +260,13 @@ export default function DeliveryZones() {
       )}
 
       {isLoading ? (
-        <p className="text-muted-foreground">Loading zones...</p>
+        <p className="text-muted-foreground">{t('adminZoneLoading')}</p>
       ) : zones.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <MapPin className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-40" />
-            <p className="text-muted-foreground font-medium">No delivery zones configured</p>
-            <p className="text-sm text-muted-foreground mt-1">Add a zone to restrict deliveries to specific areas. Without zones, all locations are accepted.</p>
+            <p className="text-muted-foreground font-medium">{t('adminZoneEmpty')}</p>
+            <p className="text-sm text-muted-foreground mt-1">{t('adminZoneEmptyDesc')}</p>
           </CardContent>
         </Card>
       ) : (
@@ -281,7 +286,7 @@ export default function DeliveryZones() {
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Radius: {zone.radiusKm} km &bull; Center: {zone.centerLat.toFixed(4)}, {zone.centerLng.toFixed(4)}
+                      {t('adminZoneRadiusInfo')(zone.radiusKm)} &bull; {zone.centerLat.toFixed(4)}, {zone.centerLng.toFixed(4)}
                     </p>
                   </div>
                 </div>
@@ -293,7 +298,7 @@ export default function DeliveryZones() {
                     onClick={() => toggleMutation.mutate({ id: zone.id, active: !zone.active })}
                     disabled={toggleMutation.isPending}
                   >
-                    {zone.active ? 'Deactivate' : 'Activate'}
+                    {zone.active ? t('adminZoneDeactivateBtn') : t('adminZoneActivateBtn')}
                   </Button>
                   <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEdit(zone)}>
                     <Pencil className="w-4 h-4" />
@@ -302,7 +307,7 @@ export default function DeliveryZones() {
                     size="icon"
                     variant="ghost"
                     className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                    onClick={() => { if (confirm(`Delete zone "${zone.name}"?`)) deleteMutation.mutate(zone.id); }}
+                    onClick={() => { if (confirm(t('adminZoneDeleteConfirm')(zone.name))) deleteMutation.mutate(zone.id); }}
                     disabled={deleteMutation.isPending}
                   >
                     <Trash2 className="w-4 h-4" />

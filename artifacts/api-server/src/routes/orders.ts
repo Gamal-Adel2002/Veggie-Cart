@@ -63,26 +63,31 @@ router.post("/", authenticate(false), async (req: AuthRequest, res) => {
     return;
   }
 
-  // Zone validation: only when latitude+longitude are provided and zones are configured
-  if (latitude != null && longitude != null) {
-    const activeZones = await db
-      .select()
-      .from(deliveryZonesTable)
-      .where(eq(deliveryZonesTable.active, true));
+  // Zone validation: fetch active zones; if zones exist, lat/lng are required and must be within a zone
+  const activeZones = await db
+    .select()
+    .from(deliveryZonesTable)
+    .where(eq(deliveryZonesTable.active, true));
 
-    if (activeZones.length > 0) {
-      const lat = Number(latitude);
-      const lng = Number(longitude);
-      const inZone = activeZones.some(
-        (z) => haversineKm(lat, lng, z.centerLat, z.centerLng) <= z.radiusKm
-      );
-      if (!inZone) {
-        res.status(422).json({
-          error: "OUTSIDE_DELIVERY_ZONE",
-          message: "Delivery is not available at your selected location. Please choose an address within our delivery area.",
-        });
-        return;
-      }
+  if (activeZones.length > 0) {
+    if (latitude == null || longitude == null) {
+      res.status(422).json({
+        error: "LOCATION_REQUIRED",
+        message: "A delivery location is required. Please pin your address on the map before placing an order.",
+      });
+      return;
+    }
+    const lat = Number(latitude);
+    const lng = Number(longitude);
+    const inZone = activeZones.some(
+      (z) => haversineKm(lat, lng, z.centerLat, z.centerLng) <= z.radiusKm
+    );
+    if (!inZone) {
+      res.status(422).json({
+        error: "OUTSIDE_DELIVERY_ZONE",
+        message: "Delivery is not available at your selected location. Please choose an address within our delivery area.",
+      });
+      return;
     }
   }
 
