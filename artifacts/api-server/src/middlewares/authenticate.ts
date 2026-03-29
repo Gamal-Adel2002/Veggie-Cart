@@ -1,8 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
 import { verifyToken } from "../lib/auth";
-import { db } from "@workspace/db";
-import { usersTable } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
 
 export interface AuthRequest extends Request {
   userId?: number;

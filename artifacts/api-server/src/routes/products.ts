@@ -81,7 +81,7 @@ router.get("/", async (req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id));
   const product = await getProductWithCategory(id);
   if (!product) {
     res.status(404).json({ error: "Product not found" });
@@ -113,7 +113,7 @@ router.post("/", authenticate(), requireAdmin, async (req: AuthRequest, res) => 
 });
 
 router.put("/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id));
   const { name, nameAr, description, descriptionAr, price, unit, image, categoryId, featured, inStock } = req.body;
   const [product] = await db.update(productsTable).set({
     name,
@@ -136,7 +136,7 @@ router.put("/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) =
 });
 
 router.delete("/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id));
   await db.delete(productsTable).where(eq(productsTable.id, id));
   res.json({ success: true, message: "Product deleted" });
 });

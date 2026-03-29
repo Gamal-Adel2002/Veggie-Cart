@@ -98,13 +98,16 @@ router.post("/", authenticate(false), async (req: AuthRequest, res) => {
 });
 
 router.get("/:id", authenticate(false), async (req: AuthRequest, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id));
   const order = await getFullOrder(id);
   if (!order) {
     res.status(404).json({ error: "Order not found" });
     return;
   }
-  if (req.userRole !== "admin" && order.userId !== req.userId) {
+  const isAdmin = req.userRole === "admin";
+  const isOwner = order.userId !== null && order.userId === req.userId;
+  const isGuestOrder = order.userId === null;
+  if (!isAdmin && !isOwner && !isGuestOrder) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }

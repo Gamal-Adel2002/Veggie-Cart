@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEffect } from "react";
 import { useStore } from "@/store";
+import { setAuthTokenGetter } from "@workspace/api-client-react";
 
 // Pages
 import Home from "./pages/Home";
@@ -26,6 +27,9 @@ import NotFound from "./pages/not-found";
 const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: false, retry: 1 } }
 });
+
+// Register auth token getter so every API call automatically includes the Bearer token
+setAuthTokenGetter(() => useStore.getState().token);
 
 function Router() {
   const lang = useStore(s => s.lang);

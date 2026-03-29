@@ -26,7 +26,7 @@ router.post("/", authenticate(), requireAdmin, async (req: AuthRequest, res) => 
 });
 
 router.put("/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id));
   const { name, phone, active } = req.body;
   const [person] = await db.update(deliveryPersonsTable)
     .set({ name, phone, active })
@@ -40,7 +40,7 @@ router.put("/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) =
 });
 
 router.delete("/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id));
   await db.delete(deliveryPersonsTable).where(eq(deliveryPersonsTable.id, id));
   res.json({ success: true, message: "Delivery person deleted" });
 });

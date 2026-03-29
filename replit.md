@@ -93,7 +93,8 @@ React + Vite storefront for the FreshVeg grocery delivery application.
 - State: Zustand store (`src/store.ts`) - auth token, user, cart, language
 - Routing: wouter
 - API: Generated React Query hooks from `@workspace/api-client-react`
-- All hooks wrapped in `src/hooks/use-auth-api.ts` to inject auth headers
+- All hooks wrapped in `src/hooks/use-auth-api.ts` for convenience re-exports
+- Auth token injected globally via `setAuthTokenGetter(() => useStore.getState().token)` in `App.tsx` — no per-hook `request` headers needed
 - `pnpm --filter @workspace/grocery-store run dev` — run the dev server (port from `PORT` env)
 
 ### `lib/db` (`@workspace/db`)

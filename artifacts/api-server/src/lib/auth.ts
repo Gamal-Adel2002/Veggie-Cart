@@ -1,7 +1,12 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "grocery-app-secret-key-2024";
+const jwtSecret = process.env.JWT_SECRET;
+if (!jwtSecret && process.env.NODE_ENV === "production") {
+  throw new Error("JWT_SECRET environment variable is required in production");
+}
+const JWT_SECRET = jwtSecret || "grocery-app-secret-key-dev-only";
+
 const SALT_ROUNDS = 10;
 
 export async function hashPassword(password: string): Promise<string> {

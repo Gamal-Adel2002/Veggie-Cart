@@ -28,7 +28,7 @@ router.post("/", authenticate(), requireAdmin, async (req: AuthRequest, res) => 
 });
 
 router.put("/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id));
   const { name, nameAr, icon } = req.body;
   const [cat] = await db.update(categoriesTable)
     .set({ name, nameAr, icon })
@@ -42,7 +42,7 @@ router.put("/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) =
 });
 
 router.delete("/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id));
   await db.delete(categoriesTable).where(eq(categoriesTable.id, id));
   res.json({ success: true, message: "Category deleted" });
 });

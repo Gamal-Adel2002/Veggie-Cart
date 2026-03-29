@@ -91,7 +91,7 @@ router.get("/orders", authenticate(), requireAdmin, async (req: AuthRequest, res
 });
 
 router.put("/orders/:id/status", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id));
   const { status } = req.body;
 
   const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
@@ -118,7 +118,7 @@ router.put("/orders/:id/status", authenticate(), requireAdmin, async (req: AuthR
 });
 
 router.post("/orders/:id/assign", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id));
   const { deliveryPersonId } = req.body;
 
   if (!deliveryPersonId) {
