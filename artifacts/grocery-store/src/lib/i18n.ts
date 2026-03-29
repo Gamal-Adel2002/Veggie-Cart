@@ -324,6 +324,16 @@ export const dictionary = {
     deliveryOrderCount: (n: number) => `${n} order${n !== 1 ? 's' : ''}`,
     deliveryCurrencySymbol: "EGP",
 
+    // Notifications
+    notifBell: "Notifications",
+    notifTitle: "Notifications",
+    notifEmpty: "No notifications yet",
+    notifClearAll: "Clear all",
+    notifNewOrder: "New Order",
+    notifOrderAssigned: "New Delivery",
+    notifPermissionBanner: "Enable notifications to get alerts for new orders.",
+    notifPermissionBtn: "Enable",
+
     // Not found
     pageNotFound: "404 Page Not Found",
     pageNotFoundDesc: "The page you are looking for does not exist.",
@@ -653,6 +663,16 @@ export const dictionary = {
     deliveryZoneLabel: (name: string) => `منطقة: ${name}`,
     deliveryOrderCount: (n: number) => `${n} طلب${n !== 1 ? 'ات' : ''}`,
     deliveryCurrencySymbol: "ج.م",
+
+    // Notifications
+    notifBell: "الإشعارات",
+    notifTitle: "الإشعارات",
+    notifEmpty: "لا توجد إشعارات بعد",
+    notifClearAll: "مسح الكل",
+    notifNewOrder: "طلب جديد",
+    notifOrderAssigned: "توصيل جديد",
+    notifPermissionBanner: "فعّل الإشعارات للحصول على تنبيهات بالطلبات الجديدة.",
+    notifPermissionBtn: "تفعيل",
 
     // Not found
     pageNotFound: "404 الصفحة غير موجودة",

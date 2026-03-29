@@ -13,6 +13,7 @@ import { authenticate, requireAdmin, type AuthRequest } from "../middlewares/aut
 import type { OrderStatus } from "@workspace/db/schema";
 import { buildWhatsAppMessage, sendWhatsAppMessage, sendSmsMessage } from "../lib/whatsapp";
 import { hashPassword } from "../lib/auth";
+import { broadcastToDeliveryPerson, sendPushToDeliveryPerson } from "./notifications";
 
 const router = Router();
 
@@ -180,6 +181,23 @@ router.post("/orders/:id/assign", authenticate(), requireAdmin, async (req: Auth
   }
 
   const full = await getFullOrder(id);
+
+  // Notify delivery person (SSE + push) — fire and forget
+  setImmediate(async () => {
+    try {
+      broadcastToDeliveryPerson(Number(deliveryPersonId), "order_assigned", {
+        orderId: id,
+        customerName: order.customerName,
+        deliveryAddress: order.deliveryAddress,
+        totalPrice: order.totalPrice,
+      });
+      await sendPushToDeliveryPerson(Number(deliveryPersonId), {
+        title: "FreshVeg — New Delivery",
+        body: `Order #${id} · ${order.deliveryAddress || order.customerName}`,
+        url: "/delivery",
+      });
+    } catch {}
+  });
 
   res.json({
     order: full,

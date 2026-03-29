@@ -28,3 +28,10 @@ timeoutMs = 20000
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+VAPID_PUBLIC_KEY = "BEXu8xmLBSspq40d0Dx_1zLjJwHraq1uHQfgVlvWpTPY-HM0XwOSnVJZg1ZVjPUj8_17ZDXZdeYcaalEYeQGuhU"
+VAPID_PRIVATE_KEY = "MW4zqBObD3mbJc5bmq2yLkfS_ejdqJXsWSbymrTj16s"
+VAPID_SUBJECT = "mailto:admin@freshveggies.app"

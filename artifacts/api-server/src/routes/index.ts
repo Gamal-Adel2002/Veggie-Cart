@@ -11,6 +11,7 @@ import deliveryPortalRouter from "./delivery-portal";
 import adminRouter from "./admin";
 import uploadRouter from "./upload";
 import zonesRouter from "./zones";
+import notificationsRouter from "./notifications";
 
 const router = Router();
 
@@ -27,5 +28,6 @@ router.use("/admin/delivery-persons", deliveryRouter);
 router.use("/admin", adminRouter);
 router.use("/upload", uploadRouter);
 router.use("/delivery", deliveryPortalRouter);
+router.use("/notifications", notificationsRouter);
 
 export default router;

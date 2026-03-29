@@ -9,6 +9,7 @@ import {
 } from "@workspace/db/schema";
 import { eq, desc, sql } from "drizzle-orm";
 import { authenticate, type AuthRequest } from "../middlewares/authenticate";
+import { broadcastToAdmins, sendPushToAdmins } from "./notifications";
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371;
@@ -227,6 +228,23 @@ router.post("/", authenticate(false), async (req: AuthRequest, res) => {
   }
 
   const full = await getFullOrder(orderId!);
+
+  // Notify admin(s) about new order (SSE + push) — fire and forget
+  setImmediate(async () => {
+    try {
+      broadcastToAdmins("new_order", {
+        orderId: orderId!,
+        customerName: full?.customerName || customerName,
+        totalPrice: full?.totalPrice || 0,
+      });
+      await sendPushToAdmins({
+        title: "FreshVeg — New Order",
+        body: `${full?.customerName || customerName} · EGP ${(full?.totalPrice || 0).toFixed(2)}`,
+        url: "/admin/orders",
+      });
+    } catch {}
+  });
+
   res.status(201).json(full);
 });
 

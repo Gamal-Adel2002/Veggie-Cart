@@ -1,16 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { Package, ShoppingBag, Truck, Grid, LayoutDashboard, LogOut, UserCog, MapPin, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/store';
 import { useAppLogout } from '@/hooks/use-auth-api';
 import { useTranslation } from '@/lib/i18n';
+import { NotificationProvider, useNotifications } from '@/contexts/NotificationContext';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { NotificationToast } from '@/components/notifications/NotificationToast';
 
-export function AdminLayout({ children }: { children: React.ReactNode }) {
+function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const logoutAction = useStore(s => s.logout);
   const { mutate: logoutApi } = useAppLogout();
   const { t } = useTranslation();
+  const { notifications } = useNotifications();
 
   const navItems = [
     { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
@@ -60,15 +64,28 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       <main className="flex-1 ms-64 min-h-screen">
-        <header className="h-16 border-b border-border bg-card/80 backdrop-blur flex items-center px-8 sticky top-0 z-40">
+        <header className="h-16 border-b border-border bg-card/80 backdrop-blur flex items-center justify-between px-8 sticky top-0 z-40">
           <h1 className="text-lg font-semibold text-foreground capitalize">
             {location.split('/').pop() || 'Dashboard'}
           </h1>
+          <NotificationBell />
         </header>
         <div className="p-8 max-w-7xl mx-auto">
           {children}
         </div>
       </main>
+
+      <NotificationToast notifications={notifications} />
     </div>
+  );
+}
+
+export function AdminLayout({ children }: { children: React.ReactNode }) {
+  const token = useStore(s => s.token);
+
+  return (
+    <NotificationProvider role="admin" token={token}>
+      <AdminLayoutInner>{children}</AdminLayoutInner>
+    </NotificationProvider>
   );
 }

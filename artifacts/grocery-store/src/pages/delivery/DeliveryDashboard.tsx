@@ -8,6 +8,9 @@ import { useTranslation } from '@/lib/i18n';
 import { useToast } from '@/hooks/use-toast';
 import { Truck, LogOut, MapPin, Package, CheckCircle2, Loader2, Phone } from 'lucide-react';
 import { format } from 'date-fns';
+import { NotificationProvider } from '@/contexts/NotificationContext';
+import { NotificationToast } from '@/components/notifications/NotificationToast';
+import { useNotifications } from '@/contexts/NotificationContext';
 
 interface OrderItem {
   id: number;
@@ -261,9 +264,10 @@ function OrderCard({ order, lang, t, onComplete, isCompleting }: {
   );
 }
 
-export default function DeliveryDashboard() {
+function DeliveryDashboardInner() {
   const { t, lang } = useTranslation();
   const { toast } = useToast();
+  const { notifications } = useNotifications();
   const deliveryToken = useStore(s => s.deliveryToken);
   const deliveryPerson = useStore(s => s.deliveryPerson);
   const logoutDelivery = useStore(s => s.logoutDelivery);
@@ -413,6 +417,16 @@ export default function DeliveryDashboard() {
           </div>
         )}
       </main>
+      <NotificationToast notifications={notifications} />
     </div>
+  );
+}
+
+export default function DeliveryDashboard() {
+  const deliveryToken = useStore(s => s.deliveryToken);
+  return (
+    <NotificationProvider role="delivery" token={deliveryToken}>
+      <DeliveryDashboardInner />
+    </NotificationProvider>
   );
 }
