@@ -58,7 +58,7 @@ router.post("/login", async (req, res) => {
     sameSite: "lax",
     maxAge: cookieMaxAge,
     secure: process.env.NODE_ENV === "production",
-    path: "/api/delivery",
+    path: "/api",
   });
 
   res.json({ token, person: safePerson });
@@ -66,7 +66,7 @@ router.post("/login", async (req, res) => {
 
 // POST /delivery/logout
 router.post("/logout", (_req, res) => {
-  res.clearCookie("delivery_token", { path: "/api/delivery" });
+  res.clearCookie("delivery_token", { path: "/api" });
   res.json({ success: true });
 });
 

@@ -10,6 +10,9 @@ import {
 import { eq, desc, sql } from "drizzle-orm";
 import { authenticate, type AuthRequest } from "../middlewares/authenticate";
 import { broadcastToAdmins, sendPushToAdmins } from "./notifications";
+import pino from "pino";
+
+const logger = pino({ level: "info" });
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371;
@@ -245,7 +248,9 @@ router.post("/", authenticate(false), async (req: AuthRequest, res) => {
         bodyAr: `${full?.customerName || customerName} · ${(full?.totalPrice || 0).toFixed(2)} ج.م`,
         url: `/admin/orders?orderId=${orderId}`,
       });
-    } catch {}
+    } catch (err) {
+      logger.warn({ err }, "Notification dispatch failed for new order");
+    }
   });
 
   res.status(201).json(full);

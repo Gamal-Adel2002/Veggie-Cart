@@ -14,6 +14,9 @@ import type { OrderStatus } from "@workspace/db/schema";
 import { buildWhatsAppMessage, sendWhatsAppMessage, sendSmsMessage } from "../lib/whatsapp";
 import { hashPassword } from "../lib/auth";
 import { broadcastToDeliveryPerson, sendPushToDeliveryPerson } from "./notifications";
+import pino from "pino";
+
+const logger = pino({ level: "info" });
 
 const router = Router();
 
@@ -199,7 +202,9 @@ router.post("/orders/:id/assign", authenticate(), requireAdmin, async (req: Auth
         bodyAr: `طلب #${id} · ${order.deliveryAddress || order.customerName}`,
         url: `/delivery/dashboard`,
       });
-    } catch {}
+    } catch (err) {
+      logger.warn({ err }, "Notification dispatch failed for order assignment");
+    }
   });
 
   res.json({
