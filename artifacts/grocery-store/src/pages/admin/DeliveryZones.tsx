@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MapPicker } from '@/components/MapPicker';
-import { Plus, Pencil, Trash2, X, Check, MapPin } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Check, MapPin, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/lib/i18n';
 
@@ -50,6 +50,7 @@ export default function DeliveryZones() {
   const { toast } = useToast();
   const { t } = useTranslation();
 
+  const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<ZoneFormData>(emptyForm());
@@ -59,6 +60,12 @@ export default function DeliveryZones() {
     queryKey: ['admin-delivery-zones'],
     queryFn: () => apiFetch('/api/admin/delivery-zones'),
   });
+
+  const filteredZones = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return zones;
+    return zones.filter(z => z.name.toLowerCase().includes(q));
+  }, [zones, search]);
 
   const createMutation = useMutation({
     mutationFn: (data: object) => apiFetch('/api/admin/delivery-zones', { method: 'POST', body: JSON.stringify(data) }),
@@ -264,19 +271,31 @@ export default function DeliveryZones() {
         </Card>
       )}
 
+      {!showForm && (
+        <div className="relative mb-4">
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder={t('searchDeliveryZones')}
+            className="ps-9"
+          />
+        </div>
+      )}
+
       {isLoading ? (
         <p className="text-muted-foreground">{t('adminZoneLoading')}</p>
-      ) : zones.length === 0 ? (
+      ) : filteredZones.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <MapPin className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-40" />
-            <p className="text-muted-foreground font-medium">{t('adminZoneEmpty')}</p>
-            <p className="text-sm text-muted-foreground mt-1">{t('adminZoneEmptyDesc')}</p>
+            <p className="text-muted-foreground font-medium">{search ? 'No zones match your search.' : t('adminZoneEmpty')}</p>
+            <p className="text-sm text-muted-foreground mt-1">{search ? '' : t('adminZoneEmptyDesc')}</p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
-          {zones.map(zone => (
+          {filteredZones.map(zone => (
             <Card key={zone.id} className={`transition-opacity ${!zone.active ? 'opacity-60' : ''}`}>
               <CardContent className="py-4 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">

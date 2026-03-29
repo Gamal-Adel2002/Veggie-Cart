@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'wouter';
-import { Package, ShoppingBag, Truck, Grid, LayoutDashboard, LogOut, UserCog, MapPin } from 'lucide-react';
+import { Package, ShoppingBag, Truck, Grid, LayoutDashboard, LogOut, UserCog, MapPin, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/store';
 import { useAppLogout } from '@/hooks/use-auth-api';
@@ -17,6 +17,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     { href: '/admin/orders', icon: ShoppingBag, label: 'Orders' },
     { href: '/admin/products', icon: Package, label: 'Products' },
     { href: '/admin/categories', icon: Grid, label: 'Categories' },
+    { href: '/admin/customers', icon: Users, label: t('adminCustomers') },
     { href: '/admin/delivery', icon: Truck, label: 'Delivery Staff' },
     { href: '/admin/delivery-zones', icon: MapPin, label: t('adminDeliveryZones') },
     { href: '/admin/admins', icon: UserCog, label: 'Admins' },

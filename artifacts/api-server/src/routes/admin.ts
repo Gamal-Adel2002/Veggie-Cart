@@ -299,6 +299,98 @@ router.put("/admins/:id", authenticate(), requireAdmin, async (req: AuthRequest,
   res.json(safe);
 });
 
+// ── Customer management ───────────────────────────────────────────────────────
+
+router.get("/customers", authenticate(), requireAdmin, async (_req, res) => {
+  const customers = await db
+    .select({
+      id: usersTable.id,
+      name: usersTable.name,
+      phone: usersTable.phone,
+      address: usersTable.address,
+      latitude: usersTable.latitude,
+      longitude: usersTable.longitude,
+      profileImage: usersTable.profileImage,
+      createdAt: usersTable.createdAt,
+      orderCount: sql<number>`COUNT(${ordersTable.id})::int`,
+    })
+    .from(usersTable)
+    .leftJoin(ordersTable, eq(ordersTable.userId, usersTable.id))
+    .where(eq(usersTable.role, "customer"))
+    .groupBy(usersTable.id)
+    .orderBy(desc(usersTable.createdAt));
+
+  res.json(customers);
+});
+
+router.put("/customers/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
+  const id = parseInt(String(req.params.id));
+  if (isNaN(id) || id <= 0) { res.status(400).json({ error: "Invalid customer ID" }); return; }
+
+  const [existing] = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
+  if (!existing || existing.role !== "customer") { res.status(404).json({ error: "Customer not found" }); return; }
+
+  const { name, phone, address, latitude, longitude } = req.body;
+  const updates: Record<string, unknown> = {};
+
+  if (name != null) {
+    if (typeof name !== "string" || !name.trim()) { res.status(400).json({ error: "name must be a non-empty string" }); return; }
+    updates.name = name.trim();
+  }
+  if (phone != null) {
+    if (typeof phone !== "string" || !phone.trim()) { res.status(400).json({ error: "phone must be a non-empty string" }); return; }
+    const conflict = await db.select().from(usersTable).where(eq(usersTable.phone, phone.trim())).limit(1);
+    if (conflict.length > 0 && conflict[0].id !== id) { res.status(409).json({ error: "Phone already in use" }); return; }
+    updates.phone = phone.trim();
+  }
+  if (address != null) updates.address = String(address);
+  if (latitude != null) {
+    const lat = Number(latitude);
+    if (!Number.isFinite(lat)) { res.status(400).json({ error: "Invalid latitude" }); return; }
+    updates.latitude = lat;
+  }
+  if (longitude != null) {
+    const lng = Number(longitude);
+    if (!Number.isFinite(lng)) { res.status(400).json({ error: "Invalid longitude" }); return; }
+    updates.longitude = lng;
+  }
+
+  if (Object.keys(updates).length === 0) { res.json(existing); return; }
+
+  const [updated] = await db.update(usersTable).set(updates).where(eq(usersTable.id, id)).returning();
+  const { password: _, ...safe } = updated;
+  res.json(safe);
+});
+
+router.put("/customers/:id/reset-password", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
+  const id = parseInt(String(req.params.id));
+  if (isNaN(id) || id <= 0) { res.status(400).json({ error: "Invalid customer ID" }); return; }
+
+  const [existing] = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
+  if (!existing || existing.role !== "customer") { res.status(404).json({ error: "Customer not found" }); return; }
+
+  const { newPassword } = req.body;
+  if (!newPassword || typeof newPassword !== "string" || newPassword.length < 6) {
+    res.status(400).json({ error: "newPassword must be at least 6 characters" });
+    return;
+  }
+
+  const hashed = await hashPassword(newPassword);
+  await db.update(usersTable).set({ password: hashed }).where(eq(usersTable.id, id));
+  res.json({ success: true });
+});
+
+router.delete("/customers/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
+  const id = parseInt(String(req.params.id));
+  if (isNaN(id) || id <= 0) { res.status(400).json({ error: "Invalid customer ID" }); return; }
+
+  const [existing] = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
+  if (!existing || existing.role !== "customer") { res.status(404).json({ error: "Customer not found" }); return; }
+
+  await db.delete(usersTable).where(eq(usersTable.id, id));
+  res.status(204).end();
+});
+
 // ── Delivery Zones CRUD ───────────────────────────────────────────────────────
 
 router.get("/delivery-zones", authenticate(), requireAdmin, async (_req, res) => {

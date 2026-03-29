@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
+import { useTranslation as useI18n } from '@/lib/i18n';
+import { Search } from 'lucide-react';
 import { useAppAdmins, useAppCreateAdmin, useAppUpdateAdmin } from '@/hooks/use-auth-api';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -26,11 +28,22 @@ export default function Admins() {
   const { mutateAsync: updateAdmin } = useAppUpdateAdmin();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { t } = useI18n();
 
+  const [search, setSearch] = useState('');
   const [mode, setMode] = useState<DialogMode | null>(null);
   const [editTarget, setEditTarget] = useState<User | null>(null);
   const [formData, setFormData] = useState<FormData>({ name: '', phone: '', password: '' });
   const [saving, setSaving] = useState(false);
+
+  const filteredAdmins = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q || !admins) return admins || [];
+    return admins.filter((a) =>
+      a.name.toLowerCase().includes(q) ||
+      a.phone.toLowerCase().includes(q)
+    );
+  }, [admins, search]);
 
   const openNew = () => {
     setMode('new');
@@ -81,9 +94,19 @@ export default function Admins() {
 
   return (
     <AdminLayout>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">Admin Accounts</h2>
         <Button onClick={openNew}><Plus className="w-4 h-4 me-2" /> Add Admin</Button>
+      </div>
+
+      <div className="relative mb-4">
+        <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder={t('searchAdmins')}
+          className="ps-9"
+        />
       </div>
 
       <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
@@ -102,12 +125,14 @@ export default function Admins() {
                 <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Loading…</TableCell>
               </TableRow>
             )}
-            {!isLoading && admins?.length === 0 && (
+            {!isLoading && filteredAdmins.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No admins found.</TableCell>
+                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                  {search ? 'No admins match your search.' : 'No admins found.'}
+                </TableCell>
               </TableRow>
             )}
-            {admins?.map((admin) => (
+            {filteredAdmins.map((admin) => (
               <TableRow key={admin.id}>
                 <TableCell className="font-medium">{admin.name}</TableCell>
                 <TableCell>{admin.phone}</TableCell>

@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
+import { useTranslation } from '@/lib/i18n';
+import { Search } from 'lucide-react';
 import { useAppCategories, useAppCreateCategory, useAppUpdateCategory, useAppDeleteCategory } from '@/hooks/use-auth-api';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -15,9 +17,20 @@ export default function Categories() {
   const { mutateAsync: updateC } = useAppUpdateCategory();
   const { mutateAsync: deleteC } = useAppDeleteCategory();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
+  const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<Category | 'new' | null>(null);
   const [formData, setFormData] = useState({ name: '', nameAr: '', icon: '🥦' });
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q || !categories) return categories || [];
+    return categories.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      c.nameAr.toLowerCase().includes(q)
+    );
+  }, [categories, search]);
 
   const openEdit = (c: Category | 'new') => {
     setEditing(c);
@@ -35,9 +48,19 @@ export default function Categories() {
 
   return (
     <AdminLayout>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">Categories</h2>
         <Button onClick={() => openEdit('new')}><Plus className="w-4 h-4 me-2" /> Add Category</Button>
+      </div>
+
+      <div className="relative mb-4">
+        <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder={t('searchCategories')}
+          className="ps-9"
+        />
       </div>
 
       <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
@@ -52,7 +75,14 @@ export default function Categories() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {categories?.map(c => (
+            {filtered.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  {search ? 'No categories match your search.' : 'No categories yet.'}
+                </TableCell>
+              </TableRow>
+            )}
+            {filtered.map(c => (
               <TableRow key={c.id}>
                 <TableCell className="text-2xl">{c.icon}</TableCell>
                 <TableCell>{c.name}</TableCell>

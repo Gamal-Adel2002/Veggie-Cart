@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
+import { useTranslation } from '@/lib/i18n';
+import { Search } from 'lucide-react';
 import { useAppProducts, useAppCategories, useAppCreateProduct, useAppUpdateProduct, useAppDeleteProduct, useAppUploadImage } from '@/hooks/use-auth-api';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -32,7 +34,18 @@ type FormValues = z.infer<typeof schema>;
 export default function Products() {
   const { data: products } = useAppProducts();
   const { data: categories } = useAppCategories();
+  const [search, setSearch] = useState('');
+  const { t } = useTranslation();
   const [editing, setEditing] = useState<Product | null | 'new'>(null);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q || !products) return products || [];
+    return products.filter(p =>
+      p.name.toLowerCase().includes(q) ||
+      p.nameAr.toLowerCase().includes(q)
+    );
+  }, [products, search]);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -111,9 +124,19 @@ export default function Products() {
 
   return (
     <AdminLayout>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">Manage Products</h2>
         <Button onClick={() => openEdit('new')}><Plus className="w-4 h-4 me-2" /> Add Product</Button>
+      </div>
+
+      <div className="relative mb-4">
+        <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder={t('searchProducts')}
+          className="ps-9"
+        />
       </div>
 
       <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
@@ -128,7 +151,14 @@ export default function Products() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {products?.map(p => (
+            {filtered.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  {search ? 'No products match your search.' : 'No products yet.'}
+                </TableCell>
+              </TableRow>
+            )}
+            {filtered.map(p => (
               <TableRow key={p.id}>
                 <TableCell><img src={p.image || ''} className="w-10 h-10 object-contain rounded bg-muted" alt="" /></TableCell>
                 <TableCell>{p.name} <br/><span className="text-muted-foreground text-xs">{p.nameAr}</span></TableCell>

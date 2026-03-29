@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useAppAdminOrders, useAppUpdateOrderStatus, useAppAssignDelivery, useAppDeliveryPersons } from '@/hooks/use-auth-api';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
@@ -11,6 +12,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { type Order, UpdateOrderStatusInputStatus } from '@workspace/api-client-react';
 import { getErrorMessage } from '@/lib/utils';
+import { useTranslation } from '@/lib/i18n';
+import { Search } from 'lucide-react';
 
 const updatableStatuses = Object.values(UpdateOrderStatusInputStatus) as Array<typeof UpdateOrderStatusInputStatus[keyof typeof UpdateOrderStatusInputStatus]>;
 
@@ -21,10 +24,23 @@ export default function Orders() {
   const { mutateAsync: assignDelivery } = useAppAssignDelivery();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
+  const { t } = useTranslation();
+
+  const [search, setSearch] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [newStatus, setNewStatus] = useState<typeof updatableStatuses[number] | ''>('');
   const [deliveryId, setDeliveryId] = useState<string>('');
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q || !orders) return orders || [];
+    return orders.filter(o =>
+      String(o.id).includes(q) ||
+      o.customerName.toLowerCase().includes(q) ||
+      o.customerPhone.toLowerCase().includes(q) ||
+      o.status.toLowerCase().includes(q)
+    );
+  }, [orders, search]);
 
   const handleUpdateStatus = async () => {
     if (!selectedOrder || !newStatus) return;
@@ -63,6 +79,16 @@ export default function Orders() {
 
   return (
     <AdminLayout>
+      <div className="relative mb-4">
+        <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder={t('searchOrders')}
+          className="ps-9"
+        />
+      </div>
+
       <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
         <Table>
           <TableHeader>
@@ -76,7 +102,14 @@ export default function Orders() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {orders?.map((order) => (
+            {filtered.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  {search ? 'No orders match your search.' : 'No orders yet.'}
+                </TableCell>
+              </TableRow>
+            )}
+            {filtered.map((order) => (
               <TableRow key={order.id}>
                 <TableCell className="font-medium">#{order.id}</TableCell>
                 <TableCell>{order.customerName}</TableCell>
