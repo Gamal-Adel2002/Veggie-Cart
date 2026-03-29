@@ -20,6 +20,7 @@ L.Marker.prototype.options.icon = DefaultIcon;
 interface MapPickerProps {
   location: { latitude: number; longitude: number } | null;
   onChange: (lat: number, lng: number) => void;
+  onAddressChange?: (address: string) => void;
   className?: string;
 }
 
@@ -55,7 +56,7 @@ function FlyTo({ target }: { target: { lat: number; lng: number } | null }) {
   return null;
 }
 
-export function MapPicker({ location, onChange, className }: MapPickerProps) {
+export function MapPicker({ location, onChange, onAddressChange, className }: MapPickerProps) {
   const position = location ? { lat: location.latitude, lng: location.longitude } : null;
 
   const [query, setQuery] = useState('');
@@ -111,6 +112,7 @@ export function MapPicker({ location, onChange, className }: MapPickerProps) {
     const lat = parseFloat(result.lat);
     const lng = parseFloat(result.lon);
     onChange(lat, lng);
+    onAddressChange?.(result.display_name);
     setFlyTarget({ lat, lng });
     setShowDropdown(false);
     setQuery(result.display_name);

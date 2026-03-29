@@ -247,7 +247,11 @@ export default function Account() {
               {/* Location map picker */}
               <div className="border-t border-border/50 pt-4 space-y-2">
                 <Label className="text-xs">{t('deliveryLocation')}</Label>
-                <MapPicker location={mapLoc} onChange={(lat, lng) => setMapLoc({ latitude: lat, longitude: lng })} />
+                <MapPicker
+                  location={mapLoc}
+                  onChange={(lat, lng) => setMapLoc({ latitude: lat, longitude: lng })}
+                  onAddressChange={(addr) => setMapAddress(addr)}
+                />
               </div>
 
               <div className="flex gap-2 pt-2">
