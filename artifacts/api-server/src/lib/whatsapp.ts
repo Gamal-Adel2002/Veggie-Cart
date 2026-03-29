@@ -97,9 +97,9 @@ export async function sendSmsMessage(
 ): Promise<{ success: boolean; error?: string }> {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
-  // Use env var only if it looks like a valid E.164 international number (starts with +1 or international prefix)
+  // Use env var only if it looks like a valid E.164 number (starts with + followed by digits)
   const envFrom = process.env.TWILIO_SMS_FROM;
-  const fromPhone = envFrom && envFrom.startsWith("+1") ? envFrom : "+12603702714";
+  const fromPhone = envFrom && /^\+\d+$/.test(envFrom) ? envFrom : "+12603702714";
 
   if (!accountSid || !authToken) {
     logger.warn("Twilio credentials not configured - SMS not sent");
