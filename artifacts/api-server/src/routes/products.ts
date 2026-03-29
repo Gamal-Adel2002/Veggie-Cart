@@ -47,6 +47,8 @@ async function getProductWithCategory(id: number) {
     categoryId: productsTable.categoryId,
     featured: productsTable.featured,
     inStock: productsTable.inStock,
+    quantity: productsTable.quantity,
+    quantityAlert: productsTable.quantityAlert,
     createdAt: productsTable.createdAt,
     category: {
       id: categoriesTable.id,
@@ -81,6 +83,8 @@ router.get("/", async (req, res) => {
     categoryId: productsTable.categoryId,
     featured: productsTable.featured,
     inStock: productsTable.inStock,
+    quantity: productsTable.quantity,
+    quantityAlert: productsTable.quantityAlert,
     createdAt: productsTable.createdAt,
     category: {
       id: categoriesTable.id,
@@ -107,11 +111,15 @@ router.get("/:id", async (req, res) => {
 });
 
 router.post("/", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
-  const { name, nameAr, description, descriptionAr, price, unit, image, categoryId, featured, inStock } = req.body;
+  const { name, nameAr, description, descriptionAr, price, unit, image, categoryId, featured, inStock, quantity, quantityAlert } = req.body;
   if (!name || !nameAr || !price || !unit) {
     res.status(400).json({ error: "name, nameAr, price, and unit are required" });
     return;
   }
+
+  const qty = quantity !== undefined && quantity !== null && quantity !== "" ? Number(quantity) : null;
+  const qtyAlert = quantityAlert !== undefined && quantityAlert !== null && quantityAlert !== "" ? Number(quantityAlert) : null;
+
   const [product] = await db.insert(productsTable).values({
     name,
     nameAr,
@@ -122,7 +130,9 @@ router.post("/", authenticate(), requireAdmin, async (req: AuthRequest, res) => 
     image: image || null,
     categoryId: categoryId ? Number(categoryId) : null,
     featured: featured ?? false,
-    inStock: inStock ?? true,
+    inStock: qty !== null ? qty > 0 : (inStock ?? true),
+    quantity: qty,
+    quantityAlert: qtyAlert,
   }).returning();
   const full = await getProductWithCategory(product.id);
   res.status(201).json(full);
@@ -130,7 +140,19 @@ router.post("/", authenticate(), requireAdmin, async (req: AuthRequest, res) => 
 
 router.put("/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
   const id = parseInt(String(req.params.id));
-  const { name, nameAr, description, descriptionAr, price, unit, image, categoryId, featured, inStock } = req.body;
+  const { name, nameAr, description, descriptionAr, price, unit, image, categoryId, featured, inStock, quantity, quantityAlert } = req.body;
+
+  const qty = quantity !== undefined && quantity !== null && quantity !== "" ? Number(quantity) : quantity === null ? null : undefined;
+  const qtyAlert = quantityAlert !== undefined && quantityAlert !== null && quantityAlert !== "" ? Number(quantityAlert) : quantityAlert === null ? null : undefined;
+
+  // Auto-set inStock based on quantity if quantity is provided
+  let resolvedInStock: boolean | undefined = inStock ?? undefined;
+  if (qty !== undefined && qty !== null) {
+    resolvedInStock = qty > 0;
+  } else if (qty === null) {
+    resolvedInStock = inStock ?? undefined;
+  }
+
   const [product] = await db.update(productsTable).set({
     name,
     nameAr,
@@ -141,7 +163,9 @@ router.put("/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) =
     image: image !== undefined ? image || null : undefined,
     categoryId: categoryId !== undefined ? (categoryId ? Number(categoryId) : null) : undefined,
     featured: featured ?? undefined,
-    inStock: inStock ?? undefined,
+    inStock: resolvedInStock,
+    quantity: qty,
+    quantityAlert: qtyAlert,
   }).where(eq(productsTable.id, id)).returning();
   if (!product) {
     res.status(404).json({ error: "Product not found" });

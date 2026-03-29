@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
 import { useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2, Edit } from 'lucide-react';
+import { Plus, Trash2, Edit, Package } from 'lucide-react';
 import type { Product } from '@workspace/api-client-react';
 
 const schema = z.object({
@@ -21,15 +22,22 @@ const schema = z.object({
   unit: z.enum(['kg', 'piece', 'bundle']),
   categoryId: z.coerce.number(),
   featured: z.boolean().default(false),
-  inStock: z.boolean().default(true)
+  inStock: z.boolean().default(true),
+  quantity: z.union([z.coerce.number().min(0), z.literal('')]).optional(),
+  quantityAlert: z.union([z.coerce.number().min(0), z.literal('')]).optional(),
 });
+
+type FormValues = z.infer<typeof schema>;
 
 export default function Products() {
   const { data: products } = useAppProducts();
   const { data: categories } = useAppCategories();
   const [editing, setEditing] = useState<Product | null | 'new'>(null);
   
-  const form = useForm({ resolver: zodResolver(schema), defaultValues: { name:'', nameAr:'', price:1, unit:'kg', categoryId:1, featured:false, inStock:true } });
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { name:'', nameAr:'', price:1, unit:'kg', categoryId:1, featured:false, inStock:true, quantity:'', quantityAlert:'' }
+  });
   const [file, setFile] = useState<File | null>(null);
 
   const { mutateAsync: createP } = useAppCreateProduct();
@@ -40,29 +48,65 @@ export default function Products() {
 
   const openEdit = (p: Product | 'new') => {
     setEditing(p);
-    if (p === 'new') form.reset({ name:'', nameAr:'', price:1, unit:'kg', categoryId:categories?.[0]?.id||1, featured:false, inStock:true });
-    else {
+    if (p === 'new') {
+      form.reset({ name:'', nameAr:'', price:1, unit:'kg', categoryId:categories?.[0]?.id||1, featured:false, inStock:true, quantity:'', quantityAlert:'' });
+    } else {
       const unit = (["kg", "piece", "bundle"] as const).includes(p.unit as "kg" | "piece" | "bundle")
         ? (p.unit as "kg" | "piece" | "bundle")
         : "kg";
-      form.reset({ name:p.name, nameAr:p.nameAr, price:p.price, unit, categoryId:p.categoryId||1, featured:p.featured, inStock:p.inStock });
+      form.reset({
+        name: p.name,
+        nameAr: p.nameAr,
+        price: p.price,
+        unit,
+        categoryId: p.categoryId||1,
+        featured: p.featured,
+        inStock: p.inStock,
+        quantity: p.quantity !== null && p.quantity !== undefined ? p.quantity : '',
+        quantityAlert: p.quantityAlert !== null && p.quantityAlert !== undefined ? p.quantityAlert : '',
+      });
     }
   };
 
-  const onSubmit = async (data: z.infer<typeof schema>) => {
+  const onSubmit = async (data: FormValues) => {
     let imageUrl = typeof editing === 'object' && editing?.image ? editing.image : undefined;
     if (file) {
       const res = await uploadImg({ data: { file } });
       imageUrl = res.url;
     }
 
-    const payload = { ...data, image: imageUrl };
+    const qty = data.quantity !== '' && data.quantity !== undefined ? Number(data.quantity) : null;
+    const qtyAlert = data.quantityAlert !== '' && data.quantityAlert !== undefined ? Number(data.quantityAlert) : null;
+
+    const payload = {
+      name: data.name,
+      nameAr: data.nameAr,
+      price: data.price,
+      unit: data.unit,
+      categoryId: data.categoryId,
+      featured: data.featured,
+      inStock: qty !== null ? qty > 0 : data.inStock,
+      image: imageUrl,
+      quantity: qty as number | undefined,
+      quantityAlert: qtyAlert as number | undefined,
+    };
+
     if (editing === 'new') await createP({ data: payload });
-    else await updateP({ id: editing!.id, data: payload });
+    else await updateP({ id: (editing as Product).id, data: payload });
     
     queryClient.invalidateQueries({ queryKey: ['/api/products'] });
     setEditing(null);
     setFile(null);
+  };
+
+  const getStockBadge = (p: Product) => {
+    if (!p.inStock || (p.quantity !== null && p.quantity !== undefined && p.quantity <= 0)) {
+      return <Badge variant="destructive" className="text-xs">Out of Stock</Badge>;
+    }
+    if (p.quantity !== null && p.quantity !== undefined) {
+      return <Badge variant="outline" className="text-xs text-green-600 border-green-300">{p.quantity} {p.unit}</Badge>;
+    }
+    return <Badge variant="outline" className="text-xs text-green-600 border-green-300">In Stock</Badge>;
   };
 
   return (
@@ -79,6 +123,7 @@ export default function Products() {
               <TableHead>Image</TableHead>
               <TableHead>Name (EN/AR)</TableHead>
               <TableHead>Price/Unit</TableHead>
+              <TableHead>Stock</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -88,6 +133,7 @@ export default function Products() {
                 <TableCell><img src={p.image || ''} className="w-10 h-10 object-contain rounded bg-muted" alt="" /></TableCell>
                 <TableCell>{p.name} <br/><span className="text-muted-foreground text-xs">{p.nameAr}</span></TableCell>
                 <TableCell>{p.price} / {p.unit}</TableCell>
+                <TableCell>{getStockBadge(p)}</TableCell>
                 <TableCell>
                   <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Edit className="w-4 h-4" /></Button>
                   <Button variant="ghost" size="icon" className="text-destructive" onClick={async () => {
@@ -102,7 +148,7 @@ export default function Products() {
       </div>
 
       <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editing === 'new' ? 'New Product' : 'Edit Product'}</DialogTitle></DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -123,6 +169,33 @@ export default function Products() {
                   </Select></FormItem>
                 )} />
               </div>
+
+              <div className="border border-border rounded-xl p-4 space-y-3 bg-muted/30">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground mb-1">
+                  <Package className="w-4 h-4 text-primary" />
+                  Stock Management
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField control={form.control} name="quantity" render={({field}) => (
+                    <FormItem>
+                      <FormLabel>Quantity ({form.watch('unit') || 'unit'})</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.1" min="0" placeholder="Leave blank if unlimited" {...field} value={field.value ?? ''} />
+                      </FormControl>
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="quantityAlert" render={({field}) => (
+                    <FormItem>
+                      <FormLabel>Low Stock Alert Threshold</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.1" min="0" placeholder="e.g. 50" {...field} value={field.value ?? ''} />
+                      </FormControl>
+                    </FormItem>
+                  )} />
+                </div>
+                <p className="text-xs text-muted-foreground">When quantity reaches the alert threshold, a warning will appear on the dashboard. Leave blank for unlimited stock.</p>
+              </div>
+
               <div>
                 <label className="text-sm font-medium leading-none">Image</label>
                 <Input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} className="mt-1.5" />

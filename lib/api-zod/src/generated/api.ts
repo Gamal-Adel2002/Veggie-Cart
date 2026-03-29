@@ -201,6 +201,8 @@ export const GetProductsResponseItem = zod.object({
     .nullish(),
   featured: zod.boolean(),
   inStock: zod.boolean(),
+  quantity: zod.number().nullish(),
+  quantityAlert: zod.number().nullish(),
   createdAt: zod.coerce.date(),
 });
 export const GetProductsResponse = zod.array(GetProductsResponseItem);
@@ -219,6 +221,8 @@ export const CreateProductBody = zod.object({
   categoryId: zod.number().optional(),
   featured: zod.boolean().optional(),
   inStock: zod.boolean().optional(),
+  quantity: zod.number().nullish(),
+  quantityAlert: zod.number().nullish(),
 });
 
 /**
@@ -249,6 +253,8 @@ export const GetProductResponse = zod.object({
     .nullish(),
   featured: zod.boolean(),
   inStock: zod.boolean(),
+  quantity: zod.number().nullish(),
+  quantityAlert: zod.number().nullish(),
   createdAt: zod.coerce.date(),
 });
 
@@ -270,6 +276,8 @@ export const UpdateProductBody = zod.object({
   categoryId: zod.number().optional(),
   featured: zod.boolean().optional(),
   inStock: zod.boolean().optional(),
+  quantity: zod.number().nullish(),
+  quantityAlert: zod.number().nullish(),
 });
 
 export const UpdateProductResponse = zod.object({
@@ -293,6 +301,8 @@ export const UpdateProductResponse = zod.object({
     .nullish(),
   featured: zod.boolean(),
   inStock: zod.boolean(),
+  quantity: zod.number().nullish(),
+  quantityAlert: zod.number().nullish(),
   createdAt: zod.coerce.date(),
 });
 
@@ -596,6 +606,22 @@ export const AssignDeliveryResponse = zod.object({
   whatsappSent: zod.boolean(),
   whatsappMessage: zod.string().optional(),
 });
+
+/**
+ * @summary Admin - list products at or below their alert threshold
+ */
+export const GetLowStockProductsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  nameAr: zod.string(),
+  quantity: zod.number().nullish(),
+  quantityAlert: zod.number().nullish(),
+  unit: zod.enum(["kg", "piece", "bundle"]),
+  inStock: zod.boolean(),
+});
+export const GetLowStockProductsResponse = zod.array(
+  GetLowStockProductsResponseItem,
+);
 
 /**
  * @summary Admin - list delivery persons

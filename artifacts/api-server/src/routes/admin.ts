@@ -7,7 +7,7 @@ import {
   usersTable,
   deliveryPersonsTable,
 } from "@workspace/db/schema";
-import { eq, sql, desc } from "drizzle-orm";
+import { eq, sql, desc, lte, isNotNull, and } from "drizzle-orm";
 import { authenticate, requireAdmin, type AuthRequest } from "../middlewares/authenticate";
 import type { OrderStatus } from "@workspace/db/schema";
 import { buildWhatsAppMessage, sendWhatsAppMessage } from "../lib/whatsapp";
@@ -178,6 +178,30 @@ router.post("/orders/:id/assign", authenticate(), requireAdmin, async (req: Auth
     whatsappSent: waResult.success,
     whatsappMessage: whatsappMsg,
   });
+});
+
+// ── Low-stock alerts ─────────────────────────────────────────────────────────
+
+router.get("/low-stock", authenticate(), requireAdmin, async (_req, res) => {
+  const lowStock = await db
+    .select({
+      id: productsTable.id,
+      name: productsTable.name,
+      nameAr: productsTable.nameAr,
+      quantity: productsTable.quantity,
+      quantityAlert: productsTable.quantityAlert,
+      unit: productsTable.unit,
+      inStock: productsTable.inStock,
+    })
+    .from(productsTable)
+    .where(
+      and(
+        isNotNull(productsTable.quantity),
+        isNotNull(productsTable.quantityAlert),
+        lte(productsTable.quantity, productsTable.quantityAlert)
+      )
+    );
+  res.json(lowStock);
 });
 
 // ── Admin user management ────────────────────────────────────────────────────

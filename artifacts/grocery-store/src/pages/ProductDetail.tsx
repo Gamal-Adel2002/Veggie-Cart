@@ -25,7 +25,10 @@ export default function ProductDetail() {
   const description = lang === 'ar' ? product.descriptionAr : product.description;
   const categoryName = lang === 'ar' ? product.category?.nameAr : product.category?.name;
 
+  const isOutOfStock = !product.inStock || (product.quantity !== null && product.quantity !== undefined && product.quantity <= 0);
+
   const handleAdd = () => {
+    if (isOutOfStock) return;
     addToCart(product, qty);
     toast({ title: "Added to Cart", description: `${qty} x ${name} added.` });
   };
@@ -42,13 +45,21 @@ export default function ProductDetail() {
         <div className="bg-card rounded-3xl border border-border/50 shadow-xl shadow-black/5 overflow-hidden flex flex-col md:flex-row">
           <div className="md:w-1/2 bg-muted/20 p-12 flex items-center justify-center relative">
             {product.image ? (
-              <img src={product.image} alt={name} className="w-full max-w-md h-auto object-contain drop-shadow-2xl" />
+              <img
+                src={product.image}
+                alt={name}
+                className={`w-full max-w-md h-auto object-contain drop-shadow-2xl ${isOutOfStock ? 'grayscale opacity-60' : ''}`}
+              />
             ) : (
               <div className="w-full aspect-square bg-secondary rounded-2xl flex items-center justify-center text-muted-foreground">
                 No Image
               </div>
             )}
-            {product.featured && <Badge className="absolute top-6 start-6 bg-accent border-none text-accent-foreground px-3 py-1">Featured</Badge>}
+            {isOutOfStock ? (
+              <Badge className="absolute top-6 start-6 bg-destructive border-none text-destructive-foreground px-3 py-1">Out of Stock</Badge>
+            ) : product.featured ? (
+              <Badge className="absolute top-6 start-6 bg-accent border-none text-accent-foreground px-3 py-1">Featured</Badge>
+            ) : null}
           </div>
 
           <div className="md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
@@ -60,21 +71,29 @@ export default function ProductDetail() {
               {description || "Fresh and locally sourced. Perfect for your daily cooking needs."}
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 mt-auto">
-              <div className="flex items-center border-2 border-border rounded-xl h-14 bg-background px-2 w-full sm:w-40">
-                <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 rounded-lg hover:bg-muted" onClick={() => setQty(Math.max(1, qty - 1))}>
-                  <Minus className="w-4 h-4" />
-                </Button>
-                <span className="flex-1 text-center font-bold text-lg">{qty}</span>
-                <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 rounded-lg hover:bg-muted" onClick={() => setQty(qty + 1)}>
-                  <Plus className="w-4 h-4" />
+            {isOutOfStock ? (
+              <div className="mt-auto">
+                <Button disabled size="lg" className="h-14 w-full rounded-xl text-lg font-bold opacity-60 cursor-not-allowed">
+                  {t('outOfStock') || 'Out of Stock'}
                 </Button>
               </div>
-              <Button onClick={handleAdd} size="lg" className="h-14 flex-1 rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 text-lg font-bold">
-                <ShoppingCart className="w-5 h-5 me-3" />
-                {t('addToCart')}
-              </Button>
-            </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-4 mt-auto">
+                <div className="flex items-center border-2 border-border rounded-xl h-14 bg-background px-2 w-full sm:w-40">
+                  <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 rounded-lg hover:bg-muted" onClick={() => setQty(Math.max(1, qty - 1))}>
+                    <Minus className="w-4 h-4" />
+                  </Button>
+                  <span className="flex-1 text-center font-bold text-lg">{qty}</span>
+                  <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 rounded-lg hover:bg-muted" onClick={() => setQty(qty + 1)}>
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                <Button onClick={handleAdd} size="lg" className="h-14 flex-1 rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 text-lg font-bold">
+                  <ShoppingCart className="w-5 h-5 me-3" />
+                  {t('addToCart')}
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </main>

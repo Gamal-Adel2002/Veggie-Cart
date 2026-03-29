@@ -18,4 +18,6 @@ export interface ProductInput {
   categoryId?: number;
   featured?: boolean;
   inStock?: boolean;
+  quantity?: number | null;
+  quantityAlert?: number | null;
 }

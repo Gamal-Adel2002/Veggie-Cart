@@ -76,6 +76,17 @@ router.post("/", authenticate(false), async (req: AuthRequest, res) => {
       res.status(400).json({ error: `Product ${productId} not found` });
       return;
     }
+
+    // Stock check: if product has a quantity set, ensure enough stock
+    if (product.quantity !== null && product.quantity !== undefined) {
+      if (product.quantity < quantity) {
+        res.status(400).json({
+          error: `Insufficient stock for "${product.name}". Available: ${product.quantity} ${product.unit}, requested: ${quantity} ${product.unit}`,
+        });
+        return;
+      }
+    }
+
     const subtotal = product.price * quantity;
     totalPrice += subtotal;
     enrichedItems.push({
@@ -106,6 +117,26 @@ router.post("/", authenticate(false), async (req: AuthRequest, res) => {
 
   for (const item of enrichedItems) {
     await db.insert(orderItemsTable).values({ ...item, orderId: order.id });
+  }
+
+  // Deduct stock quantities after order is successfully placed
+  for (const item of enrichedItems) {
+    const [product] = await db
+      .select()
+      .from(productsTable)
+      .where(eq(productsTable.id, item.productId))
+      .limit(1);
+
+    if (product && product.quantity !== null && product.quantity !== undefined) {
+      const newQty = Math.max(0, product.quantity - item.quantity);
+      await db
+        .update(productsTable)
+        .set({
+          quantity: newQty,
+          inStock: newQty > 0,
+        })
+        .where(eq(productsTable.id, item.productId));
+    }
   }
 
   const full = await getFullOrder(order.id);

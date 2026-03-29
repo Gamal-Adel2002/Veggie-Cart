@@ -473,6 +473,21 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /admin/low-stock:
+    get:
+      operationId: getLowStockProducts
+      tags: [admin]
+      summary: Admin - list products at or below their alert threshold
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LowStockProduct"
+
   /admin/delivery-persons:
     get:
       operationId: getDeliveryPersons
@@ -860,6 +875,14 @@ components:
           type: boolean
         inStock:
           type: boolean
+        quantity:
+          type: number
+          format: double
+          nullable: true
+        quantityAlert:
+          type: number
+          format: double
+          nullable: true
         createdAt:
           type: string
           format: date-time
@@ -898,11 +921,48 @@ components:
           type: boolean
         inStock:
           type: boolean
+        quantity:
+          type: number
+          format: double
+          nullable: true
+        quantityAlert:
+          type: number
+          format: double
+          nullable: true
       required:
         - name
         - nameAr
         - price
         - unit
+
+    LowStockProduct:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        nameAr:
+          type: string
+        quantity:
+          type: number
+          format: double
+          nullable: true
+        quantityAlert:
+          type: number
+          format: double
+          nullable: true
+        unit:
+          type: string
+          enum: [kg, piece, bundle]
+        inStock:
+          type: boolean
+      required:
+        - id
+        - name
+        - nameAr
+        - unit
+        - inStock
 
     OrderItem:
       type: object

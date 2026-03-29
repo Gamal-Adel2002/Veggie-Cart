@@ -21,5 +21,7 @@ export interface Product {
   category?: Category | null;
   featured: boolean;
   inStock: boolean;
+  quantity?: number | null;
+  quantityAlert?: number | null;
   createdAt: Date;
 }

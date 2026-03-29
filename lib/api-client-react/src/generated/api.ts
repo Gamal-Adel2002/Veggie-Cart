@@ -33,6 +33,7 @@ import type {
   HealthStatus,
   LocationInput,
   LoginInput,
+  LowStockProduct,
   Order,
   Product,
   ProductInput,
@@ -1890,6 +1891,81 @@ export const useAssignDelivery = <
 > => {
   return useMutation(getAssignDeliveryMutationOptions(options));
 };
+
+/**
+ * @summary Admin - list products at or below their alert threshold
+ */
+export const getGetLowStockProductsUrl = () => {
+  return `/api/admin/low-stock`;
+};
+
+export const getLowStockProducts = async (
+  options?: RequestInit,
+): Promise<LowStockProduct[]> => {
+  return customFetch<LowStockProduct[]>(getGetLowStockProductsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetLowStockProductsQueryKey = () => {
+  return [`/api/admin/low-stock`] as const;
+};
+
+export const getGetLowStockProductsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getLowStockProducts>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getLowStockProducts>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetLowStockProductsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getLowStockProducts>>
+  > = ({ signal }) => getLowStockProducts({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getLowStockProducts>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetLowStockProductsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getLowStockProducts>>
+>;
+export type GetLowStockProductsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Admin - list products at or below their alert threshold
+ */
+
+export function useGetLowStockProducts<
+  TData = Awaited<ReturnType<typeof getLowStockProducts>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getLowStockProducts>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetLowStockProductsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary Admin - list delivery persons

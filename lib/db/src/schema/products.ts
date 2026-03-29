@@ -17,6 +17,8 @@ export const productsTable = pgTable("products", {
   categoryId: integer("category_id").references(() => categoriesTable.id),
   featured: boolean("featured").notNull().default(false),
   inStock: boolean("in_stock").notNull().default(true),
+  quantity: real("quantity"),
+  quantityAlert: real("quantity_alert"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

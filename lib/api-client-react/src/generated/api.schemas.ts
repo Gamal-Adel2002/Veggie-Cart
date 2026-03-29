@@ -103,6 +103,8 @@ export interface Product {
   category?: Category | null;
   featured: boolean;
   inStock: boolean;
+  quantity?: number | null;
+  quantityAlert?: number | null;
   createdAt: string;
 }
 
@@ -126,6 +128,27 @@ export interface ProductInput {
   categoryId?: number;
   featured?: boolean;
   inStock?: boolean;
+  quantity?: number | null;
+  quantityAlert?: number | null;
+}
+
+export type LowStockProductUnit =
+  (typeof LowStockProductUnit)[keyof typeof LowStockProductUnit];
+
+export const LowStockProductUnit = {
+  kg: "kg",
+  piece: "piece",
+  bundle: "bundle",
+} as const;
+
+export interface LowStockProduct {
+  id: number;
+  name: string;
+  nameAr: string;
+  quantity?: number | null;
+  quantityAlert?: number | null;
+  unit: LowStockProductUnit;
+  inStock: boolean;
 }
 
 export interface OrderItem {

@@ -22,6 +22,8 @@ export * from "./getProductsParams";
 export * from "./healthStatus";
 export * from "./locationInput";
 export * from "./loginInput";
+export * from "./lowStockProduct";
+export * from "./lowStockProductUnit";
 export * from "./order";
 export * from "./orderItem";
 export * from "./orderItemInput";

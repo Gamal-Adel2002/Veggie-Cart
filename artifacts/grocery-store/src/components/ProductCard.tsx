@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'wouter';
 import { Plus } from 'lucide-react';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useStore } from '@/store';
@@ -14,9 +14,12 @@ export function ProductCard({ product }: { product: Product }) {
   const addToCart = useStore(s => s.addToCart);
   const { toast } = useToast();
 
+  const isOutOfStock = !product.inStock || (product.quantity !== null && product.quantity !== undefined && product.quantity <= 0);
+
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isOutOfStock) return;
     addToCart(product, 1);
     toast({
       title: "Added to Cart",
@@ -34,18 +37,22 @@ export function ProductCard({ product }: { product: Product }) {
             <img 
               src={product.image} 
               alt={name}
-              className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700 ease-out"
+              className={`w-full h-full object-contain transition-transform duration-700 ease-out ${isOutOfStock ? 'grayscale opacity-60' : 'group-hover:scale-110'}`}
             />
           ) : (
             <div className="w-full h-full bg-secondary rounded-xl flex items-center justify-center text-muted-foreground">
               No Image
             </div>
           )}
-          {product.featured && (
+          {isOutOfStock ? (
+            <Badge className="absolute top-3 start-3 bg-destructive text-destructive-foreground border-none">
+              Out of Stock
+            </Badge>
+          ) : product.featured ? (
             <Badge className="absolute top-3 start-3 bg-accent text-accent-foreground border-none">
               Featured
             </Badge>
-          )}
+          ) : null}
         </div>
         <CardContent className="p-5 flex-1 flex flex-col gap-1">
           <div className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">
@@ -62,10 +69,21 @@ export function ProductCard({ product }: { product: Product }) {
         <div className="px-5 pb-5 pt-0">
           <Button 
             onClick={handleAdd}
-            className="w-full rounded-xl font-bold bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground shadow-none hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 group/btn"
+            disabled={isOutOfStock}
+            className={`w-full rounded-xl font-bold shadow-none transition-all duration-300 group/btn ${
+              isOutOfStock
+                ? 'bg-muted text-muted-foreground cursor-not-allowed opacity-60'
+                : 'bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground hover:shadow-lg hover:shadow-primary/25'
+            }`}
           >
-            <Plus className="w-4 h-4 me-2 group-hover/btn:rotate-90 transition-transform duration-300" />
-            {t('addToCart')}
+            {isOutOfStock ? (
+              t('outOfStock') || 'Out of Stock'
+            ) : (
+              <>
+                <Plus className="w-4 h-4 me-2 group-hover/btn:rotate-90 transition-transform duration-300" />
+                {t('addToCart')}
+              </>
+            )}
           </Button>
         </div>
       </Card>

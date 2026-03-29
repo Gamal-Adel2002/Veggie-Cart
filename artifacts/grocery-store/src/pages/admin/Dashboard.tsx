@@ -1,14 +1,47 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { useAppAdminStats } from '@/hooks/use-auth-api';
+import { useAppAdminStats, useAppLowStockProducts } from '@/hooks/use-auth-api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Package, TrendingUp, Users, ShoppingBag } from 'lucide-react';
+import { Package, TrendingUp, Users, ShoppingBag, AlertTriangle, X } from 'lucide-react';
 
 export default function Dashboard() {
   const { data: stats } = useAppAdminStats();
+  const { data: lowStockProducts } = useAppLowStockProducts();
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+
+  const showBanner = !bannerDismissed && lowStockProducts && lowStockProducts.length > 0;
 
   return (
     <AdminLayout>
+      {showBanner && (
+        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+          <div className="flex-1">
+            <p className="font-semibold text-amber-800 mb-1">Low Stock Alert</p>
+            <ul className="space-y-0.5">
+              {lowStockProducts.map(p => (
+                <li key={p.id} className="text-sm text-amber-700">
+                  <span className="font-medium">{p.name}</span>
+                  {p.quantity !== null && p.quantity !== undefined && (
+                    <> — only <span className="font-bold">{p.quantity} {p.unit}</span> remaining
+                      {p.quantityAlert !== null && p.quantityAlert !== undefined && (
+                        <span className="text-amber-500"> (alert threshold: {p.quantityAlert} {p.unit})</span>
+                      )}
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <button
+            onClick={() => setBannerDismissed(true)}
+            className="text-amber-400 hover:text-amber-600 transition-colors shrink-0"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
