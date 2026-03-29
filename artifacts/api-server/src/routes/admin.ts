@@ -306,20 +306,33 @@ router.get("/delivery-zones", authenticate(), requireAdmin, async (_req, res) =>
   res.json(zones);
 });
 
+function validateZoneFields(body: Record<string, unknown>): { error: string } | null {
+  const { name, centerLat, centerLng, radiusKm } = body;
+  if (!name || typeof name !== "string" || !name.trim()) return { error: "name must be a non-empty string" };
+  const lat = Number(centerLat);
+  const lng = Number(centerLng);
+  const radius = Number(radiusKm);
+  if (!Number.isFinite(lat) || lat < -90 || lat > 90) return { error: "centerLat must be a valid latitude (-90 to 90)" };
+  if (!Number.isFinite(lng) || lng < -180 || lng > 180) return { error: "centerLng must be a valid longitude (-180 to 180)" };
+  if (!Number.isFinite(radius) || radius <= 0) return { error: "radiusKm must be a positive number" };
+  return null;
+}
+
 router.post("/delivery-zones", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
-  const { name, centerLat, centerLng, radiusKm, active } = req.body;
-  if (!name || centerLat == null || centerLng == null || radiusKm == null) {
-    res.status(400).json({ error: "name, centerLat, centerLng, and radiusKm are required" });
-    return;
-  }
+  const bodyErr = validateZoneFields(req.body);
+  if (bodyErr) { res.status(400).json(bodyErr); return; }
+
+  const { name, centerLat, centerLng, radiusKm } = req.body;
+  const active = req.body.active === false || req.body.active === "false" ? false : true;
+
   const [zone] = await db
     .insert(deliveryZonesTable)
     .values({
-      name: String(name),
+      name: String(name).trim(),
       centerLat: Number(centerLat),
       centerLng: Number(centerLng),
       radiusKm: Number(radiusKm),
-      active: active !== false,
+      active,
     })
     .returning();
   res.status(201).json(zone);
@@ -334,11 +347,27 @@ router.put("/delivery-zones/:id", authenticate(), requireAdmin, async (req: Auth
 
   const { name, centerLat, centerLng, radiusKm, active } = req.body;
   const updates: Partial<typeof deliveryZonesTable.$inferInsert> = {};
-  if (name != null) updates.name = String(name);
-  if (centerLat != null) updates.centerLat = Number(centerLat);
-  if (centerLng != null) updates.centerLng = Number(centerLng);
-  if (radiusKm != null) updates.radiusKm = Number(radiusKm);
-  if (active != null) updates.active = Boolean(active);
+
+  if (name != null) {
+    if (typeof name !== "string" || !String(name).trim()) { res.status(400).json({ error: "name must be a non-empty string" }); return; }
+    updates.name = String(name).trim();
+  }
+  if (centerLat != null) {
+    const val = Number(centerLat);
+    if (!Number.isFinite(val) || val < -90 || val > 90) { res.status(400).json({ error: "centerLat must be a valid latitude (-90 to 90)" }); return; }
+    updates.centerLat = val;
+  }
+  if (centerLng != null) {
+    const val = Number(centerLng);
+    if (!Number.isFinite(val) || val < -180 || val > 180) { res.status(400).json({ error: "centerLng must be a valid longitude (-180 to 180)" }); return; }
+    updates.centerLng = val;
+  }
+  if (radiusKm != null) {
+    const val = Number(radiusKm);
+    if (!Number.isFinite(val) || val <= 0) { res.status(400).json({ error: "radiusKm must be a positive number" }); return; }
+    updates.radiusKm = val;
+  }
+  if (active != null) updates.active = active === true || active === "true";
 
   const [zone] = await db.update(deliveryZonesTable).set(updates).where(eq(deliveryZonesTable.id, id)).returning();
   res.json(zone);
