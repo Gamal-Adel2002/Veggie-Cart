@@ -1,0 +1,100 @@
+import React from 'react';
+import { Link, useLocation } from 'wouter';
+import { ShoppingCart, User, LogOut, Menu, Languages, Sprout } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useStore } from '@/store';
+import { useTranslation } from '@/lib/i18n';
+import { Badge } from '@/components/ui/badge';
+import { useAppLogout } from '@/hooks/use-auth-api';
+import { motion } from 'framer-motion';
+
+export function Navbar() {
+  const { t, lang } = useTranslation();
+  const setLang = useStore(s => s.setLang);
+  const cart = useStore(s => s.cart);
+  const user = useStore(s => s.user);
+  const logoutAction = useStore(s => s.logout);
+  const { mutate: logoutApi } = useAppLogout();
+  const [location] = useLocation();
+
+  const cartItemsCount = cart.reduce((acc, item) => acc + item.cartQuantity, 0);
+
+  const toggleLang = () => setLang(lang === 'en' ? 'ar' : 'en');
+  
+  const handleLogout = () => {
+    logoutApi();
+    logoutAction();
+  };
+
+  return (
+    <motion.header 
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      className="sticky top-0 z-[100] w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 shadow-sm"
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16 items-center">
+          <div className="flex items-center gap-6">
+            <Link href="/" className="flex items-center gap-2 group">
+              <div className="bg-primary/10 p-2 rounded-xl text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
+                <Sprout className="w-6 h-6" />
+              </div>
+              <span className="font-display font-bold text-xl tracking-tight text-foreground hidden sm:block">
+                FreshVeg
+              </span>
+            </Link>
+            
+            <nav className="hidden md:flex items-center gap-1 ms-6">
+              <Link href="/">
+                <Button variant={location === '/' ? 'secondary' : 'ghost'} className="rounded-full px-5">
+                  {t('home')}
+                </Button>
+              </Link>
+              <Link href="/shop">
+                <Button variant={location === '/shop' ? 'secondary' : 'ghost'} className="rounded-full px-5">
+                  {t('shop')}
+                </Button>
+              </Link>
+            </nav>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={toggleLang} className="rounded-full" title="Language">
+              <Languages className="w-5 h-5 text-muted-foreground" />
+            </Button>
+            
+            <Link href="/cart">
+              <Button variant="ghost" size="icon" className="relative rounded-full hover:bg-primary/5 hover:text-primary">
+                <ShoppingCart className="w-5 h-5" />
+                {cartItemsCount > 0 && (
+                  <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 min-w-[1.25rem] h-5 flex items-center justify-center rounded-full text-[10px]">
+                    {cartItemsCount}
+                  </Badge>
+                )}
+              </Button>
+            </Link>
+
+            {user ? (
+              <>
+                <Link href={user.role === 'admin' ? '/admin' : '/account'}>
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <User className="w-5 h-5 text-muted-foreground" />
+                  </Button>
+                </Link>
+                <Button variant="ghost" size="icon" onClick={handleLogout} className="rounded-full text-destructive hover:bg-destructive/10">
+                  <LogOut className="w-5 h-5" />
+                </Button>
+              </>
+            ) : (
+              <Link href="/auth/login">
+                <Button className="rounded-full ms-2 font-semibold shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5 transition-all">
+                  {t('login')}
+                </Button>
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+    </motion.header>
+  );
+}

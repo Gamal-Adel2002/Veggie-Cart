@@ -21,7 +21,8 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 ```text
 artifacts-monorepo/
 ├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
+│   ├── api-server/         # Express API server
+│   └── grocery-store/      # React+Vite storefront (FreshVeg)
 ├── lib/                    # Shared libraries
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks
@@ -52,15 +53,48 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 
 ### `artifacts/api-server` (`@workspace/api-server`)
 
-Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
+Express 5 API server for the FreshVeg grocery delivery app. Routes live in `src/routes/` and use JWT auth.
 
 - Entry: `src/index.ts` — reads `PORT`, starts Express
 - App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
+- Routes mounted at `/api`:
+  - `GET /health` — health check
+  - `/auth` — signup, login, logout, me, location update, admin login
+  - `/categories` — GET all categories with product counts
+  - `/products` — GET/POST/PUT/DELETE products with image upload
+  - `/orders` — Customer order CRUD (POST create, GET list, GET by ID)
+  - `/admin/orders` — Admin order management (list all, update status, assign delivery)
+  - `/admin/delivery-persons` — Delivery staff CRUD
+  - `/admin/stats` — Dashboard stats
+  - `/upload` — Image upload (multer, stored in `./uploads/`)
+  - `/uploads/*` — Static file serving for uploaded images
+- Auth: JWT via bcryptjs + jsonwebtoken, middleware in `src/middlewares/authenticate.ts`
+- WhatsApp: Twilio integration in `src/lib/whatsapp.ts` (sends message on delivery person assignment)
 - Depends on: `@workspace/db`, `@workspace/api-zod`
-- `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
+- `pnpm --filter @workspace/api-server run dev` — run the dev server (port from `PORT` env)
+
+### `artifacts/grocery-store` (`@workspace/grocery-store`)
+
+React + Vite storefront for the FreshVeg grocery delivery application.
+
+- Preview path: `/` (root)
+- Features:
+  - Homepage with hero section, categories, featured products
+  - Shop page with category filter sidebar and product grid
+  - Product detail page
+  - Cart (Zustand state, persisted to localStorage)
+  - Checkout with Leaflet map for delivery location selection
+  - Order confirmation page
+  - Customer auth: phone-based signup (with profile image upload) and login
+  - Account page with order history and location update
+  - Admin panel: login, dashboard, orders management, products CRUD, categories CRUD, delivery persons CRUD
+  - EN/AR language toggle with RTL support
+  - Green-themed, mobile-first design
+- State: Zustand store (`src/store.ts`) - auth token, user, cart, language
+- Routing: wouter
+- API: Generated React Query hooks from `@workspace/api-client-react`
+- All hooks wrapped in `src/hooks/use-auth-api.ts` to inject auth headers
+- `pnpm --filter @workspace/grocery-store run dev` — run the dev server (port from `PORT` env)
 
 ### `lib/db` (`@workspace/db`)
 
@@ -68,7 +102,8 @@ Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client insta
 
 - `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
 - `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
+- Tables: users, categories, products, orders, order_items, delivery_persons
+- Seeded with: 5 categories, 19 products, 1 admin user (phone: 01000000000, password: admin123), 3 delivery persons
 - `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
 - Exports: `.` (pool, db, schema), `./schema` (schema only)
 
@@ -89,8 +124,36 @@ Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used b
 
 ### `lib/api-client-react` (`@workspace/api-client-react`)
 
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
+Generated React Query hooks and fetch client from the OpenAPI spec.
+
+- Barrel export at `./src/index.ts` - re-exports from generated files
+- **Important**: Always import from `@workspace/api-client-react` (barrel), NOT from `@workspace/api-client-react/src/generated/api` (deep path)
+- Custom fetch in `src/custom-fetch.ts` - supports `setBaseUrl()` and auth token injection
 
 ### `scripts` (`@workspace/scripts`)
 
 Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+
+## Environment Variables / Secrets
+
+- `DATABASE_URL` — PostgreSQL connection string (provided by Replit)
+- `JWT_SECRET` — JWT signing secret (defaults to hardcoded fallback)
+- `TWILIO_ACCOUNT_SID` — Twilio account SID for WhatsApp notifications
+- `TWILIO_AUTH_TOKEN` — Twilio auth token
+- `TWILIO_WHATSAPP_FROM` — Twilio WhatsApp sender number (defaults to sandbox `whatsapp:+14155238886`)
+
+## Order Status Lifecycle
+
+`waiting` → `accepted` or `rejected`
+`accepted` → `preparing`
+`preparing` → `with_delivery`
+`with_delivery` → `completed`
+
+## WhatsApp Notifications
+
+When a delivery person is assigned to an order, a WhatsApp message is sent via Twilio to the delivery person's phone with:
+- 🚚 New Order header
+- Customer name and phone
+- 📍 Google Maps link to delivery location
+- 🛒 Order items with quantities and units
+- 💰 Total in EGP
