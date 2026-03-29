@@ -654,6 +654,56 @@ export const DeleteDeliveryPersonResponse = zod.object({
 });
 
 /**
+ * @summary Admin - list all admin accounts
+ */
+export const GetAdminsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  phone: zod.string(),
+  address: zod.string().nullish(),
+  profileImage: zod.string().nullish(),
+  latitude: zod.number().nullish(),
+  longitude: zod.number().nullish(),
+  role: zod.enum(["customer", "admin"]),
+  createdAt: zod.coerce.date(),
+});
+export const GetAdminsResponse = zod.array(GetAdminsResponseItem);
+
+/**
+ * @summary Admin - create a new admin account
+ */
+export const CreateAdminBody = zod.object({
+  name: zod.string(),
+  phone: zod.string(),
+  password: zod.string(),
+});
+
+/**
+ * @summary Admin - update an admin account (phone and/or password)
+ */
+export const UpdateAdminParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateAdminBody = zod.object({
+  name: zod.string().optional(),
+  phone: zod.string().optional(),
+  password: zod.string().optional(),
+});
+
+export const UpdateAdminResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  phone: zod.string(),
+  address: zod.string().nullish(),
+  profileImage: zod.string().nullish(),
+  latitude: zod.number().nullish(),
+  longitude: zod.number().nullish(),
+  role: zod.enum(["customer", "admin"]),
+  createdAt: zod.coerce.date(),
+});
+
+/**
  * @summary Admin - dashboard statistics
  */
 export const GetAdminStatsResponse = zod.object({

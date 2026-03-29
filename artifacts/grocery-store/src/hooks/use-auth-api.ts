@@ -6,7 +6,8 @@ import {
   useGetOrders, useCreateOrder, useGetOrder,
   useAdminGetOrders, useUpdateOrderStatus, useAssignDelivery,
   useGetDeliveryPersons, useCreateDeliveryPerson, useUpdateDeliveryPerson, useDeleteDeliveryPerson,
-  useGetAdminStats, useUploadImage
+  useGetAdminStats, useUploadImage,
+  useGetAdmins, useCreateAdmin, useUpdateAdmin,
 } from '@workspace/api-client-react';
 
 export function useAppProducts(params?: Parameters<typeof useGetProducts>[0]) { return useGetProducts(params); }
@@ -41,3 +42,7 @@ export function useAppDeleteProduct() { return useDeleteProduct(); }
 export function useAppCreateCategory() { return useCreateCategory(); }
 export function useAppUpdateCategory() { return useUpdateCategory(); }
 export function useAppDeleteCategory() { return useDeleteCategory(); }
+
+export function useAppAdmins() { return useGetAdmins(); }
+export function useAppCreateAdmin() { return useCreateAdmin(); }
+export function useAppUpdateAdmin() { return useUpdateAdmin(); }

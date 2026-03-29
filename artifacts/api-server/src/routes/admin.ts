@@ -11,6 +11,7 @@ import { eq, sql, desc } from "drizzle-orm";
 import { authenticate, requireAdmin, type AuthRequest } from "../middlewares/authenticate";
 import type { OrderStatus } from "@workspace/db/schema";
 import { buildWhatsAppMessage, sendWhatsAppMessage } from "../lib/whatsapp";
+import { hashPassword } from "../lib/auth";
 
 const router = Router();
 
@@ -177,6 +178,92 @@ router.post("/orders/:id/assign", authenticate(), requireAdmin, async (req: Auth
     whatsappSent: waResult.success,
     whatsappMessage: whatsappMsg,
   });
+});
+
+// ── Admin user management ────────────────────────────────────────────────────
+
+router.get("/admins", authenticate(), requireAdmin, async (_req, res) => {
+  const admins = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.role, "admin"))
+    .orderBy(desc(usersTable.createdAt));
+
+  const safe = admins.map(({ password: _, ...rest }) => rest);
+  res.json(safe);
+});
+
+router.post("/admins", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
+  const { name, phone, password } = req.body;
+  if (!name || !phone || !password) {
+    res.status(400).json({ error: "name, phone, and password are required" });
+    return;
+  }
+
+  const existing = await db.select().from(usersTable).where(eq(usersTable.phone, phone)).limit(1);
+  if (existing.length > 0) {
+    res.status(409).json({ error: "Phone already registered" });
+    return;
+  }
+
+  const hashed = await hashPassword(password);
+  const [user] = await db
+    .insert(usersTable)
+    .values({ name, phone, password: hashed, role: "admin" })
+    .returning();
+
+  const { password: _, ...safe } = user;
+  res.status(201).json(safe);
+});
+
+router.put("/admins/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
+  const id = parseInt(String(req.params.id));
+  if (isNaN(id) || id <= 0) {
+    res.status(400).json({ error: "Invalid admin ID" });
+    return;
+  }
+
+  const [existing] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.id, id))
+    .limit(1);
+
+  if (!existing || existing.role !== "admin") {
+    res.status(404).json({ error: "Admin not found" });
+    return;
+  }
+
+  const { name, phone, password } = req.body;
+  const updates: Record<string, unknown> = {};
+
+  if (name) updates.name = name;
+  if (phone && phone !== existing.phone) {
+    const conflict = await db.select().from(usersTable).where(eq(usersTable.phone, phone)).limit(1);
+    if (conflict.length > 0 && conflict[0].id !== id) {
+      res.status(409).json({ error: "Phone already in use by another account" });
+      return;
+    }
+    updates.phone = phone;
+  }
+  if (password) {
+    updates.password = await hashPassword(password);
+  }
+
+  if (Object.keys(updates).length === 0) {
+    const { password: _, ...safe } = existing;
+    res.json(safe);
+    return;
+  }
+
+  const [updated] = await db
+    .update(usersTable)
+    .set(updates)
+    .where(eq(usersTable.id, id))
+    .returning();
+
+  const { password: _, ...safe } = updated;
+  res.json(safe);
 });
 
 export default router;

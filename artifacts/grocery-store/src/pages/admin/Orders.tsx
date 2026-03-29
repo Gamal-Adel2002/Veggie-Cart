@@ -4,13 +4,12 @@ import { useAppAdminOrders, useAppUpdateOrderStatus, useAppAssignDelivery, useAp
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { type Order, UpdateOrderStatusInputStatus } from '@workspace/api-client-react';
-import { ExternalLink } from 'lucide-react';
 import { getErrorMessage } from '@/lib/utils';
 
 const updatableStatuses = Object.values(UpdateOrderStatusInputStatus) as Array<typeof UpdateOrderStatusInputStatus[keyof typeof UpdateOrderStatusInputStatus]>;
@@ -26,7 +25,6 @@ export default function Orders() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [newStatus, setNewStatus] = useState<typeof updatableStatuses[number] | ''>('');
   const [deliveryId, setDeliveryId] = useState<string>('');
-  const [waMessage, setWaMessage] = useState<{phone: string, text: string}|null>(null);
 
   const handleUpdateStatus = async () => {
     if (!selectedOrder || !newStatus) return;
@@ -45,12 +43,17 @@ export default function Orders() {
     try {
       const res = await assignDelivery({ id: selectedOrder.id, data: { deliveryPersonId: Number(deliveryId) } });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/orders'] });
-      
-      const dp = deliveryPersons?.find(d => d.id === Number(deliveryId));
-      if (res.whatsappMessage && dp) {
-        setWaMessage({ phone: dp.phone, text: res.whatsappMessage });
-      }
       setSelectedOrder(null);
+
+      if (res.whatsappSent) {
+        toast({ title: "Delivery Assigned", description: "WhatsApp message sent to delivery person." });
+      } else {
+        toast({
+          title: "Delivery Assigned",
+          description: "Order assigned, but WhatsApp message was not sent (Twilio not configured).",
+          variant: "default",
+        });
+      }
     } catch (e: unknown) {
       toast({ title: "Error", description: getErrorMessage(e), variant: "destructive" });
     }
@@ -120,7 +123,7 @@ export default function Orders() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button variant="secondary" onClick={handleAssign}>Assign & WA</Button>
+                <Button variant="secondary" onClick={handleAssign}>Assign</Button>
               </div>
             </div>
 
@@ -129,24 +132,6 @@ export default function Orders() {
               <p><strong>Items:</strong> {selectedOrder?.items.map(i => `${i.quantity}x ${i.productName}`).join(', ')}</p>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* WhatsApp Modal */}
-      <Dialog open={!!waMessage} onOpenChange={(open) => !open && setWaMessage(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>WhatsApp Message Generated</DialogTitle></DialogHeader>
-          <div className="bg-green-50 dark:bg-green-950 p-4 rounded-xl font-mono text-xs whitespace-pre-wrap text-green-900 dark:text-green-300 max-h-60 overflow-y-auto">
-            {waMessage?.text}
-          </div>
-          <DialogFooter>
-            <Button onClick={() => {
-              window.open(`https://wa.me/${waMessage?.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(waMessage?.text || '')}`);
-              setWaMessage(null);
-            }} className="w-full bg-green-600 hover:bg-green-700 text-white">
-              Open WhatsApp <ExternalLink className="w-4 h-4 ms-2" />
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </AdminLayout>

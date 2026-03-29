@@ -22,6 +22,7 @@ import Orders from "./pages/admin/Orders";
 import Products from "./pages/admin/Products";
 import Categories from "./pages/admin/Categories";
 import DeliveryPersons from "./pages/admin/DeliveryPersons";
+import Admins from "./pages/admin/Admins";
 import NotFound from "./pages/not-found";
 
 const queryClient = new QueryClient({
@@ -58,6 +59,7 @@ function Router() {
       <Route path="/admin/products" component={Products} />
       <Route path="/admin/categories" component={Categories} />
       <Route path="/admin/delivery" component={DeliveryPersons} />
+      <Route path="/admin/admins" component={Admins} />
 
       <Route component={NotFound} />
     </Switch>

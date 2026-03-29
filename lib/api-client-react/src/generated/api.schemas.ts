@@ -231,6 +231,18 @@ export interface AdminStats {
   revenue: number;
 }
 
+export interface CreateAdminInput {
+  name: string;
+  phone: string;
+  password: string;
+}
+
+export interface UpdateAdminInput {
+  name?: string;
+  phone?: string;
+  password?: string;
+}
+
 export type GetProductsParams = {
   search?: string;
   categoryId?: number;
