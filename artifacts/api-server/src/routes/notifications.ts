@@ -57,6 +57,52 @@ interface SseClient {
 
 const sseClients = new Map<string, SseClient>();
 
+// Per-thread activity tracking: key = `${userId}:${customerId}` (admin or customer)
+// Value = set of SSE clientIds currently "watching" that thread
+const threadActiveClients = new Map<string, Set<string>>();
+
+function threadKey(userId: number, customerId: number): string {
+  return `${userId}:${customerId}`;
+}
+
+export function setThreadActive(userId: number, customerId: number, clientId: string) {
+  const key = threadKey(userId, customerId);
+  if (!threadActiveClients.has(key)) threadActiveClients.set(key, new Set());
+  threadActiveClients.get(key)!.add(clientId);
+}
+
+export function clearThreadActive(userId: number, customerId: number, clientId: string) {
+  const key = threadKey(userId, customerId);
+  const clients = threadActiveClients.get(key);
+  if (clients) {
+    clients.delete(clientId);
+    if (clients.size === 0) threadActiveClients.delete(key);
+  }
+}
+
+/** Returns true if any connected client for userId is actively viewing the thread for customerId */
+export function isUserViewingThread(userId: number, customerId: number): boolean {
+  const key = threadKey(userId, customerId);
+  const clients = threadActiveClients.get(key);
+  if (!clients || clients.size === 0) return false;
+  // Only count if the SSE client is still connected
+  for (const clientId of clients) {
+    if (sseClients.has(clientId)) return true;
+  }
+  return false;
+}
+
+/** Returns true if any admin is actively viewing the private thread for customerId */
+export function isAnyAdminViewingThread(customerId: number): boolean {
+  for (const [key, clients] of threadActiveClients) {
+    if (!key.endsWith(`:${customerId}`)) continue;
+    const userId = parseInt(key.split(":")[0]);
+    const client = Array.from(sseClients.values()).find(c => c.userId === userId && c.role === "admin");
+    if (client && clients.has(client.id)) return true;
+  }
+  return false;
+}
+
 export function broadcastToAdmins(event: string, data: unknown) {
   const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
   for (const client of sseClients.values()) {
@@ -213,6 +259,7 @@ router.get("/vapid-public-key", (_req, res) => {
 // GET /notifications/stream — SSE endpoint
 // Authentication via httpOnly cookies (token or delivery_token) sent automatically
 // by EventSource with withCredentials: true. No bearer token in query string.
+// Optional ?watchThread=<customerId> signals active-thread presence for push suppression.
 router.get("/stream", authenticate(false), (req: AuthRequest, res) => {
   if (!req.userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -220,6 +267,7 @@ router.get("/stream", authenticate(false), (req: AuthRequest, res) => {
   }
 
   const clientId = `${req.userId}-${req.userRole}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const watchThreadId = parseInt(String(req.query.watchThread || "")) || null;
 
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
@@ -237,6 +285,11 @@ router.get("/stream", authenticate(false), (req: AuthRequest, res) => {
   };
   sseClients.set(clientId, client);
 
+  // Register thread-active presence if client is watching a specific thread
+  if (watchThreadId) {
+    setThreadActive(req.userId, watchThreadId, clientId);
+  }
+
   const heartbeat = setInterval(() => {
     try { res.write(`:heartbeat\n\n`); } catch { clearInterval(heartbeat); }
   }, 25000);
@@ -244,6 +297,10 @@ router.get("/stream", authenticate(false), (req: AuthRequest, res) => {
   req.on("close", () => {
     clearInterval(heartbeat);
     sseClients.delete(clientId);
+    // Clean up thread-active presence
+    if (watchThreadId) {
+      clearThreadActive(req.userId, watchThreadId, clientId);
+    }
   });
 });
 

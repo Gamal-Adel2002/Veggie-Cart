@@ -7,8 +7,8 @@ import {
   broadcastToAdmins,
   broadcastToUser,
   broadcastToAll,
-  isUserConnected,
-  isAnyAdminConnected,
+  isUserViewingThread,
+  isAnyAdminViewingThread,
   sendPushToCustomer,
   sendPushToAdmins,
 } from "./notifications";
@@ -44,6 +44,11 @@ async function enrichMessages(messages: RawMsg[]): Promise<Enriched[]> {
     }));
     return { ...m, reactions };
   });
+}
+
+/** Attach empty reactions array to private messages (no reactions on private channel) */
+function asEnriched(msgs: RawMsg[]): Enriched[] {
+  return msgs.map((m) => ({ ...m, reactions: [] }));
 }
 
 // ── Public Chat ───────────────────────────────────────────────────────────────
@@ -83,6 +88,9 @@ router.post("/public", authenticate(), async (req: AuthRequest, res) => {
 });
 
 router.post("/public/:id/react", authenticate(), async (req: AuthRequest, res) => {
+  // Only admins and customers can react; delivery role is excluded
+  if (req.userRole === "delivery") { res.status(403).json({ error: "Forbidden" }); return; }
+
   const msgId = parseInt(String(req.params.id));
   if (isNaN(msgId) || msgId <= 0) { res.status(400).json({ error: "Invalid message ID" }); return; }
   const { emoji } = req.body;
@@ -113,8 +121,20 @@ router.post("/public/:id/react", authenticate(), async (req: AuthRequest, res) =
 });
 
 // ── Private Chat ──────────────────────────────────────────────────────────────
+// Only admins and customers (role === "admin" | "customer") may access private routes.
+// Delivery persons are explicitly blocked.
+
+function requireChatRole(req: AuthRequest, res: { status: (n: number) => { json: (o: object) => void } }): boolean {
+  if (req.userRole !== "admin" && req.userRole !== "customer") {
+    res.status(403).json({ error: "Forbidden" });
+    return false;
+  }
+  return true;
+}
 
 router.get("/private", authenticate(), async (req: AuthRequest, res) => {
+  if (!requireChatRole(req, res)) return;
+
   if (req.userRole === "admin") {
     const messages = await db.select().from(chatMessagesTable)
       .where(eq(chatMessagesTable.channel, "private"))
@@ -141,13 +161,14 @@ router.get("/private", authenticate(), async (req: AuthRequest, res) => {
           customerName: user.name,
           customerPhone: user.phone,
           customerImage: user.profileImage,
-          lastMessage: conv.lastMessage,
+          lastMessage: { ...conv.lastMessage, reactions: [] },
           unreadCount: conv.unreadCount,
         });
       }
     }
     res.json(result);
   } else {
+    // Customer: only sees their own thread summary
     const myId = req.userId!;
     const allMessages = await db.select().from(chatMessagesTable)
       .where(eq(chatMessagesTable.channel, "private"))
@@ -156,14 +177,18 @@ router.get("/private", authenticate(), async (req: AuthRequest, res) => {
     const unreadCount = myMessages.filter(
       (m) => m.senderRole === "admin" && m.recipientId === myId && m.readAt === null
     ).length;
-    const lastMessage = myMessages.length > 0 ? myMessages[0] : null;
+    const lastMessage = myMessages.length > 0 ? { ...myMessages[0], reactions: [] } : null;
     res.json({ customerId: myId, unreadCount, lastMessage });
   }
 });
 
 router.get("/private/:customerId", authenticate(), async (req: AuthRequest, res) => {
+  if (!requireChatRole(req, res)) return;
+
   const customerId = parseInt(String(req.params.customerId));
   if (isNaN(customerId) || customerId <= 0) { res.status(400).json({ error: "Invalid customer ID" }); return; }
+
+  // Admin can see any thread; customer can only see their own
   if (req.userRole !== "admin" && req.userId !== customerId) { res.status(403).json({ error: "Forbidden" }); return; }
 
   const allMessages = await db.select().from(chatMessagesTable)
@@ -173,10 +198,12 @@ router.get("/private/:customerId", authenticate(), async (req: AuthRequest, res)
   const thread = allMessages.filter(
     (m) => m.senderId === customerId || m.recipientId === customerId
   );
-  res.json(thread);
+  res.json(asEnriched(thread));
 });
 
 router.post("/private/:customerId", authenticate(), async (req: AuthRequest, res) => {
+  if (!requireChatRole(req, res)) return;
+
   const customerId = parseInt(String(req.params.customerId));
   if (isNaN(customerId) || customerId <= 0) { res.status(400).json({ error: "Invalid customer ID" }); return; }
   if (req.userRole !== "admin" && req.userId !== customerId) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -195,32 +222,42 @@ router.post("/private/:customerId", authenticate(), async (req: AuthRequest, res
     mediaType: mediaType ? String(mediaType) : null,
   }).returning();
 
-  broadcastToAdmins("private_chat_message", msg);
-  broadcastToUser(customerId, "private_chat_message", msg);
+  const enrichedMsg = { ...msg, reactions: [] };
 
-  // Push notification for offline recipients
-  if (isAdmin && !isUserConnected(customerId)) {
-    sendPushToCustomer(customerId, {
-      title: "New Message",
-      titleAr: "رسالة جديدة",
-      body: content ? String(content).slice(0, 80) : "New attachment",
-      bodyAr: content ? String(content).slice(0, 80) : "مرفق جديد",
-      url: "/messages",
-    }).catch(() => {});
-  } else if (!isAdmin && !isAnyAdminConnected()) {
-    sendPushToAdmins({
-      title: "New Customer Message",
-      titleAr: "رسالة عميل جديدة",
-      body: content ? String(content).slice(0, 80) : "New attachment",
-      bodyAr: content ? String(content).slice(0, 80) : "مرفق جديد",
-      url: "/admin/private-chats",
-    }).catch(() => {});
+  broadcastToAdmins("private_chat_message", enrichedMsg);
+  broadcastToUser(customerId, "private_chat_message", enrichedMsg);
+
+  // Push notification: only if recipient is NOT actively viewing this thread
+  if (isAdmin) {
+    // Notify customer only if they are not currently viewing this thread
+    if (!isUserViewingThread(customerId, customerId)) {
+      sendPushToCustomer(customerId, {
+        title: "New Message",
+        titleAr: "رسالة جديدة",
+        body: content ? String(content).slice(0, 80) : "New attachment",
+        bodyAr: content ? String(content).slice(0, 80) : "مرفق جديد",
+        url: "/messages",
+      }).catch(() => {});
+    }
+  } else {
+    // Notify admins only if no admin is currently viewing this customer's thread
+    if (!isAnyAdminViewingThread(customerId)) {
+      sendPushToAdmins({
+        title: "New Customer Message",
+        titleAr: "رسالة عميل جديدة",
+        body: content ? String(content).slice(0, 80) : "New attachment",
+        bodyAr: content ? String(content).slice(0, 80) : "مرفق جديد",
+        url: "/admin/private-chats",
+      }).catch(() => {});
+    }
   }
 
-  res.status(201).json(msg);
+  res.status(201).json(enrichedMsg);
 });
 
 router.put("/private/:customerId/read", authenticate(), async (req: AuthRequest, res) => {
+  if (!requireChatRole(req, res)) return;
+
   const customerId = parseInt(String(req.params.customerId));
   if (isNaN(customerId) || customerId <= 0) { res.status(400).json({ error: "Invalid customer ID" }); return; }
   if (req.userRole !== "admin" && req.userId !== customerId) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -247,6 +284,8 @@ router.put("/private/:customerId/read", authenticate(), async (req: AuthRequest,
 });
 
 router.post("/private/:customerId/typing", authenticate(), async (req: AuthRequest, res) => {
+  if (!requireChatRole(req, res)) return;
+
   const customerId = parseInt(String(req.params.customerId));
   if (isNaN(customerId) || customerId <= 0) { res.status(400).json({ error: "Invalid customer ID" }); return; }
   if (req.userRole !== "admin" && req.userId !== customerId) { res.status(403).json({ error: "Forbidden" }); return; }

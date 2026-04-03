@@ -38,7 +38,7 @@ export default function Messages() {
   // SSE for real-time updates
   useEffect(() => {
     if (!token || !customerId) return;
-    const es = new EventSource(`/api/notifications/stream?token=${encodeURIComponent(token)}`);
+    const es = new EventSource(`/api/notifications/stream?token=${encodeURIComponent(token)}&watchThread=${customerId}`);
 
     es.addEventListener('private_chat_message', (e) => {
       const data = JSON.parse(e.data) as ChatMessage;

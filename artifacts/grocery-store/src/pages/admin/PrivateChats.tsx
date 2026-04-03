@@ -48,7 +48,7 @@ function ThreadPanel({
   // SSE for real-time updates for this thread
   useEffect(() => {
     if (!token) return;
-    const es = new EventSource(`/api/notifications/stream?token=${encodeURIComponent(token)}`);
+    const es = new EventSource(`/api/notifications/stream?token=${encodeURIComponent(token)}&watchThread=${customerId}`);
     eventSourceRef.current = es;
 
     es.addEventListener('private_chat_message', (e) => {
