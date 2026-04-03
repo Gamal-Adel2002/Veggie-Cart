@@ -67,6 +67,11 @@ router.post("/login", async (req, res) => {
     return;
   }
 
+  if (!isValidEgyptianPhone(String(phone))) {
+    res.status(400).json({ error: "Phone must start with 010, 011, 012, or 015 and be exactly 11 digits" });
+    return;
+  }
+
   const [user] = await db.select().from(usersTable).where(eq(usersTable.phone, phone)).limit(1);
   if (!user) {
     res.status(401).json({ error: "Invalid credentials" });
@@ -170,6 +175,11 @@ router.post("/admin/login", async (req, res) => {
   const { phone, password } = req.body;
   if (!phone || !password) {
     res.status(400).json({ error: "phone and password are required" });
+    return;
+  }
+
+  if (!isValidEgyptianPhone(String(phone))) {
+    res.status(400).json({ error: "Phone must start with 010, 011, 012, or 015 and be exactly 11 digits" });
     return;
   }
 
