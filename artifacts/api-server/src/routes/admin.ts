@@ -7,8 +7,9 @@ import {
   usersTable,
   deliveryPersonsTable,
   deliveryZonesTable,
+  categoriesTable,
 } from "@workspace/db/schema";
-import { eq, sql, desc, lte, isNotNull, and } from "drizzle-orm";
+import { eq, sql, desc, lte, isNotNull, and, inArray } from "drizzle-orm";
 import { authenticate, requireAdmin, type AuthRequest } from "../middlewares/authenticate";
 import type { OrderStatus } from "@workspace/db/schema";
 import { buildWhatsAppMessage, sendWhatsAppMessage, sendSmsMessage } from "../lib/whatsapp";
@@ -213,6 +214,72 @@ router.post("/orders/:id/assign", authenticate(), requireAdmin, async (req: Auth
     smsSent,
     whatsappMessage: whatsappMsg,
   });
+});
+
+// ── Ordered products aggregation ──────────────────────────────────────────────
+
+router.get("/ordered-products", authenticate(), requireAdmin, async (_req, res) => {
+  const activeStatuses: OrderStatus[] = ["waiting", "accepted", "preparing"];
+
+  const rows = await db
+    .select({
+      categoryId: categoriesTable.id,
+      categoryName: categoriesTable.name,
+      categoryNameAr: categoriesTable.nameAr,
+      categoryIcon: categoriesTable.icon,
+      productName: orderItemsTable.productName,
+      productNameAr: orderItemsTable.productNameAr,
+      unit: orderItemsTable.unit,
+      totalQuantity: sql<number>`SUM(${orderItemsTable.quantity})::float`,
+    })
+    .from(orderItemsTable)
+    .innerJoin(ordersTable, eq(orderItemsTable.orderId, ordersTable.id))
+    .innerJoin(productsTable, eq(orderItemsTable.productId, productsTable.id))
+    .leftJoin(categoriesTable, eq(productsTable.categoryId, categoriesTable.id))
+    .where(inArray(ordersTable.status, activeStatuses))
+    .groupBy(
+      categoriesTable.id,
+      categoriesTable.name,
+      categoriesTable.nameAr,
+      categoriesTable.icon,
+      orderItemsTable.productName,
+      orderItemsTable.productNameAr,
+      orderItemsTable.unit
+    );
+
+  // Group into category buckets
+  const categoryMap = new Map<number, {
+    categoryName: string;
+    categoryNameAr: string;
+    categoryIcon: string;
+    products: { productName: string; productNameAr: string; unit: string; totalQuantity: number }[];
+  }>();
+
+  for (const row of rows) {
+    const catId = row.categoryId ?? 0;
+    if (!categoryMap.has(catId)) {
+      categoryMap.set(catId, {
+        categoryName: row.categoryName ?? "Uncategorised",
+        categoryNameAr: row.categoryNameAr ?? "غير مصنف",
+        categoryIcon: row.categoryIcon ?? "📦",
+        products: [],
+      });
+    }
+    categoryMap.get(catId)!.products.push({
+      productName: row.productName,
+      productNameAr: row.productNameAr,
+      unit: row.unit,
+      totalQuantity: row.totalQuantity,
+    });
+  }
+
+  // Sort products within each category by totalQuantity descending
+  const result = Array.from(categoryMap.values()).map((cat) => ({
+    ...cat,
+    products: cat.products.sort((a, b) => b.totalQuantity - a.totalQuantity),
+  }));
+
+  res.json(result);
 });
 
 // ── Low-stock alerts ─────────────────────────────────────────────────────────

@@ -9,6 +9,7 @@ import {
   useGetAdminStats, useUploadImage,
   useGetAdmins, useCreateAdmin, useUpdateAdmin,
   useGetLowStockProducts,
+  useGetOrderedProducts,
 } from '@workspace/api-client-react';
 
 export function useAppProducts(params?: Parameters<typeof useGetProducts>[0]) { return useGetProducts(params); }
@@ -50,3 +51,4 @@ export function useAppCreateAdmin() { return useCreateAdmin(); }
 export function useAppUpdateAdmin() { return useUpdateAdmin(); }
 
 export function useAppLowStockProducts() { return useGetLowStockProducts(); }
+export function useAppOrderedProducts() { return useGetOrderedProducts(); }

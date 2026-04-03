@@ -74,6 +74,29 @@ export const GetMeResponse = zod.object({
 });
 
 /**
+ * @summary Update current user profile
+ */
+export const UpdateMeBody = zod.object({
+  name: zod.string().optional(),
+  phone: zod.string().optional(),
+  profileImage: zod.string().optional(),
+  currentPassword: zod.string().optional(),
+  newPassword: zod.string().optional(),
+});
+
+export const UpdateMeResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  phone: zod.string(),
+  address: zod.string().nullish(),
+  profileImage: zod.string().nullish(),
+  latitude: zod.number().nullish(),
+  longitude: zod.number().nullish(),
+  role: zod.enum(["customer", "admin"]),
+  createdAt: zod.coerce.date(),
+});
+
+/**
  * @summary Update saved location
  */
 export const UpdateLocationBody = zod.object({
@@ -607,6 +630,26 @@ export const AssignDeliveryResponse = zod.object({
   smsSent: zod.boolean(),
   whatsappMessage: zod.string().optional(),
 });
+
+/**
+ * @summary Admin - aggregate product quantities across active orders grouped by category
+ */
+export const GetOrderedProductsResponseItem = zod.object({
+  categoryName: zod.string(),
+  categoryNameAr: zod.string(),
+  categoryIcon: zod.string(),
+  products: zod.array(
+    zod.object({
+      productName: zod.string(),
+      productNameAr: zod.string(),
+      unit: zod.string(),
+      totalQuantity: zod.number(),
+    }),
+  ),
+});
+export const GetOrderedProductsResponse = zod.array(
+  GetOrderedProductsResponseItem,
+);
 
 /**
  * @summary Admin - list products at or below their alert threshold

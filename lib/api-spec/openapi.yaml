@@ -502,6 +502,21 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /admin/ordered-products:
+    get:
+      operationId: getOrderedProducts
+      tags: [admin]
+      summary: Admin - aggregate product quantities across active orders grouped by category
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OrderedProductsCategory"
+
   /admin/low-stock:
     get:
       operationId: getLowStockProducts
@@ -1249,3 +1264,40 @@ components:
           type: string
         password:
           type: string
+
+    OrderedProductItem:
+      type: object
+      properties:
+        productName:
+          type: string
+        productNameAr:
+          type: string
+        unit:
+          type: string
+        totalQuantity:
+          type: number
+          format: double
+      required:
+        - productName
+        - productNameAr
+        - unit
+        - totalQuantity
+
+    OrderedProductsCategory:
+      type: object
+      properties:
+        categoryName:
+          type: string
+        categoryNameAr:
+          type: string
+        categoryIcon:
+          type: string
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderedProductItem"
+      required:
+        - categoryName
+        - categoryNameAr
+        - categoryIcon
+        - products

@@ -44,6 +44,14 @@ export interface LocationInput {
   longitude: number;
 }
 
+export interface UpdateMeInput {
+  name?: string;
+  phone?: string;
+  profileImage?: string;
+  currentPassword?: string;
+  newPassword?: string;
+}
+
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
 export const UserRole = {
@@ -267,6 +275,20 @@ export interface UpdateAdminInput {
   password?: string;
 }
 
+export interface OrderedProductItem {
+  productName: string;
+  productNameAr: string;
+  unit: string;
+  totalQuantity: number;
+}
+
+export interface OrderedProductsCategory {
+  categoryName: string;
+  categoryNameAr: string;
+  categoryIcon: string;
+  products: OrderedProductItem[];
+}
+
 export type GetProductsParams = {
   search?: string;
   categoryId?: number;
@@ -280,11 +302,3 @@ export type AdminGetOrdersParams = {
 export type UploadImageBody = {
   file?: Blob;
 };
-
-export interface UpdateMeInput {
-  name?: string;
-  phone?: string;
-  profileImage?: string;
-  currentPassword?: string;
-  newPassword?: string;
-}

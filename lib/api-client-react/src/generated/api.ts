@@ -35,6 +35,7 @@ import type {
   LoginInput,
   LowStockProduct,
   Order,
+  OrderedProductsCategory,
   Product,
   ProductInput,
   SignupInput,
@@ -446,6 +447,92 @@ export function useGetMe<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Update current user profile
+ */
+export const getUpdateMeUrl = () => {
+  return `/api/auth/me`;
+};
+
+export const updateMe = async (
+  updateMeInput: UpdateMeInput,
+  options?: RequestInit,
+): Promise<User> => {
+  return customFetch<User>(getUpdateMeUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateMeInput),
+  });
+};
+
+export const getUpdateMeMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMe>>,
+    TError,
+    { data: BodyType<UpdateMeInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateMe>>,
+  TError,
+  { data: BodyType<UpdateMeInput> },
+  TContext
+> => {
+  const mutationKey = ["updateMe"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateMe>>,
+    { data: BodyType<UpdateMeInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return updateMe(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateMeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateMe>>
+>;
+export type UpdateMeMutationBody = BodyType<UpdateMeInput>;
+export type UpdateMeMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Update current user profile
+ */
+export const useUpdateMe = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMe>>,
+    TError,
+    { data: BodyType<UpdateMeInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateMe>>,
+  TError,
+  { data: BodyType<UpdateMeInput> },
+  TContext
+> => {
+  return useMutation(getUpdateMeMutationOptions(options));
+};
 
 /**
  * @summary Update saved location
@@ -1894,6 +1981,81 @@ export const useAssignDelivery = <
 };
 
 /**
+ * @summary Admin - aggregate product quantities across active orders grouped by category
+ */
+export const getGetOrderedProductsUrl = () => {
+  return `/api/admin/ordered-products`;
+};
+
+export const getOrderedProducts = async (
+  options?: RequestInit,
+): Promise<OrderedProductsCategory[]> => {
+  return customFetch<OrderedProductsCategory[]>(getGetOrderedProductsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetOrderedProductsQueryKey = () => {
+  return [`/api/admin/ordered-products`] as const;
+};
+
+export const getGetOrderedProductsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getOrderedProducts>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getOrderedProducts>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetOrderedProductsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getOrderedProducts>>
+  > = ({ signal }) => getOrderedProducts({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getOrderedProducts>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetOrderedProductsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getOrderedProducts>>
+>;
+export type GetOrderedProductsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Admin - aggregate product quantities across active orders grouped by category
+ */
+
+export function useGetOrderedProducts<
+  TData = Awaited<ReturnType<typeof getOrderedProducts>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getOrderedProducts>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetOrderedProductsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary Admin - list products at or below their alert threshold
  */
 export const getGetLowStockProductsUrl = () => {
@@ -2701,87 +2863,4 @@ export const useUploadImage = <
   TContext
 > => {
   return useMutation(getUploadImageMutationOptions(options));
-};
-
-export const getUpdateMeUrl = () => `/auth/me`;
-
-/**
- * @summary Update current user profile
- */
-export const updateMe = async (
-  updateMeInput: UpdateMeInput,
-  options?: RequestInit,
-): Promise<User> => {
-  return customFetch<User>(getUpdateMeUrl(), {
-    ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(updateMeInput),
-  });
-};
-
-export const getUpdateMeMutationOptions = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof updateMe>>,
-    TError,
-    { data: BodyType<UpdateMeInput> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof updateMe>>,
-  TError,
-  { data: BodyType<UpdateMeInput> },
-  TContext
-> => {
-  const mutationKey = ["updateMe"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof updateMe>>,
-    { data: BodyType<UpdateMeInput> }
-  > = (props) => {
-    const { data } = props ?? {};
-    return updateMe(data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type UpdateMeMutationResult = NonNullable<
-  Awaited<ReturnType<typeof updateMe>>
->;
-export type UpdateMeMutationBody = BodyType<UpdateMeInput>;
-export type UpdateMeMutationError = ErrorType<unknown>;
-
-/**
- * @summary Update current user profile
- */
-export const useUpdateMe = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof updateMe>>,
-    TError,
-    { data: BodyType<UpdateMeInput> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof updateMe>>,
-  TError,
-  { data: BodyType<UpdateMeInput> },
-  TContext
-> => {
-  return useMutation(getUpdateMeMutationOptions(options));
 };
