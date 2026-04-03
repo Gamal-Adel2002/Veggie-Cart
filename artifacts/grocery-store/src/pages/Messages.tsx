@@ -103,9 +103,7 @@ export default function Messages() {
     if (!file || !customerId) return;
     setUploadingImg(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const result = await uploadMedia({ data: formData as Parameters<typeof uploadMedia>[0]['data'] });
+      const result = await uploadMedia({ data: { file } });
       const mediaType = (result as { url: string; mediaType: string }).mediaType;
       await sendMsg({ customerId, data: { mediaUrl: (result as { url: string }).url, mediaType } });
       refetch();
@@ -167,11 +165,21 @@ export default function Messages() {
                     <p className="text-[11px] font-semibold text-primary mb-1">Support Team</p>
                   )}
                   {msg.content && <p className="text-sm leading-relaxed">{msg.content}</p>}
-                  {msg.mediaUrl && msg.mediaType !== 'video' && (
+                  {msg.mediaUrl && msg.mediaType === 'image' && (
                     <img src={msg.mediaUrl} alt="attachment" className="mt-1 max-h-48 rounded-xl object-cover" />
                   )}
                   {msg.mediaUrl && msg.mediaType === 'video' && (
                     <video src={msg.mediaUrl} controls className="mt-1 max-h-48 rounded-xl w-full" />
+                  )}
+                  {msg.mediaUrl && msg.mediaType === 'file' && (
+                    <a
+                      href={msg.mediaUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`mt-1 flex items-center gap-2 text-xs underline ${isMine ? 'text-primary-foreground/80' : 'text-primary'}`}
+                    >
+                      📎 {msg.mediaUrl.split('/').pop() || 'Download file'}
+                    </a>
                   )}
                   <div className={`flex items-center gap-1 mt-1 ${isMine ? 'justify-end' : ''}`}>
                     <span className={`text-[10px] ${isMine ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>

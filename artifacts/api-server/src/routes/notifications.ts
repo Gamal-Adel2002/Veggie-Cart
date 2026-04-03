@@ -96,9 +96,11 @@ export function isUserViewingThread(userId: number, customerId: number): boolean
 export function isAnyAdminViewingThread(customerId: number): boolean {
   for (const [key, clients] of threadActiveClients) {
     if (!key.endsWith(`:${customerId}`)) continue;
-    const userId = parseInt(key.split(":")[0]);
-    const client = Array.from(sseClients.values()).find(c => c.userId === userId && c.role === "admin");
-    if (client && clients.has(client.id)) return true;
+    // Check every client ID in the watching set — not just first admin found for the user
+    for (const clientId of clients) {
+      const client = sseClients.get(clientId);
+      if (client && client.role === "admin") return true;
+    }
   }
   return false;
 }

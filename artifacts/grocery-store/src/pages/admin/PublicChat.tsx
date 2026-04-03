@@ -66,9 +66,7 @@ export default function PublicChat() {
     if (!file) return;
     setUploadingImg(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const result = await uploadMedia({ data: formData as Parameters<typeof uploadMedia>[0]['data'] });
+      const result = await uploadMedia({ data: { file } });
       const mediaType = (result as { url: string; mediaType: string }).mediaType;
       await sendMsg({ data: { mediaUrl: (result as { url: string }).url, mediaType } });
       queryClient.invalidateQueries({ queryKey: ['/api/chat/public'] });
@@ -102,11 +100,21 @@ export default function PublicChat() {
           {(messages || []).map((msg: ChatMessage) => (
             <div key={msg.id} className="bg-card border border-border rounded-2xl p-4 shadow-sm">
               {msg.content && <p className="text-sm leading-relaxed">{msg.content}</p>}
+              {msg.mediaUrl && msg.mediaType === 'image' && (
+                <img src={msg.mediaUrl} alt="attachment" className="mt-2 max-h-64 rounded-xl object-cover" />
+              )}
               {msg.mediaUrl && msg.mediaType === 'video' && (
                 <video src={msg.mediaUrl} controls className="mt-2 max-h-64 rounded-xl w-full object-contain bg-black" />
               )}
-              {msg.mediaUrl && msg.mediaType !== 'video' && (
-                <img src={msg.mediaUrl} alt="attachment" className="mt-2 max-h-64 rounded-xl object-cover" />
+              {msg.mediaUrl && msg.mediaType === 'file' && (
+                <a
+                  href={msg.mediaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 flex items-center gap-2 text-xs text-primary underline"
+                >
+                  📎 {msg.mediaUrl.split('/').pop() || 'Download file'}
+                </a>
               )}
               <div className="flex items-center gap-3 mt-3">
                 <span className="text-xs text-muted-foreground">
