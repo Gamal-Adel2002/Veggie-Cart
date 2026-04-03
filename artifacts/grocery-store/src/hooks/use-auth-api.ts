@@ -6,7 +6,7 @@ import {
   useGetOrders, useCreateOrder, useGetOrder, useCancelOrder, useModifyOrder,
   useAdminGetOrders, useUpdateOrderStatus, useAssignDelivery,
   useGetDeliveryPersons, useCreateDeliveryPerson, useUpdateDeliveryPerson, useDeleteDeliveryPerson,
-  useGetAdminStats, useUploadImage,
+  useGetAdminStats, useUploadImage, useUploadMedia,
   useGetAdmins, useCreateAdmin, useUpdateAdmin,
   useGetLowStockProducts,
   useGetOrderedProducts,
@@ -44,6 +44,7 @@ export function useAppDeleteDeliveryPerson() { return useDeleteDeliveryPerson();
 
 export function useAppAdminStats() { return useGetAdminStats(); }
 export function useAppUploadImage() { return useUploadImage(); }
+export function useAppUploadMedia() { return useUploadMedia(); }
 export function useAppCreateProduct() { return useCreateProduct(); }
 export function useAppUpdateProduct() { return useUpdateProduct(); }
 export function useAppDeleteProduct() { return useDeleteProduct(); }

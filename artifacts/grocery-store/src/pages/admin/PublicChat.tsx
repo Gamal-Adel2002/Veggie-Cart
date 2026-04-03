@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { useAppPublicChat, useAppSendPublicMessage, useAppUploadImage } from '@/hooks/use-auth-api';
+import { useAppPublicChat, useAppSendPublicMessage, useAppUploadMedia } from '@/hooks/use-auth-api';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Megaphone, ImagePlus, Send, Loader2 } from 'lucide-react';
@@ -16,7 +16,7 @@ const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 export default function PublicChat() {
   const { data: messages, isLoading } = useAppPublicChat();
   const { mutateAsync: sendMsg } = useAppSendPublicMessage();
-  const { mutateAsync: uploadImage } = useAppUploadImage();
+  const { mutateAsync: uploadMedia } = useAppUploadMedia();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const token = useStore(s => s.token);
@@ -61,15 +61,15 @@ export default function PublicChat() {
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadingImg(true);
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const result = await uploadImage({ data: formData as Parameters<typeof uploadImage>[0]['data'] });
-      const mediaType = file.type.startsWith('video/') ? 'video' : 'image';
+      const result = await uploadMedia({ data: formData as Parameters<typeof uploadMedia>[0]['data'] });
+      const mediaType = (result as { url: string; mediaType: string }).mediaType;
       await sendMsg({ data: { mediaUrl: (result as { url: string }).url, mediaType } });
       queryClient.invalidateQueries({ queryKey: ['/api/chat/public'] });
     } catch (e) {
@@ -142,9 +142,9 @@ export default function PublicChat() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*,video/*"
+                accept="image/*,video/mp4,video/webm,video/quicktime,.pdf,.doc,.docx"
                 className="hidden"
-                onChange={handleImageUpload}
+                onChange={handleMediaUpload}
               />
               <Button
                 variant="ghost"

@@ -88,8 +88,8 @@ router.post("/public", authenticate(), async (req: AuthRequest, res) => {
 });
 
 router.post("/public/:id/react", authenticate(), async (req: AuthRequest, res) => {
-  // Only admins and customers can react; delivery role is excluded
-  if (req.userRole === "delivery") { res.status(403).json({ error: "Forbidden" }); return; }
+  // Only customers can react to public messages
+  if (req.userRole !== "customer") { res.status(403).json({ error: "Customers only" }); return; }
 
   const msgId = parseInt(String(req.params.id));
   if (isNaN(msgId) || msgId <= 0) { res.status(400).json({ error: "Invalid message ID" }); return; }
@@ -225,7 +225,7 @@ router.post("/private/:customerId", authenticate(), async (req: AuthRequest, res
   const enrichedMsg = { ...msg, reactions: [] };
 
   broadcastToAdmins("private_chat_message", enrichedMsg);
-  broadcastToUser(customerId, "private_chat_message", enrichedMsg);
+  broadcastToUser(customerId, "private_chat_message", enrichedMsg, "customer");
 
   // Push notification: only if recipient is NOT actively viewing this thread
   if (isAdmin) {
@@ -271,7 +271,7 @@ router.put("/private/:customerId/read", authenticate(), async (req: AuthRequest,
     for (const m of toMark) {
       await db.update(chatMessagesTable).set({ readAt: now }).where(eq(chatMessagesTable.id, m.id));
     }
-    broadcastToUser(customerId, "chat_read_receipt", { readBy: "admin", customerId, readAt: now });
+    broadcastToUser(customerId, "chat_read_receipt", { readBy: "admin", customerId, readAt: now }, "customer");
   } else {
     const toMark = unread.filter((m) => m.senderRole === "admin" && m.recipientId === req.userId);
     for (const m of toMark) {
@@ -292,7 +292,7 @@ router.post("/private/:customerId/typing", authenticate(), async (req: AuthReque
 
   const ev = { customerId, typingRole: req.userRole, typingUserId: req.userId };
   if (req.userRole === "admin") {
-    broadcastToUser(customerId, "chat_typing", ev);
+    broadcastToUser(customerId, "chat_typing", ev, "customer");
   } else {
     broadcastToAdmins("chat_typing", ev);
   }

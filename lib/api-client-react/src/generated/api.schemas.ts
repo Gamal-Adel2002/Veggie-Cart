@@ -23,6 +23,20 @@ export interface UploadResponse {
   url: string;
 }
 
+export type MediaUploadResponseMediaType =
+  (typeof MediaUploadResponseMediaType)[keyof typeof MediaUploadResponseMediaType];
+
+export const MediaUploadResponseMediaType = {
+  image: "image",
+  video: "video",
+  file: "file",
+} as const;
+
+export interface MediaUploadResponse {
+  url: string;
+  mediaType: MediaUploadResponseMediaType;
+}
+
 export interface SignupInput {
   name: string;
   phone: string;
@@ -419,6 +433,10 @@ export type AdminGetOrdersParams = {
 };
 
 export type UploadImageBody = {
+  file?: Blob;
+};
+
+export type UploadMediaBody = {
   file?: Blob;
 };
 

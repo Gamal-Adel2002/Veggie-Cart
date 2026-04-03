@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import {
   useAppPrivateConversations, useAppPrivateThread,
-  useAppSendPrivateMessage, useAppMarkThreadRead, useAppSendTyping, useAppUploadImage,
+  useAppSendPrivateMessage, useAppMarkThreadRead, useAppSendTyping, useAppUploadMedia,
 } from '@/hooks/use-auth-api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,7 +32,7 @@ function ThreadPanel({
   const { mutateAsync: sendMsg } = useAppSendPrivateMessage();
   const { mutateAsync: markRead } = useAppMarkThreadRead();
   const { mutateAsync: sendTyping } = useAppSendTyping();
-  const { mutateAsync: uploadImage } = useAppUploadImage();
+  const { mutateAsync: uploadMedia } = useAppUploadMedia();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -108,15 +108,15 @@ function ThreadPanel({
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadingImg(true);
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const result = await uploadImage({ data: formData as Parameters<typeof uploadImage>[0]['data'] });
-      const mediaType = file.type.startsWith('video/') ? 'video' : 'image';
+      const result = await uploadMedia({ data: formData as Parameters<typeof uploadMedia>[0]['data'] });
+      const mediaType = (result as { url: string; mediaType: string }).mediaType;
       await sendMsg({ customerId, data: { mediaUrl: (result as { url: string }).url, mediaType } });
       refetch();
       queryClient.invalidateQueries({ queryKey: ['/api/chat/private'] });
@@ -189,7 +189,7 @@ function ThreadPanel({
       {/* Input */}
       <div className="p-3 border-t border-border bg-card/80">
         <div className="flex items-center gap-2">
-          <input ref={fileInputRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleImageUpload} />
+          <input ref={fileInputRef} type="file" accept="image/*,video/mp4,video/webm,video/quicktime,.pdf,.doc,.docx" className="hidden" onChange={handleMediaUpload} />
           <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={uploadingImg} className="text-muted-foreground hover:text-primary shrink-0">
             {uploadingImg ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
           </Button>

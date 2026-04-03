@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import {
-  useAppPrivateThread, useAppSendPrivateMessage, useAppMarkThreadRead, useAppSendTyping, useAppUploadImage,
+  useAppPrivateThread, useAppSendPrivateMessage, useAppMarkThreadRead, useAppSendTyping, useAppUploadMedia,
 } from '@/hooks/use-auth-api';
 import { useStore } from '@/store';
+import { usePushSubscription } from '@/hooks/use-push-subscription';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/lib/utils';
@@ -19,11 +20,14 @@ export default function Messages() {
   const token = useStore(s => s.token);
   const customerId = user?.id ?? 0;
 
+  // Register push subscription so customer receives notifications when off-thread
+  usePushSubscription();
+
   const { data: messages, refetch } = useAppPrivateThread(customerId);
   const { mutateAsync: sendMsg } = useAppSendPrivateMessage();
   const { mutateAsync: markRead } = useAppMarkThreadRead();
   const { mutateAsync: sendTyping } = useAppSendTyping();
-  const { mutateAsync: uploadImage } = useAppUploadImage();
+  const { mutateAsync: uploadMedia } = useAppUploadMedia();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -94,15 +98,15 @@ export default function Messages() {
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !customerId) return;
     setUploadingImg(true);
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const result = await uploadImage({ data: formData as Parameters<typeof uploadImage>[0]['data'] });
-      const mediaType = file.type.startsWith('video/') ? 'video' : 'image';
+      const result = await uploadMedia({ data: formData as Parameters<typeof uploadMedia>[0]['data'] });
+      const mediaType = (result as { url: string; mediaType: string }).mediaType;
       await sendMsg({ customerId, data: { mediaUrl: (result as { url: string }).url, mediaType } });
       refetch();
     } catch (e) {
@@ -196,7 +200,7 @@ export default function Messages() {
         {/* Input */}
         <div className="mt-3 bg-card border border-border rounded-2xl p-3 shadow-sm">
           <div className="flex items-center gap-2">
-            <input ref={fileInputRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleImageUpload} />
+            <input ref={fileInputRef} type="file" accept="image/*,video/mp4,video/webm,video/quicktime,.pdf,.doc,.docx" className="hidden" onChange={handleMediaUpload} />
             <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={uploadingImg} className="text-muted-foreground hover:text-primary shrink-0">
               {uploadingImg ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
             </Button>

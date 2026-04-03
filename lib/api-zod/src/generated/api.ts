@@ -915,6 +915,18 @@ export const UploadImageResponse = zod.object({
 });
 
 /**
+ * @summary Upload chat media (image, video, or document)
+ */
+export const UploadMediaBody = zod.object({
+  file: zod.instanceof(File).optional(),
+});
+
+export const UploadMediaResponse = zod.object({
+  url: zod.string(),
+  mediaType: zod.enum(["image", "video", "file"]),
+});
+
+/**
  * @summary Get public chat messages (paginated)
  */
 export const getPublicChatQueryLimitDefault = 50;

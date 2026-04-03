@@ -121,12 +121,17 @@ export function broadcastToDeliveryPerson(deliveryPersonId: number, event: strin
   }
 }
 
-export function broadcastToUser(userId: number, event: string, data: unknown) {
+/**
+ * Broadcast to a specific user by userId AND optionally restrict to a specific role.
+ * This prevents delivery-role SSE clients (which share userId namespace with other users)
+ * from receiving messages intended for customers.
+ */
+export function broadcastToUser(userId: number, event: string, data: unknown, role?: string) {
   const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
   for (const client of sseClients.values()) {
-    if (client.userId === userId) {
-      try { client.res.write(payload); } catch {}
-    }
+    if (client.userId !== userId) continue;
+    if (role && client.role !== role) continue;
+    try { client.res.write(payload); } catch {}
   }
 }
 

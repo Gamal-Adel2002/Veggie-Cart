@@ -785,6 +785,29 @@ paths:
               schema:
                 $ref: "#/components/schemas/UploadResponse"
 
+  /upload/media:
+    post:
+      operationId: uploadMedia
+      tags: [products]
+      summary: Upload chat media (image, video, or document)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaUploadResponse"
+
   /chat/public:
     get:
       operationId: getPublicChat
@@ -1129,6 +1152,18 @@ components:
           type: string
       required:
         - url
+
+    MediaUploadResponse:
+      type: object
+      properties:
+        url:
+          type: string
+        mediaType:
+          type: string
+          enum: [image, video, file]
+      required:
+        - url
+        - mediaType
 
     SignupInput:
       type: object

@@ -38,6 +38,7 @@ import type {
   LocationInput,
   LoginInput,
   LowStockProduct,
+  MediaUploadResponse,
   ModifyOrderInput,
   Order,
   OrderedProductsCategory,
@@ -56,6 +57,7 @@ import type {
   UpdateMeInput,
   UpdateOrderStatusInput,
   UploadImageBody,
+  UploadMediaBody,
   UploadResponse,
   User,
 } from "./api.schemas";
@@ -3046,6 +3048,96 @@ export const useUploadImage = <
   TContext
 > => {
   return useMutation(getUploadImageMutationOptions(options));
+};
+
+/**
+ * @summary Upload chat media (image, video, or document)
+ */
+export const getUploadMediaUrl = () => {
+  return `/api/upload/media`;
+};
+
+export const uploadMedia = async (
+  uploadMediaBody: UploadMediaBody,
+  options?: RequestInit,
+): Promise<MediaUploadResponse> => {
+  const formData = new FormData();
+  if (uploadMediaBody.file !== undefined) {
+    formData.append(`file`, uploadMediaBody.file);
+  }
+
+  return customFetch<MediaUploadResponse>(getUploadMediaUrl(), {
+    ...options,
+    method: "POST",
+    body: formData,
+  });
+};
+
+export const getUploadMediaMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof uploadMedia>>,
+    TError,
+    { data: BodyType<UploadMediaBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof uploadMedia>>,
+  TError,
+  { data: BodyType<UploadMediaBody> },
+  TContext
+> => {
+  const mutationKey = ["uploadMedia"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof uploadMedia>>,
+    { data: BodyType<UploadMediaBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return uploadMedia(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UploadMediaMutationResult = NonNullable<
+  Awaited<ReturnType<typeof uploadMedia>>
+>;
+export type UploadMediaMutationBody = BodyType<UploadMediaBody>;
+export type UploadMediaMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Upload chat media (image, video, or document)
+ */
+export const useUploadMedia = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof uploadMedia>>,
+    TError,
+    { data: BodyType<UploadMediaBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof uploadMedia>>,
+  TError,
+  { data: BodyType<UploadMediaBody> },
+  TContext
+> => {
+  return useMutation(getUploadMediaMutationOptions(options));
 };
 
 /**
