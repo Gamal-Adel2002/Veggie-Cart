@@ -322,16 +322,11 @@ router.put("/:id/cancel", authenticate(), async (req: AuthRequest, res) => {
         .set({ status: "cancelled", updatedAt: new Date() })
         .where(eq(ordersTable.id, id));
     });
-  } catch {
+  } catch (err) {
     if (cancelError === "NOT_FOUND") { res.status(404).json({ error: "Order not found" }); return; }
     if (cancelError === "FORBIDDEN") { res.status(403).json({ error: "Forbidden" }); return; }
     if (cancelError === "CONFLICT") { res.status(409).json({ error: "Only orders with status 'waiting' can be cancelled" }); return; }
-    throw new Error("Unexpected cancel transaction failure");
-  }
-
-  if (cancelError === "CONFLICT") {
-    res.status(409).json({ error: "Only orders with status 'waiting' can be cancelled" });
-    return;
+    throw err;
   }
 
   const full = await getFullOrder(id);
@@ -478,21 +473,12 @@ router.put("/:id", authenticate(), async (req: AuthRequest, res) => {
       // Step 6: Update order total
       await tx.update(ordersTable).set({ totalPrice, updatedAt: new Date() }).where(eq(ordersTable.id, id));
     });
-  } catch {
+  } catch (err) {
     if (modifyError === "NOT_FOUND") { res.status(404).json({ error: "Order not found" }); return; }
     if (modifyError === "FORBIDDEN") { res.status(403).json({ error: "Forbidden" }); return; }
     if (modifyError === "CONFLICT") { res.status(409).json({ error: "Only orders with status 'waiting' can be modified" }); return; }
     if (modifyError) { res.status(400).json({ error: modifyError }); return; }
-    throw new Error("Unexpected modify transaction failure");
-  }
-
-  if (modifyError === "CONFLICT") {
-    res.status(409).json({ error: "Only orders with status 'waiting' can be modified" });
-    return;
-  }
-  if (modifyError) {
-    res.status(400).json({ error: modifyError });
-    return;
+    throw err;
   }
 
   const full = await getFullOrder(id);
