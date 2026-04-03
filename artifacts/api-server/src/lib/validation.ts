@@ -1,4 +1,4 @@
-const EGYPTIAN_PHONE_REGEX = /^0(10|11|12|15)\d{7}$/;
+const EGYPTIAN_PHONE_REGEX = /^0(10|11|12|15)\d{8}$/;
 
 export function isValidEgyptianPhone(phone: string): boolean {
   return EGYPTIAN_PHONE_REGEX.test(phone);

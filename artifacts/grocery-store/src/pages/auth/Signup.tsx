@@ -20,7 +20,7 @@ export default function Signup() {
 
   const schema = z.object({
     name: z.string().min(2, t('nameRequired')),
-    phone: z.string().regex(/^0(10|11|12|15)\d{7}$/, t('invalidEgyptianPhone')),
+    phone: z.string().regex(/^0(10|11|12|15)\d{8}$/, t('invalidEgyptianPhone')),
     password: z.string().min(6, t('passwordMinLength')),
     address: z.string().optional()
   });

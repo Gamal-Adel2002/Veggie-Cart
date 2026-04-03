@@ -123,7 +123,7 @@ export default function Account() {
       return;
     }
 
-    if (form.phone && !/^0(10|11|12|15)\d{7}$/.test(form.phone)) {
+    if (form.phone && !/^0(10|11|12|15)\d{8}$/.test(form.phone)) {
       setPhoneError(t('invalidEgyptianPhone'));
       return;
     }
