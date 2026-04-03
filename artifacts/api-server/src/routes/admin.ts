@@ -273,11 +273,13 @@ router.get("/ordered-products", authenticate(), requireAdmin, async (_req, res) 
     });
   }
 
-  // Sort products within each category by totalQuantity descending
-  const result = Array.from(categoryMap.values()).map((cat) => ({
-    ...cat,
-    products: cat.products.sort((a, b) => b.totalQuantity - a.totalQuantity),
-  }));
+  // Sort products within each category by totalQuantity descending, then sort categories by name
+  const result = Array.from(categoryMap.values())
+    .map((cat) => ({
+      ...cat,
+      products: cat.products.sort((a, b) => b.totalQuantity - a.totalQuantity),
+    }))
+    .sort((a, b) => a.categoryName.localeCompare(b.categoryName));
 
   res.json(result);
 });
