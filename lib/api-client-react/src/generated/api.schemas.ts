@@ -294,6 +294,53 @@ export interface OrderedProductsCategory {
   products: OrderedProductItem[];
 }
 
+export interface Supplier {
+  id: number;
+  name: string;
+  phone?: string | null;
+  address?: string | null;
+  createdAt: string;
+}
+
+export interface SupplierInput {
+  name: string;
+  phone?: string;
+  address?: string;
+}
+
+export interface SupplierOrderItem {
+  id: number;
+  supplierOrderId: number;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+}
+
+export interface SupplierOrder {
+  id: number;
+  supplierId: number;
+  supplier?: Supplier | null;
+  notes?: string | null;
+  totalPrice: number;
+  orderedAt: string;
+  createdAt: string;
+  items: SupplierOrderItem[];
+}
+
+export interface SupplierOrderItemInput {
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface CreateSupplierOrderInput {
+  supplierId: number;
+  orderedAt: string;
+  notes?: string;
+  items: SupplierOrderItemInput[];
+}
+
 export type GetProductsParams = {
   search?: string;
   categoryId?: number;

@@ -8,6 +8,9 @@ import {
   deliveryPersonsTable,
   deliveryZonesTable,
   categoriesTable,
+  suppliersTable,
+  supplierOrdersTable,
+  supplierOrderItemsTable,
 } from "@workspace/db/schema";
 import { eq, sql, desc, lte, isNotNull, and, inArray } from "drizzle-orm";
 import { authenticate, requireAdmin, type AuthRequest } from "../middlewares/authenticate";
@@ -580,6 +583,130 @@ router.delete("/delivery-zones/:id", authenticate(), requireAdmin, async (req: A
   const id = parseInt(String(req.params.id));
   if (isNaN(id)) { res.status(400).json({ error: "Invalid zone ID" }); return; }
   await db.delete(deliveryZonesTable).where(eq(deliveryZonesTable.id, id));
+  res.status(204).end();
+});
+
+// ── Suppliers CRUD ────────────────────────────────────────────────────────────
+
+router.get("/suppliers", authenticate(), requireAdmin, async (_req, res) => {
+  const suppliers = await db.select().from(suppliersTable).orderBy(desc(suppliersTable.createdAt));
+  res.json(suppliers);
+});
+
+router.post("/suppliers", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
+  const { name, phone, address } = req.body;
+  if (!name || typeof name !== "string" || !name.trim()) {
+    res.status(400).json({ error: "name is required" });
+    return;
+  }
+  const [supplier] = await db
+    .insert(suppliersTable)
+    .values({ name: name.trim(), phone: phone ? String(phone).trim() : null, address: address ? String(address).trim() : null })
+    .returning();
+  res.status(201).json(supplier);
+});
+
+router.put("/suppliers/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
+  const id = parseInt(String(req.params.id));
+  if (isNaN(id) || id <= 0) { res.status(400).json({ error: "Invalid supplier ID" }); return; }
+  const [existing] = await db.select().from(suppliersTable).where(eq(suppliersTable.id, id)).limit(1);
+  if (!existing) { res.status(404).json({ error: "Supplier not found" }); return; }
+
+  const { name, phone, address } = req.body;
+  const updates: Partial<typeof suppliersTable.$inferInsert> = {};
+  if (name != null) {
+    if (typeof name !== "string" || !name.trim()) { res.status(400).json({ error: "name must be a non-empty string" }); return; }
+    updates.name = name.trim();
+  }
+  if (phone !== undefined) updates.phone = phone ? String(phone).trim() : null;
+  if (address !== undefined) updates.address = address ? String(address).trim() : null;
+
+  const [supplier] = await db.update(suppliersTable).set(updates).where(eq(suppliersTable.id, id)).returning();
+  res.json(supplier);
+});
+
+router.delete("/suppliers/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
+  const id = parseInt(String(req.params.id));
+  if (isNaN(id) || id <= 0) { res.status(400).json({ error: "Invalid supplier ID" }); return; }
+  const [existing] = await db.select().from(suppliersTable).where(eq(suppliersTable.id, id)).limit(1);
+  if (!existing) { res.status(404).json({ error: "Supplier not found" }); return; }
+  // Cascade: delete supplier orders and their items
+  const orders = await db.select({ id: supplierOrdersTable.id }).from(supplierOrdersTable).where(eq(supplierOrdersTable.supplierId, id));
+  for (const o of orders) {
+    await db.delete(supplierOrderItemsTable).where(eq(supplierOrderItemsTable.supplierOrderId, o.id));
+  }
+  await db.delete(supplierOrdersTable).where(eq(supplierOrdersTable.supplierId, id));
+  await db.delete(suppliersTable).where(eq(suppliersTable.id, id));
+  res.status(204).end();
+});
+
+// ── Supplier Orders CRUD ──────────────────────────────────────────────────────
+
+async function getFullSupplierOrder(id: number) {
+  const [order] = await db.select().from(supplierOrdersTable).where(eq(supplierOrdersTable.id, id)).limit(1);
+  if (!order) return null;
+  const [supplier] = await db.select().from(suppliersTable).where(eq(suppliersTable.id, order.supplierId)).limit(1);
+  const items = await db.select().from(supplierOrderItemsTable).where(eq(supplierOrderItemsTable.supplierOrderId, id));
+  return { ...order, supplier: supplier || null, items };
+}
+
+router.get("/supplier-orders", authenticate(), requireAdmin, async (_req, res) => {
+  const orders = await db.select().from(supplierOrdersTable).orderBy(desc(supplierOrdersTable.orderedAt));
+  const full = await Promise.all(orders.map((o) => getFullSupplierOrder(o.id)));
+  res.json(full.filter(Boolean));
+});
+
+router.post("/supplier-orders", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
+  const { supplierId, orderedAt, notes, items } = req.body;
+  if (!supplierId || !orderedAt || !items || !Array.isArray(items) || items.length === 0) {
+    res.status(400).json({ error: "supplierId, orderedAt, and items array are required" });
+    return;
+  }
+  const [supplier] = await db.select().from(suppliersTable).where(eq(suppliersTable.id, Number(supplierId))).limit(1);
+  if (!supplier) { res.status(400).json({ error: "Supplier not found" }); return; }
+
+  const enrichedItems: { productName: string; quantity: number; unitPrice: number; subtotal: number }[] = [];
+  let totalPrice = 0;
+  for (const item of items) {
+    const productName = String(item.productName || "").trim();
+    const quantity = Number(item.quantity);
+    const unitPrice = Number(item.unitPrice);
+    if (!productName) { res.status(400).json({ error: "Each item must have a productName" }); return; }
+    if (!Number.isFinite(quantity) || quantity <= 0) { res.status(400).json({ error: `Invalid quantity for item "${productName}"` }); return; }
+    if (!Number.isFinite(unitPrice) || unitPrice < 0) { res.status(400).json({ error: `Invalid unitPrice for item "${productName}"` }); return; }
+    const subtotal = quantity * unitPrice;
+    totalPrice += subtotal;
+    enrichedItems.push({ productName, quantity, unitPrice, subtotal });
+  }
+
+  const [order] = await db
+    .insert(supplierOrdersTable)
+    .values({ supplierId: Number(supplierId), notes: notes ? String(notes) : null, totalPrice, orderedAt: new Date(orderedAt) })
+    .returning();
+
+  for (const item of enrichedItems) {
+    await db.insert(supplierOrderItemsTable).values({ ...item, supplierOrderId: order.id });
+  }
+
+  const full = await getFullSupplierOrder(order.id);
+  res.status(201).json(full);
+});
+
+router.get("/supplier-orders/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
+  const id = parseInt(String(req.params.id));
+  if (isNaN(id) || id <= 0) { res.status(400).json({ error: "Invalid supplier order ID" }); return; }
+  const full = await getFullSupplierOrder(id);
+  if (!full) { res.status(404).json({ error: "Supplier order not found" }); return; }
+  res.json(full);
+});
+
+router.delete("/supplier-orders/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
+  const id = parseInt(String(req.params.id));
+  if (isNaN(id) || id <= 0) { res.status(400).json({ error: "Invalid supplier order ID" }); return; }
+  const [existing] = await db.select().from(supplierOrdersTable).where(eq(supplierOrdersTable.id, id)).limit(1);
+  if (!existing) { res.status(404).json({ error: "Supplier order not found" }); return; }
+  await db.delete(supplierOrderItemsTable).where(eq(supplierOrderItemsTable.supplierOrderId, id));
+  await db.delete(supplierOrdersTable).where(eq(supplierOrdersTable.id, id));
   res.status(204).end();
 });
 

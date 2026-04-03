@@ -10,6 +10,8 @@ import {
   useGetAdmins, useCreateAdmin, useUpdateAdmin,
   useGetLowStockProducts,
   useGetOrderedProducts,
+  useAdminGetSuppliers, useAdminCreateSupplier, useAdminUpdateSupplier, useAdminDeleteSupplier,
+  useAdminGetSupplierOrders, useAdminCreateSupplierOrder, useAdminGetSupplierOrder, useAdminDeleteSupplierOrder,
 } from '@workspace/api-client-react';
 
 export function useAppProducts(params?: Parameters<typeof useGetProducts>[0]) { return useGetProducts(params); }
@@ -55,3 +57,13 @@ export function useAppOrderedProducts() { return useGetOrderedProducts(); }
 
 export function useAppCancelOrder() { return useCancelOrder(); }
 export function useAppModifyOrder() { return useModifyOrder(); }
+
+export function useAppSuppliers() { return useAdminGetSuppliers(); }
+export function useAppCreateSupplier() { return useAdminCreateSupplier(); }
+export function useAppUpdateSupplier() { return useAdminUpdateSupplier(); }
+export function useAppDeleteSupplier() { return useAdminDeleteSupplier(); }
+
+export function useAppSupplierOrders() { return useAdminGetSupplierOrders(); }
+export function useAppCreateSupplierOrder() { return useAdminCreateSupplierOrder(); }
+export function useAppSupplierOrder(id: number) { return useAdminGetSupplierOrder(id); }
+export function useAppDeleteSupplierOrder() { return useAdminDeleteSupplierOrder(); }

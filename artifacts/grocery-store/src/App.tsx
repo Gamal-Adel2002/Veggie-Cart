@@ -26,6 +26,8 @@ import AdminDeliveryZones from "./pages/admin/DeliveryZones";
 import Admins from "./pages/admin/Admins";
 import Customers from "./pages/admin/Customers";
 import OrderedProducts from "./pages/admin/OrderedProducts";
+import Suppliers from "./pages/admin/Suppliers";
+import SupplierOrders from "./pages/admin/SupplierOrders";
 import DeliveryLogin from "./pages/delivery/DeliveryLogin";
 import DeliveryDashboard from "./pages/delivery/DeliveryDashboard";
 import { RequireDelivery } from "./components/delivery/RequireDelivery";
@@ -69,6 +71,8 @@ function Router() {
       <Route path="/admin/admins" component={Admins} />
       <Route path="/admin/customers" component={Customers} />
       <Route path="/admin/ordered-products" component={OrderedProducts} />
+      <Route path="/admin/suppliers" component={Suppliers} />
+      <Route path="/admin/supplier-orders" component={SupplierOrders} />
 
       <Route path="/delivery/login" component={DeliveryLogin} />
       <Route path="/delivery/dashboard">

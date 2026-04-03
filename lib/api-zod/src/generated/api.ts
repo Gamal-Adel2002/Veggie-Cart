@@ -913,3 +913,146 @@ export const UploadImageBody = zod.object({
 export const UploadImageResponse = zod.object({
   url: zod.string(),
 });
+
+/**
+ * @summary Admin - list all suppliers
+ */
+export const AdminGetSuppliersResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  phone: zod.string().nullish(),
+  address: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
+export const AdminGetSuppliersResponse = zod.array(
+  AdminGetSuppliersResponseItem,
+);
+
+/**
+ * @summary Admin - create supplier
+ */
+export const AdminCreateSupplierBody = zod.object({
+  name: zod.string(),
+  phone: zod.string().optional(),
+  address: zod.string().optional(),
+});
+
+/**
+ * @summary Admin - update supplier
+ */
+export const AdminUpdateSupplierParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const AdminUpdateSupplierBody = zod.object({
+  name: zod.string(),
+  phone: zod.string().optional(),
+  address: zod.string().optional(),
+});
+
+export const AdminUpdateSupplierResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  phone: zod.string().nullish(),
+  address: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Admin - delete supplier
+ */
+export const AdminDeleteSupplierParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Admin - list all supplier orders
+ */
+export const AdminGetSupplierOrdersResponseItem = zod.object({
+  id: zod.number(),
+  supplierId: zod.number(),
+  supplier: zod
+    .object({
+      id: zod.number(),
+      name: zod.string(),
+      phone: zod.string().nullish(),
+      address: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
+    })
+    .nullish(),
+  notes: zod.string().nullish(),
+  totalPrice: zod.number(),
+  orderedAt: zod.coerce.date(),
+  createdAt: zod.coerce.date(),
+  items: zod.array(
+    zod.object({
+      id: zod.number(),
+      supplierOrderId: zod.number(),
+      productName: zod.string(),
+      quantity: zod.number(),
+      unitPrice: zod.number(),
+      subtotal: zod.number(),
+    }),
+  ),
+});
+export const AdminGetSupplierOrdersResponse = zod.array(
+  AdminGetSupplierOrdersResponseItem,
+);
+
+/**
+ * @summary Admin - create supplier order
+ */
+export const AdminCreateSupplierOrderBody = zod.object({
+  supplierId: zod.number(),
+  orderedAt: zod.coerce.date(),
+  notes: zod.string().optional(),
+  items: zod.array(
+    zod.object({
+      productName: zod.string(),
+      quantity: zod.number(),
+      unitPrice: zod.number(),
+    }),
+  ),
+});
+
+/**
+ * @summary Admin - get supplier order by ID
+ */
+export const AdminGetSupplierOrderParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const AdminGetSupplierOrderResponse = zod.object({
+  id: zod.number(),
+  supplierId: zod.number(),
+  supplier: zod
+    .object({
+      id: zod.number(),
+      name: zod.string(),
+      phone: zod.string().nullish(),
+      address: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
+    })
+    .nullish(),
+  notes: zod.string().nullish(),
+  totalPrice: zod.number(),
+  orderedAt: zod.coerce.date(),
+  createdAt: zod.coerce.date(),
+  items: zod.array(
+    zod.object({
+      id: zod.number(),
+      supplierOrderId: zod.number(),
+      productName: zod.string(),
+      quantity: zod.number(),
+      unitPrice: zod.number(),
+      subtotal: zod.number(),
+    }),
+  ),
+});
+
+/**
+ * @summary Admin - delete supplier order
+ */
+export const AdminDeleteSupplierOrderParams = zod.object({
+  id: zod.coerce.number(),
+});

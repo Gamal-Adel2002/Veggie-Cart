@@ -783,6 +783,146 @@ paths:
               schema:
                 $ref: "#/components/schemas/UploadResponse"
 
+  /admin/suppliers:
+    get:
+      operationId: adminGetSuppliers
+      tags: [admin]
+      summary: Admin - list all suppliers
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Supplier"
+    post:
+      operationId: adminCreateSupplier
+      tags: [admin]
+      summary: Admin - create supplier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SupplierInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Supplier"
+
+  /admin/suppliers/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    put:
+      operationId: adminUpdateSupplier
+      tags: [admin]
+      summary: Admin - update supplier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SupplierInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Supplier"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: adminDeleteSupplier
+      tags: [admin]
+      summary: Admin - delete supplier
+      responses:
+        "204":
+          description: No content
+
+  /admin/supplier-orders:
+    get:
+      operationId: adminGetSupplierOrders
+      tags: [admin]
+      summary: Admin - list all supplier orders
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SupplierOrder"
+    post:
+      operationId: adminCreateSupplierOrder
+      tags: [admin]
+      summary: Admin - create supplier order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSupplierOrderInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupplierOrder"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/supplier-orders/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      operationId: adminGetSupplierOrder
+      tags: [admin]
+      summary: Admin - get supplier order by ID
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupplierOrder"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: adminDeleteSupplierOrder
+      tags: [admin]
+      summary: Admin - delete supplier order
+      responses:
+        "204":
+          description: No content
+
 components:
   schemas:
     HealthStatus:
@@ -1377,3 +1517,131 @@ components:
         - categoryNameAr
         - categoryIcon
         - products
+
+    Supplier:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - createdAt
+
+    SupplierInput:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+      required:
+        - name
+
+    SupplierOrderItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        supplierOrderId:
+          type: integer
+        productName:
+          type: string
+        quantity:
+          type: number
+          format: double
+        unitPrice:
+          type: number
+          format: double
+        subtotal:
+          type: number
+          format: double
+      required:
+        - id
+        - supplierOrderId
+        - productName
+        - quantity
+        - unitPrice
+        - subtotal
+
+    SupplierOrder:
+      type: object
+      properties:
+        id:
+          type: integer
+        supplierId:
+          type: integer
+        supplier:
+          $ref: "#/components/schemas/Supplier"
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        totalPrice:
+          type: number
+          format: double
+        orderedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SupplierOrderItem"
+      required:
+        - id
+        - supplierId
+        - totalPrice
+        - orderedAt
+        - createdAt
+        - items
+
+    SupplierOrderItemInput:
+      type: object
+      properties:
+        productName:
+          type: string
+        quantity:
+          type: number
+          format: double
+        unitPrice:
+          type: number
+          format: double
+      required:
+        - productName
+        - quantity
+        - unitPrice
+
+    CreateSupplierOrderInput:
+      type: object
+      properties:
+        supplierId:
+          type: integer
+        orderedAt:
+          type: string
+          format: date-time
+        notes:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SupplierOrderItemInput"
+      required:
+        - supplierId
+        - orderedAt
+        - items
