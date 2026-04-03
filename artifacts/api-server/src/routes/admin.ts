@@ -14,15 +14,11 @@ import { authenticate, requireAdmin, type AuthRequest } from "../middlewares/aut
 import type { OrderStatus } from "@workspace/db/schema";
 import { buildWhatsAppMessage, sendWhatsAppMessage, sendSmsMessage } from "../lib/whatsapp";
 import { hashPassword } from "../lib/auth";
+import { isValidEgyptianPhone, INVALID_PHONE_MSG } from "../lib/validation";
 import { broadcastToDeliveryPerson, sendPushToDeliveryPerson } from "./notifications";
 import pino from "pino";
 
 const logger = pino({ level: "info" });
-
-const EGYPTIAN_PHONE_REGEX = /^0(10|11|12|15)\d{7}$/;
-function isValidEgyptianPhone(phone: string): boolean {
-  return EGYPTIAN_PHONE_REGEX.test(phone);
-}
 
 const router = Router();
 
@@ -334,7 +330,7 @@ router.post("/admins", authenticate(), requireAdmin, async (req: AuthRequest, re
   }
 
   if (!isValidEgyptianPhone(String(phone))) {
-    res.status(400).json({ error: "Phone must start with 010, 011, 012, or 015 and be exactly 11 digits" });
+    res.status(400).json({ error: INVALID_PHONE_MSG });
     return;
   }
 
@@ -378,7 +374,7 @@ router.put("/admins/:id", authenticate(), requireAdmin, async (req: AuthRequest,
   if (name) updates.name = name;
   if (phone && phone !== existing.phone) {
     if (!isValidEgyptianPhone(String(phone))) {
-      res.status(400).json({ error: "Phone must start with 010, 011, 012, or 015 and be exactly 11 digits" });
+      res.status(400).json({ error: INVALID_PHONE_MSG });
       return;
     }
     const conflict = await db.select().from(usersTable).where(eq(usersTable.phone, phone)).limit(1);
@@ -448,7 +444,7 @@ router.put("/customers/:id", authenticate(), requireAdmin, async (req: AuthReque
   }
   if (phone != null) {
     if (typeof phone !== "string" || !phone.trim()) { res.status(400).json({ error: "phone must be a non-empty string" }); return; }
-    if (!isValidEgyptianPhone(phone.trim())) { res.status(400).json({ error: "Phone must start with 010, 011, 012, or 015 and be exactly 11 digits" }); return; }
+    if (!isValidEgyptianPhone(phone.trim())) { res.status(400).json({ error: INVALID_PHONE_MSG }); return; }
     const conflict = await db.select().from(usersTable).where(eq(usersTable.phone, phone.trim())).limit(1);
     if (conflict.length > 0 && conflict[0].id !== id) { res.status(409).json({ error: "Phone number already exists" }); return; }
     updates.phone = phone.trim();

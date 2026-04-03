@@ -43,6 +43,7 @@ export default function Account() {
     newPassword: '',
     confirmNewPassword: '',
   });
+  const [phoneError, setPhoneError] = useState<string>('');
   const [previewImage, setPreviewImage] = useState<string>('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [mapLoc, setMapLoc] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -63,6 +64,7 @@ export default function Account() {
     setMapLoc(user.latitude && user.longitude ? { latitude: user.latitude, longitude: user.longitude } : null);
     setMapAddress(user.address || '');
     setLocationZoneValid(true);
+    setPhoneError('');
     setEditing(true);
   };
 
@@ -82,9 +84,10 @@ export default function Account() {
     }
 
     if (form.phone && !/^0(10|11|12|15)\d{7}$/.test(form.phone)) {
-      toast({ title: t('invalidEgyptianPhone'), variant: 'destructive' });
+      setPhoneError(t('invalidEgyptianPhone'));
       return;
     }
+    setPhoneError('');
 
     try {
       let imageUrl = user?.profileImage || '';
@@ -124,11 +127,11 @@ export default function Account() {
     } catch (err: unknown) {
       const msg = getErrorMessage(err);
       const isAlreadyInUse = msg?.toLowerCase().includes('already');
-      toast({
-        title: isAlreadyInUse ? t('phoneAlreadyExists') : t('updateFailed'),
-        description: isAlreadyInUse ? undefined : msg,
-        variant: 'destructive',
-      });
+      if (isAlreadyInUse) {
+        setPhoneError(t('phoneAlreadyExists'));
+      } else {
+        toast({ title: t('updateFailed'), description: msg, variant: 'destructive' });
+      }
     }
   };
 
@@ -220,9 +223,10 @@ export default function Account() {
                 <Input
                   required
                   value={form.phone}
-                  onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                  className="h-10 rounded-xl text-sm"
+                  onChange={e => { setPhoneError(''); setForm(f => ({ ...f, phone: e.target.value })); }}
+                  className={`h-10 rounded-xl text-sm${phoneError ? ' border-destructive' : ''}`}
                 />
+                {phoneError && <p className="text-xs text-destructive">{phoneError}</p>}
               </div>
 
               {/* Password section */}

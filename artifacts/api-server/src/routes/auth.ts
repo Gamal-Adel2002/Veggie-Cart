@@ -3,14 +3,10 @@ import { db } from "@workspace/db";
 import { usersTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import { hashPassword, comparePassword, generateToken } from "../lib/auth";
+import { isValidEgyptianPhone, INVALID_PHONE_MSG } from "../lib/validation";
 import { authenticate, type AuthRequest } from "../middlewares/authenticate";
 
 const router = Router();
-
-const EGYPTIAN_PHONE_REGEX = /^0(10|11|12|15)\d{7}$/;
-function isValidEgyptianPhone(phone: string): boolean {
-  return EGYPTIAN_PHONE_REGEX.test(phone);
-}
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -33,7 +29,7 @@ router.post("/signup", async (req, res) => {
   }
 
   if (!isValidEgyptianPhone(String(phone))) {
-    res.status(400).json({ error: "Phone must start with 010, 011, 012, or 015 and be exactly 11 digits" });
+    res.status(400).json({ error: INVALID_PHONE_MSG });
     return;
   }
 
@@ -68,7 +64,7 @@ router.post("/login", async (req, res) => {
   }
 
   if (!isValidEgyptianPhone(String(phone))) {
-    res.status(400).json({ error: "Phone must start with 010, 011, 012, or 015 and be exactly 11 digits" });
+    res.status(400).json({ error: INVALID_PHONE_MSG });
     return;
   }
 
@@ -133,7 +129,7 @@ router.put("/me", authenticate(), async (req: AuthRequest, res) => {
   // If changing phone, validate format and check uniqueness
   if (phone && phone !== user.phone) {
     if (!isValidEgyptianPhone(String(phone))) {
-      res.status(400).json({ error: "Phone must start with 010, 011, 012, or 015 and be exactly 11 digits" });
+      res.status(400).json({ error: INVALID_PHONE_MSG });
       return;
     }
     const existing = await db.select().from(usersTable).where(eq(usersTable.phone, phone)).limit(1);
@@ -179,7 +175,7 @@ router.post("/admin/login", async (req, res) => {
   }
 
   if (!isValidEgyptianPhone(String(phone))) {
-    res.status(400).json({ error: "Phone must start with 010, 011, 012, or 015 and be exactly 11 digits" });
+    res.status(400).json({ error: INVALID_PHONE_MSG });
     return;
   }
 
