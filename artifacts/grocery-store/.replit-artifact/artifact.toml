@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/"
-title = "Fresh Veggies - Grocery Delivery"
+title = "FreshVeg - Grocery Delivery"
 version = "1.0.0"
 id = "artifacts/grocery-store"
 router = "path"
