@@ -621,6 +621,11 @@ router.put("/suppliers/:id", authenticate(), requireAdmin, async (req: AuthReque
   if (phone !== undefined) updates.phone = phone ? String(phone).trim() : null;
   if (address !== undefined) updates.address = address ? String(address).trim() : null;
 
+  if (Object.keys(updates).length === 0) {
+    res.json(existing);
+    return;
+  }
+
   const [supplier] = await db.update(suppliersTable).set(updates).where(eq(suppliersTable.id, id)).returning();
   res.json(supplier);
 });
@@ -630,13 +635,14 @@ router.delete("/suppliers/:id", authenticate(), requireAdmin, async (req: AuthRe
   if (isNaN(id) || id <= 0) { res.status(400).json({ error: "Invalid supplier ID" }); return; }
   const [existing] = await db.select().from(suppliersTable).where(eq(suppliersTable.id, id)).limit(1);
   if (!existing) { res.status(404).json({ error: "Supplier not found" }); return; }
-  // Cascade: delete supplier orders and their items
-  const orders = await db.select({ id: supplierOrdersTable.id }).from(supplierOrdersTable).where(eq(supplierOrdersTable.supplierId, id));
-  for (const o of orders) {
-    await db.delete(supplierOrderItemsTable).where(eq(supplierOrderItemsTable.supplierOrderId, o.id));
-  }
-  await db.delete(supplierOrdersTable).where(eq(supplierOrdersTable.supplierId, id));
-  await db.delete(suppliersTable).where(eq(suppliersTable.id, id));
+  await db.transaction(async (tx) => {
+    const orders = await tx.select({ id: supplierOrdersTable.id }).from(supplierOrdersTable).where(eq(supplierOrdersTable.supplierId, id));
+    for (const o of orders) {
+      await tx.delete(supplierOrderItemsTable).where(eq(supplierOrderItemsTable.supplierOrderId, o.id));
+    }
+    await tx.delete(supplierOrdersTable).where(eq(supplierOrdersTable.supplierId, id));
+    await tx.delete(suppliersTable).where(eq(suppliersTable.id, id));
+  });
   res.status(204).end();
 });
 
@@ -679,16 +685,18 @@ router.post("/supplier-orders", authenticate(), requireAdmin, async (req: AuthRe
     enrichedItems.push({ productName, quantity, unitPrice, subtotal });
   }
 
-  const [order] = await db
-    .insert(supplierOrdersTable)
-    .values({ supplierId: Number(supplierId), notes: notes ? String(notes) : null, totalPrice, orderedAt: new Date(orderedAt) })
-    .returning();
-
-  for (const item of enrichedItems) {
-    await db.insert(supplierOrderItemsTable).values({ ...item, supplierOrderId: order.id });
-  }
-
-  const full = await getFullSupplierOrder(order.id);
+  const full = await db.transaction(async (tx) => {
+    const [order] = await tx
+      .insert(supplierOrdersTable)
+      .values({ supplierId: Number(supplierId), notes: notes ? String(notes) : null, totalPrice, orderedAt: new Date(orderedAt) })
+      .returning();
+    for (const item of enrichedItems) {
+      await tx.insert(supplierOrderItemsTable).values({ ...item, supplierOrderId: order.id });
+    }
+    const [supplier] = await tx.select().from(suppliersTable).where(eq(suppliersTable.id, order.supplierId)).limit(1);
+    const items = await tx.select().from(supplierOrderItemsTable).where(eq(supplierOrderItemsTable.supplierOrderId, order.id));
+    return { ...order, supplier: supplier || null, items };
+  });
   res.status(201).json(full);
 });
 
@@ -705,8 +713,10 @@ router.delete("/supplier-orders/:id", authenticate(), requireAdmin, async (req: 
   if (isNaN(id) || id <= 0) { res.status(400).json({ error: "Invalid supplier order ID" }); return; }
   const [existing] = await db.select().from(supplierOrdersTable).where(eq(supplierOrdersTable.id, id)).limit(1);
   if (!existing) { res.status(404).json({ error: "Supplier order not found" }); return; }
-  await db.delete(supplierOrderItemsTable).where(eq(supplierOrderItemsTable.supplierOrderId, id));
-  await db.delete(supplierOrdersTable).where(eq(supplierOrdersTable.id, id));
+  await db.transaction(async (tx) => {
+    await tx.delete(supplierOrderItemsTable).where(eq(supplierOrderItemsTable.supplierOrderId, id));
+    await tx.delete(supplierOrdersTable).where(eq(supplierOrdersTable.id, id));
+  });
   res.status(204).end();
 });
 
