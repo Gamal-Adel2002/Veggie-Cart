@@ -63,11 +63,19 @@ export default function Admins() {
   };
 
   const handleSave = async () => {
+    const EGYPTIAN_PHONE = /^0(10|11|12|15)\d{7}$/;
     if (mode === 'new') {
       if (!formData.name.trim() || !formData.phone.trim() || !formData.password.trim()) {
         toast({ title: "Validation Error", description: "Name, phone, and password are all required.", variant: "destructive" });
         return;
       }
+      if (!EGYPTIAN_PHONE.test(formData.phone.trim())) {
+        toast({ title: "Invalid Phone", description: "Phone must start with 010, 011, 012, or 015 and be exactly 11 digits.", variant: "destructive" });
+        return;
+      }
+    } else if (mode === 'edit' && formData.phone.trim() && !EGYPTIAN_PHONE.test(formData.phone.trim())) {
+      toast({ title: "Invalid Phone", description: "Phone must start with 010, 011, 012, or 015 and be exactly 11 digits.", variant: "destructive" });
+      return;
     }
 
     setSaving(true);

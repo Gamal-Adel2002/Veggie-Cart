@@ -88,6 +88,8 @@ export const dictionary = {
 
     // Validation errors
     validPhoneRequired: "Valid phone required",
+    invalidEgyptianPhone: "Phone must start with 010, 011, 012, or 015 and be exactly 11 digits",
+    phoneAlreadyExists: "This phone number is already registered",
     passwordRequired: "Password required",
     nameRequired: "Name required",
     passwordMinLength: "Password must be at least 6 characters",
@@ -428,6 +430,8 @@ export const dictionary = {
 
     // Validation errors
     validPhoneRequired: "رقم الهاتف غير صحيح",
+    invalidEgyptianPhone: "يجب أن يبدأ رقم الهاتف بـ 010 أو 011 أو 012 أو 015 ويكون 11 رقماً",
+    phoneAlreadyExists: "رقم الهاتف هذا مسجل بالفعل",
     passwordRequired: "كلمة المرور مطلوبة",
     nameRequired: "الاسم مطلوب",
     passwordMinLength: "كلمة المرور يجب أن تكون 6 أحرف على الأقل",

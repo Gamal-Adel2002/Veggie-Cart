@@ -19,6 +19,11 @@ import pino from "pino";
 
 const logger = pino({ level: "info" });
 
+const EGYPTIAN_PHONE_REGEX = /^0(10|11|12|15)\d{7}$/;
+function isValidEgyptianPhone(phone: string): boolean {
+  return EGYPTIAN_PHONE_REGEX.test(phone);
+}
+
 const router = Router();
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -328,9 +333,14 @@ router.post("/admins", authenticate(), requireAdmin, async (req: AuthRequest, re
     return;
   }
 
+  if (!isValidEgyptianPhone(String(phone))) {
+    res.status(400).json({ error: "Phone must start with 010, 011, 012, or 015 and be exactly 11 digits" });
+    return;
+  }
+
   const existing = await db.select().from(usersTable).where(eq(usersTable.phone, phone)).limit(1);
   if (existing.length > 0) {
-    res.status(409).json({ error: "Phone already registered" });
+    res.status(409).json({ error: "Phone number already exists" });
     return;
   }
 
@@ -367,9 +377,13 @@ router.put("/admins/:id", authenticate(), requireAdmin, async (req: AuthRequest,
 
   if (name) updates.name = name;
   if (phone && phone !== existing.phone) {
+    if (!isValidEgyptianPhone(String(phone))) {
+      res.status(400).json({ error: "Phone must start with 010, 011, 012, or 015 and be exactly 11 digits" });
+      return;
+    }
     const conflict = await db.select().from(usersTable).where(eq(usersTable.phone, phone)).limit(1);
     if (conflict.length > 0 && conflict[0].id !== id) {
-      res.status(409).json({ error: "Phone already in use by another account" });
+      res.status(409).json({ error: "Phone number already exists" });
       return;
     }
     updates.phone = phone;
@@ -434,8 +448,9 @@ router.put("/customers/:id", authenticate(), requireAdmin, async (req: AuthReque
   }
   if (phone != null) {
     if (typeof phone !== "string" || !phone.trim()) { res.status(400).json({ error: "phone must be a non-empty string" }); return; }
+    if (!isValidEgyptianPhone(phone.trim())) { res.status(400).json({ error: "Phone must start with 010, 011, 012, or 015 and be exactly 11 digits" }); return; }
     const conflict = await db.select().from(usersTable).where(eq(usersTable.phone, phone.trim())).limit(1);
-    if (conflict.length > 0 && conflict[0].id !== id) { res.status(409).json({ error: "Phone already in use" }); return; }
+    if (conflict.length > 0 && conflict[0].id !== id) { res.status(409).json({ error: "Phone number already exists" }); return; }
     updates.phone = phone.trim();
   }
   if (address != null) updates.address = String(address);

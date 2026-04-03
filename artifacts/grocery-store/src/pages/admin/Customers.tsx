@@ -95,6 +95,11 @@ export default function Customers() {
 
   const handleSaveProfile = async () => {
     if (!editing) return;
+    const EGYPTIAN_PHONE = /^0(10|11|12|15)\d{7}$/;
+    if (formData.phone.trim() && !EGYPTIAN_PHONE.test(formData.phone.trim())) {
+      toast({ title: "Invalid Phone", description: "Phone must start with 010, 011, 012, or 015 and be exactly 11 digits.", variant: 'destructive' });
+      return;
+    }
     setSavingProfile(true);
     try {
       await apiFetch(`/api/admin/customers/${editing.id}`, {

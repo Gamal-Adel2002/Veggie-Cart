@@ -20,7 +20,7 @@ export default function Signup() {
 
   const schema = z.object({
     name: z.string().min(2, t('nameRequired')),
-    phone: z.string().min(10, t('validPhoneRequired')),
+    phone: z.string().regex(/^0(10|11|12|15)\d{7}$/, t('invalidEgyptianPhone')),
     password: z.string().min(6, t('passwordMinLength')),
     address: z.string().optional()
   });
@@ -66,7 +66,16 @@ export default function Signup() {
       setLocation('/');
     } catch (e: unknown) {
       setUploading(false);
-      toast({ title: t('signupFailed'), description: getErrorMessage(e) || t('errorCreatingAccount'), variant: "destructive" });
+      const msg = getErrorMessage(e);
+      const isAlreadyRegistered = msg?.toLowerCase().includes('already') || msg?.toLowerCase().includes('registered');
+      toast({
+        title: isAlreadyRegistered ? t('phoneAlreadyExists') : t('signupFailed'),
+        description: isAlreadyRegistered ? undefined : (msg || t('errorCreatingAccount')),
+        variant: "destructive",
+      });
+      if (isAlreadyRegistered) {
+        form.setError('phone', { message: t('phoneAlreadyExists') });
+      }
     }
   };
 

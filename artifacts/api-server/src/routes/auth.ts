@@ -7,6 +7,11 @@ import { authenticate, type AuthRequest } from "../middlewares/authenticate";
 
 const router = Router();
 
+const EGYPTIAN_PHONE_REGEX = /^0(10|11|12|15)\d{7}$/;
+function isValidEgyptianPhone(phone: string): boolean {
+  return EGYPTIAN_PHONE_REGEX.test(phone);
+}
+
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
@@ -27,9 +32,14 @@ router.post("/signup", async (req, res) => {
     return;
   }
 
+  if (!isValidEgyptianPhone(String(phone))) {
+    res.status(400).json({ error: "Phone must start with 010, 011, 012, or 015 and be exactly 11 digits" });
+    return;
+  }
+
   const existing = await db.select().from(usersTable).where(eq(usersTable.phone, phone)).limit(1);
   if (existing.length > 0) {
-    res.status(409).json({ error: "Phone already registered" });
+    res.status(409).json({ error: "Phone number already exists" });
     return;
   }
 
@@ -115,11 +125,15 @@ router.put("/me", authenticate(), async (req: AuthRequest, res) => {
     }
   }
 
-  // If changing phone, check uniqueness
+  // If changing phone, validate format and check uniqueness
   if (phone && phone !== user.phone) {
+    if (!isValidEgyptianPhone(String(phone))) {
+      res.status(400).json({ error: "Phone must start with 010, 011, 012, or 015 and be exactly 11 digits" });
+      return;
+    }
     const existing = await db.select().from(usersTable).where(eq(usersTable.phone, phone)).limit(1);
     if (existing.length > 0) {
-      res.status(409).json({ error: "Phone already in use" });
+      res.status(409).json({ error: "Phone number already exists" });
       return;
     }
   }

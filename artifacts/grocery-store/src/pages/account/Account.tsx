@@ -81,6 +81,11 @@ export default function Account() {
       return;
     }
 
+    if (form.phone && !/^0(10|11|12|15)\d{7}$/.test(form.phone)) {
+      toast({ title: t('invalidEgyptianPhone'), variant: 'destructive' });
+      return;
+    }
+
     try {
       let imageUrl = user?.profileImage || '';
       if (imageFile) {
@@ -117,7 +122,13 @@ export default function Account() {
       toast({ title: t('profileUpdated'), description: t('profileUpdatedDesc') });
       setEditing(false);
     } catch (err: unknown) {
-      toast({ title: t('updateFailed'), description: getErrorMessage(err), variant: 'destructive' });
+      const msg = getErrorMessage(err);
+      const isAlreadyInUse = msg?.toLowerCase().includes('already');
+      toast({
+        title: isAlreadyInUse ? t('phoneAlreadyExists') : t('updateFailed'),
+        description: isAlreadyInUse ? undefined : msg,
+        variant: 'destructive',
+      });
     }
   };
 
