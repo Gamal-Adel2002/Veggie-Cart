@@ -422,6 +422,30 @@ export interface ReactInput {
   emoji: string;
 }
 
+/**
+ * Role of the user who is typing
+ */
+export type TypingEventRole =
+  (typeof TypingEventRole)[keyof typeof TypingEventRole];
+
+export const TypingEventRole = {
+  admin: "admin",
+  customer: "customer",
+} as const;
+
+/**
+ * SSE event payload emitted on the `typing` event channel. Sent when a participant broadcasts a typing indicator to the other party in a private chat thread. Clients should display a transient typing indicator and auto-dismiss it after ~3 seconds.
+
+ */
+export interface TypingEvent {
+  /** ID of the user who is typing */
+  userId: number;
+  /** Role of the user who is typing */
+  role: TypingEventRole;
+  /** Customer ID that identifies the private thread */
+  customerId: number;
+}
+
 export type GetProductsParams = {
   search?: string;
   categoryId?: number;
@@ -443,4 +467,8 @@ export type UploadMediaBody = {
 export type GetPublicChatParams = {
   limit?: number;
   offset?: number;
+};
+
+export type SendTypingIndicator200 = {
+  ok: boolean;
 };

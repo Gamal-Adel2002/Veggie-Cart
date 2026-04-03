@@ -18,10 +18,6 @@ export function authenticate(required = true) {
     if (authHeader?.startsWith("Bearer ")) {
       candidates.push(authHeader.slice(7));
     }
-    // Allow token in query string (needed for EventSource which cannot set headers)
-    if (typeof req.query?.token === "string" && req.query.token) {
-      candidates.push(req.query.token);
-    }
     if (req.cookies?.delivery_token) {
       candidates.push(req.cookies.delivery_token as string);
     }
@@ -64,6 +60,19 @@ export function requireDelivery(req: AuthRequest, res: Response, next: NextFunct
   if (req.userRole !== "delivery") {
     res.status(403).json({ error: "Forbidden - Delivery only" });
     return;
+  }
+  next();
+}
+
+/**
+ * SSE-only middleware: promotes a `?token=` query-string value into an
+ * Authorization header so the subsequent `authenticate()` call can verify it.
+ * Scope this ONLY to the /notifications/stream route to avoid exposing
+ * bearer tokens in URL logs for regular API endpoints.
+ */
+export function sseQueryToken(req: Request, _res: Response, next: NextFunction) {
+  if (typeof req.query?.token === "string" && req.query.token && !req.headers.authorization) {
+    req.headers.authorization = `Bearer ${req.query.token}`;
   }
   next();
 }

@@ -48,6 +48,7 @@ import type {
   ReactInput,
   SendPrivateMessageInput,
   SendPublicMessageInput,
+  SendTypingIndicator200,
   SignupInput,
   SuccessResponse,
   Supplier,
@@ -3748,6 +3749,8 @@ export const useMarkPrivateThreadRead = <
 };
 
 /**
+ * Triggers an SSE `typing` event to the other party in the thread. The SSE payload shape is defined by the `TypingEvent` schema. Clients should auto-dismiss the indicator after ~3 seconds with no new event.
+
  * @summary Broadcast typing indicator to the other party
  */
 export const getSendTypingIndicatorUrl = (customerId: number) => {
@@ -3757,11 +3760,14 @@ export const getSendTypingIndicatorUrl = (customerId: number) => {
 export const sendTypingIndicator = async (
   customerId: number,
   options?: RequestInit,
-): Promise<SuccessResponse> => {
-  return customFetch<SuccessResponse>(getSendTypingIndicatorUrl(customerId), {
-    ...options,
-    method: "POST",
-  });
+): Promise<SendTypingIndicator200> => {
+  return customFetch<SendTypingIndicator200>(
+    getSendTypingIndicatorUrl(customerId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
 };
 
 export const getSendTypingIndicatorMutationOptions = <

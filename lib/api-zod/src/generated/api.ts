@@ -1113,6 +1113,8 @@ export const MarkPrivateThreadReadResponse = zod.object({
 });
 
 /**
+ * Triggers an SSE `typing` event to the other party in the thread. The SSE payload shape is defined by the `TypingEvent` schema. Clients should auto-dismiss the indicator after ~3 seconds with no new event.
+
  * @summary Broadcast typing indicator to the other party
  */
 export const SendTypingIndicatorParams = zod.object({
@@ -1120,8 +1122,7 @@ export const SendTypingIndicatorParams = zod.object({
 });
 
 export const SendTypingIndicatorResponse = zod.object({
-  success: zod.boolean(),
-  message: zod.string().optional(),
+  ok: zod.boolean(),
 });
 
 /**

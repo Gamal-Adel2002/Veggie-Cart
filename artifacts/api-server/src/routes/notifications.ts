@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { pushSubscriptionsTable, usersTable } from "@workspace/db/schema";
 import { eq, and, isNotNull, isNull } from "drizzle-orm";
-import { authenticate, type AuthRequest } from "../middlewares/authenticate";
+import { authenticate, sseQueryToken, type AuthRequest } from "../middlewares/authenticate";
 import webpush from "web-push";
 import type { Response } from "express";
 import pino from "pino";
@@ -267,7 +267,9 @@ router.get("/vapid-public-key", (_req, res) => {
 // Authentication via httpOnly cookies (token or delivery_token) sent automatically
 // by EventSource with withCredentials: true. No bearer token in query string.
 // Optional ?watchThread=<customerId> signals active-thread presence for push suppression.
-router.get("/stream", authenticate(false), (req: AuthRequest, res) => {
+// sseQueryToken is scoped here only — it promotes ?token= to Authorization header
+// for EventSource clients that cannot set headers. Not applied globally.
+router.get("/stream", sseQueryToken, authenticate(false), (req: AuthRequest, res) => {
   if (!req.userId) {
     res.status(401).json({ error: "Unauthorized" });
     return;

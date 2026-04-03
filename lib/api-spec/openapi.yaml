@@ -967,13 +967,22 @@ paths:
       operationId: sendTypingIndicator
       tags: [chat]
       summary: Broadcast typing indicator to the other party
+      description: >
+        Triggers an SSE `typing` event to the other party in the thread.
+        The SSE payload shape is defined by the `TypingEvent` schema.
+        Clients should auto-dismiss the indicator after ~3 seconds with no new event.
       responses:
         "200":
-          description: OK
+          description: Typing indicator broadcast; SSE payload is a TypingEvent
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse"
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                required:
+                  - ok
 
   /admin/suppliers:
     get:
@@ -1974,3 +1983,26 @@ components:
           type: string
       required:
         - emoji
+
+    TypingEvent:
+      description: >
+        SSE event payload emitted on the `typing` event channel.
+        Sent when a participant broadcasts a typing indicator to the other party
+        in a private chat thread. Clients should display a transient typing
+        indicator and auto-dismiss it after ~3 seconds.
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: ID of the user who is typing
+        role:
+          type: string
+          enum: [admin, customer]
+          description: Role of the user who is typing
+        customerId:
+          type: integer
+          description: Customer ID that identifies the private thread
+      required:
+        - userId
+        - role
+        - customerId
