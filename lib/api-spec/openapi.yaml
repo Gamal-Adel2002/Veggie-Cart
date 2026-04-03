@@ -419,6 +419,72 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Order"
+    put:
+      operationId: modifyOrder
+      tags: [orders]
+      summary: Modify a waiting order (customer only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModifyOrderInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          description: Validation or stock error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Order is no longer waiting
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /orders/{id}/cancel:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    put:
+      operationId: cancelOrder
+      tags: [orders]
+      summary: Cancel a waiting order (customer only)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Order is no longer waiting
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /admin/orders:
     get:
@@ -1079,7 +1145,7 @@ components:
           nullable: true
         status:
           type: string
-          enum: [waiting, accepted, rejected, preparing, with_delivery, completed]
+          enum: [waiting, accepted, rejected, preparing, with_delivery, completed, cancelled]
         totalPrice:
           type: number
           format: double
@@ -1149,6 +1215,16 @@ components:
       required:
         - productId
         - quantity
+
+    ModifyOrderInput:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderItemInput"
+      required:
+        - items
 
     UpdateOrderStatusInput:
       type: object

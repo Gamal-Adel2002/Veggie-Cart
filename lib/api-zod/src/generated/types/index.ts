@@ -24,6 +24,7 @@ export * from "./locationInput";
 export * from "./loginInput";
 export * from "./lowStockProduct";
 export * from "./lowStockProductUnit";
+export * from "./modifyOrderInput";
 export * from "./order";
 export * from "./orderedProductItem";
 export * from "./orderedProductsCategory";

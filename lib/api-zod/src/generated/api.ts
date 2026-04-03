@@ -359,6 +359,7 @@ export const GetOrdersResponseItem = zod.object({
     "preparing",
     "with_delivery",
     "completed",
+    "cancelled",
   ]),
   totalPrice: zod.number(),
   items: zod.array(
@@ -429,6 +430,120 @@ export const GetOrderResponse = zod.object({
     "preparing",
     "with_delivery",
     "completed",
+    "cancelled",
+  ]),
+  totalPrice: zod.number(),
+  items: zod.array(
+    zod.object({
+      id: zod.number(),
+      productId: zod.number(),
+      productName: zod.string(),
+      productNameAr: zod.string(),
+      quantity: zod.number(),
+      unit: zod.string(),
+      price: zod.number(),
+      subtotal: zod.number(),
+    }),
+  ),
+  deliveryPersonId: zod.number().nullish(),
+  deliveryPerson: zod
+    .object({
+      id: zod.number(),
+      name: zod.string(),
+      phone: zod.string(),
+      active: zod.boolean(),
+      createdAt: zod.coerce.date(),
+    })
+    .nullish(),
+  userId: zod.number().nullish(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Modify a waiting order (customer only)
+ */
+export const ModifyOrderParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ModifyOrderBody = zod.object({
+  items: zod.array(
+    zod.object({
+      productId: zod.number(),
+      quantity: zod.number(),
+    }),
+  ),
+});
+
+export const ModifyOrderResponse = zod.object({
+  id: zod.number(),
+  customerName: zod.string(),
+  customerPhone: zod.string(),
+  deliveryAddress: zod.string().nullish(),
+  latitude: zod.number().nullish(),
+  longitude: zod.number().nullish(),
+  notes: zod.string().nullish(),
+  status: zod.enum([
+    "waiting",
+    "accepted",
+    "rejected",
+    "preparing",
+    "with_delivery",
+    "completed",
+    "cancelled",
+  ]),
+  totalPrice: zod.number(),
+  items: zod.array(
+    zod.object({
+      id: zod.number(),
+      productId: zod.number(),
+      productName: zod.string(),
+      productNameAr: zod.string(),
+      quantity: zod.number(),
+      unit: zod.string(),
+      price: zod.number(),
+      subtotal: zod.number(),
+    }),
+  ),
+  deliveryPersonId: zod.number().nullish(),
+  deliveryPerson: zod
+    .object({
+      id: zod.number(),
+      name: zod.string(),
+      phone: zod.string(),
+      active: zod.boolean(),
+      createdAt: zod.coerce.date(),
+    })
+    .nullish(),
+  userId: zod.number().nullish(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Cancel a waiting order (customer only)
+ */
+export const CancelOrderParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const CancelOrderResponse = zod.object({
+  id: zod.number(),
+  customerName: zod.string(),
+  customerPhone: zod.string(),
+  deliveryAddress: zod.string().nullish(),
+  latitude: zod.number().nullish(),
+  longitude: zod.number().nullish(),
+  notes: zod.string().nullish(),
+  status: zod.enum([
+    "waiting",
+    "accepted",
+    "rejected",
+    "preparing",
+    "with_delivery",
+    "completed",
+    "cancelled",
   ]),
   totalPrice: zod.number(),
   items: zod.array(
@@ -480,6 +595,7 @@ export const AdminGetOrdersResponseItem = zod.object({
     "preparing",
     "with_delivery",
     "completed",
+    "cancelled",
   ]),
   totalPrice: zod.number(),
   items: zod.array(
@@ -542,6 +658,7 @@ export const UpdateOrderStatusResponse = zod.object({
     "preparing",
     "with_delivery",
     "completed",
+    "cancelled",
   ]),
   totalPrice: zod.number(),
   items: zod.array(
@@ -598,6 +715,7 @@ export const AssignDeliveryResponse = zod.object({
       "preparing",
       "with_delivery",
       "completed",
+      "cancelled",
     ]),
     totalPrice: zod.number(),
     items: zod.array(

@@ -256,6 +256,189 @@ router.post("/", authenticate(false), async (req: AuthRequest, res) => {
   res.status(201).json(full);
 });
 
+// Cancel an order (customer-owned, waiting status only)
+router.put("/:id/cancel", authenticate(), async (req: AuthRequest, res) => {
+  const id = parseInt(String(req.params.id));
+  if (isNaN(id) || id <= 0) {
+    res.status(400).json({ error: "Invalid order ID" });
+    return;
+  }
+
+  const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
+  if (!order) {
+    res.status(404).json({ error: "Order not found" });
+    return;
+  }
+  if (order.userId !== req.userId) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  if (order.status !== "waiting") {
+    res.status(409).json({ error: "Only orders with status 'waiting' can be cancelled" });
+    return;
+  }
+
+  // Restore stock for all items in this order
+  const items = await db.select().from(orderItemsTable).where(eq(orderItemsTable.orderId, id));
+  const qtyByProduct = new Map<number, number>();
+  for (const item of items) {
+    qtyByProduct.set(item.productId, (qtyByProduct.get(item.productId) ?? 0) + item.quantity);
+  }
+  for (const [productId, qty] of qtyByProduct.entries()) {
+    await db.update(productsTable).set({
+      quantity: sql<number>`COALESCE(${productsTable.quantity}, 0) + ${qty}`,
+      inStock: sql<boolean>`(COALESCE(${productsTable.quantity}, 0) + ${qty}) > 0`,
+    }).where(eq(productsTable.id, productId));
+  }
+
+  const [updated] = await db
+    .update(ordersTable)
+    .set({ status: "cancelled", updatedAt: new Date() })
+    .where(eq(ordersTable.id, id))
+    .returning();
+
+  const full = await getFullOrder(updated.id);
+  res.json(full);
+});
+
+// Modify an order — replace all items (customer-owned, waiting status only)
+router.put("/:id", authenticate(), async (req: AuthRequest, res) => {
+  const id = parseInt(String(req.params.id));
+  if (isNaN(id) || id <= 0) {
+    res.status(400).json({ error: "Invalid order ID" });
+    return;
+  }
+
+  const { items } = req.body;
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    res.status(400).json({ error: "items array is required and must not be empty" });
+    return;
+  }
+
+  const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
+  if (!order) {
+    res.status(404).json({ error: "Order not found" });
+    return;
+  }
+  if (order.userId !== req.userId) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  if (order.status !== "waiting") {
+    res.status(409).json({ error: "Only orders with status 'waiting' can be modified" });
+    return;
+  }
+
+  // Parse and validate new items
+  const aggregatedQtys = new Map<number, number>();
+  const rawItems: Array<{ productId: number; quantity: number }> = [];
+  for (const item of items) {
+    const productId = parseInt(String(item.productId));
+    const quantity = Number(item.quantity);
+    if (!Number.isFinite(productId) || productId <= 0) {
+      res.status(400).json({ error: "Invalid productId in items" });
+      return;
+    }
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      res.status(400).json({ error: `Quantity must be a positive number (got ${item.quantity})` });
+      return;
+    }
+    aggregatedQtys.set(productId, (aggregatedQtys.get(productId) ?? 0) + quantity);
+    rawItems.push({ productId, quantity });
+  }
+
+  let stockError: string | null = null;
+
+  try {
+    await db.transaction(async (tx) => {
+      // Step 1: Restore stock for all old items
+      const oldItems = await tx.select().from(orderItemsTable).where(eq(orderItemsTable.orderId, id));
+      const oldQtyByProduct = new Map<number, number>();
+      for (const item of oldItems) {
+        oldQtyByProduct.set(item.productId, (oldQtyByProduct.get(item.productId) ?? 0) + item.quantity);
+      }
+      for (const [productId, qty] of oldQtyByProduct.entries()) {
+        await tx.update(productsTable).set({
+          quantity: sql<number>`COALESCE(${productsTable.quantity}, 0) + ${qty}`,
+          inStock: sql<boolean>`(COALESCE(${productsTable.quantity}, 0) + ${qty}) > 0`,
+        }).where(eq(productsTable.id, productId));
+      }
+
+      // Step 2: Lock and validate new item stock
+      const productCache = new Map<number, typeof productsTable.$inferSelect>();
+      for (const [productId, totalQty] of aggregatedQtys.entries()) {
+        const [product] = await tx
+          .select()
+          .from(productsTable)
+          .where(eq(productsTable.id, productId))
+          .for("update");
+
+        if (!product) {
+          stockError = `Product ${productId} not found`;
+          tx.rollback();
+          return;
+        }
+        if (product.quantity !== null && product.quantity !== undefined && product.quantity < totalQty) {
+          stockError = `Insufficient stock for "${product.name}". Available: ${product.quantity} ${product.unit}, requested: ${totalQty} ${product.unit}`;
+          tx.rollback();
+          return;
+        }
+        productCache.set(productId, product);
+      }
+
+      // Step 3: Build enriched items and total
+      let totalPrice = 0;
+      const enrichedItems: Array<{
+        productId: number; productName: string; productNameAr: string;
+        quantity: number; unit: string; price: number; subtotal: number;
+      }> = [];
+      for (const { productId, quantity } of rawItems) {
+        const product = productCache.get(productId)!;
+        const subtotal = product.price * quantity;
+        totalPrice += subtotal;
+        enrichedItems.push({
+          productId: product.id, productName: product.name, productNameAr: product.nameAr,
+          quantity, unit: product.unit, price: product.price, subtotal,
+        });
+      }
+
+      // Step 4: Delete old items and insert new ones
+      await tx.delete(orderItemsTable).where(eq(orderItemsTable.orderId, id));
+      for (const item of enrichedItems) {
+        await tx.insert(orderItemsTable).values({ ...item, orderId: id });
+      }
+
+      // Step 5: Deduct stock for new items
+      for (const [productId, totalQty] of aggregatedQtys.entries()) {
+        const product = productCache.get(productId)!;
+        if (product.quantity !== null && product.quantity !== undefined) {
+          await tx.update(productsTable).set({
+            quantity: sql<number>`${productsTable.quantity} - ${totalQty}`,
+            inStock: sql<boolean>`(${productsTable.quantity} - ${totalQty}) > 0`,
+          }).where(eq(productsTable.id, productId));
+        }
+      }
+
+      // Step 6: Update order total
+      await tx.update(ordersTable).set({ totalPrice, updatedAt: new Date() }).where(eq(ordersTable.id, id));
+    });
+  } catch (err: unknown) {
+    if (stockError) {
+      res.status(400).json({ error: stockError });
+      return;
+    }
+    throw err;
+  }
+
+  if (stockError) {
+    res.status(400).json({ error: stockError });
+    return;
+  }
+
+  const full = await getFullOrder(id);
+  res.json(full);
+});
+
 // View a specific order: requires auth (owner or admin)
 router.get("/:id", authenticate(), async (req: AuthRequest, res) => {
   const id = parseInt(String(req.params.id));

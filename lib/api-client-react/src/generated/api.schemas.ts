@@ -179,6 +179,7 @@ export const OrderStatus = {
   preparing: "preparing",
   with_delivery: "with_delivery",
   completed: "completed",
+  cancelled: "cancelled",
 } as const;
 
 export interface DeliveryPerson {
@@ -219,6 +220,10 @@ export interface CreateOrderInput {
   latitude?: number;
   longitude?: number;
   notes?: string;
+  items: OrderItemInput[];
+}
+
+export interface ModifyOrderInput {
   items: OrderItemInput[];
 }
 

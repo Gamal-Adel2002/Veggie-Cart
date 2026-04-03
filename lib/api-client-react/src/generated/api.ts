@@ -34,6 +34,7 @@ import type {
   LocationInput,
   LoginInput,
   LowStockProduct,
+  ModifyOrderInput,
   Order,
   OrderedProductsCategory,
   Product,
@@ -1711,6 +1712,177 @@ export function useGetOrder<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Modify a waiting order (customer only)
+ */
+export const getModifyOrderUrl = (id: number) => {
+  return `/api/orders/${id}`;
+};
+
+export const modifyOrder = async (
+  id: number,
+  modifyOrderInput: ModifyOrderInput,
+  options?: RequestInit,
+): Promise<Order> => {
+  return customFetch<Order>(getModifyOrderUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(modifyOrderInput),
+  });
+};
+
+export const getModifyOrderMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof modifyOrder>>,
+    TError,
+    { id: number; data: BodyType<ModifyOrderInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof modifyOrder>>,
+  TError,
+  { id: number; data: BodyType<ModifyOrderInput> },
+  TContext
+> => {
+  const mutationKey = ["modifyOrder"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof modifyOrder>>,
+    { id: number; data: BodyType<ModifyOrderInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return modifyOrder(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ModifyOrderMutationResult = NonNullable<
+  Awaited<ReturnType<typeof modifyOrder>>
+>;
+export type ModifyOrderMutationBody = BodyType<ModifyOrderInput>;
+export type ModifyOrderMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Modify a waiting order (customer only)
+ */
+export const useModifyOrder = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof modifyOrder>>,
+    TError,
+    { id: number; data: BodyType<ModifyOrderInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof modifyOrder>>,
+  TError,
+  { id: number; data: BodyType<ModifyOrderInput> },
+  TContext
+> => {
+  return useMutation(getModifyOrderMutationOptions(options));
+};
+
+/**
+ * @summary Cancel a waiting order (customer only)
+ */
+export const getCancelOrderUrl = (id: number) => {
+  return `/api/orders/${id}/cancel`;
+};
+
+export const cancelOrder = async (
+  id: number,
+  options?: RequestInit,
+): Promise<Order> => {
+  return customFetch<Order>(getCancelOrderUrl(id), {
+    ...options,
+    method: "PUT",
+  });
+};
+
+export const getCancelOrderMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cancelOrder>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof cancelOrder>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["cancelOrder"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof cancelOrder>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return cancelOrder(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CancelOrderMutationResult = NonNullable<
+  Awaited<ReturnType<typeof cancelOrder>>
+>;
+
+export type CancelOrderMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Cancel a waiting order (customer only)
+ */
+export const useCancelOrder = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cancelOrder>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof cancelOrder>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getCancelOrderMutationOptions(options));
+};
 
 /**
  * @summary Admin - get all orders

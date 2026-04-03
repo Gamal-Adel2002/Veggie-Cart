@@ -11,9 +11,10 @@ export const orderStatusEnum = pgEnum("order_status", [
   "preparing",
   "with_delivery",
   "completed",
+  "cancelled",
 ]);
 
-export type OrderStatus = "waiting" | "accepted" | "rejected" | "preparing" | "with_delivery" | "completed";
+export type OrderStatus = "waiting" | "accepted" | "rejected" | "preparing" | "with_delivery" | "completed" | "cancelled";
 
 export const ordersTable = pgTable("orders", {
   id: serial("id").primaryKey(),

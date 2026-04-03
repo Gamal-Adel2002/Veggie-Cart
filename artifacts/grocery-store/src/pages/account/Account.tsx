@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { useStore } from '@/store';
-import { useAppOrders, useAppUpdateMe, useAppUpdateLocation, useAppUploadImage } from '@/hooks/use-auth-api';
-import { MapPin, User as UserIcon, Package, Edit2, Camera, X, Loader2, AlertTriangle } from 'lucide-react';
+import { useAppOrders, useAppUpdateMe, useAppUpdateLocation, useAppUploadImage, useAppCancelOrder, useAppModifyOrder, useAppProducts } from '@/hooks/use-auth-api';
+import { MapPin, User as UserIcon, Package, Edit2, Camera, X, Loader2, AlertTriangle, Pencil, Ban, Plus, Minus, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,24 @@ import { format } from 'date-fns';
 import { useTranslation } from '@/lib/i18n';
 import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/lib/utils';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const statusColors: Record<string, string> = {
   waiting: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
@@ -20,7 +38,17 @@ const statusColors: Record<string, string> = {
   with_delivery: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
   completed: 'bg-green-500/10 text-green-600 border-green-500/20',
   rejected: 'bg-red-500/10 text-red-600 border-red-500/20',
+  cancelled: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
 };
+
+interface EditItem {
+  productId: number;
+  productName: string;
+  productNameAr: string;
+  unit: string;
+  price: number;
+  quantity: number;
+}
 
 export default function Account() {
   const { t, lang } = useTranslation();
@@ -31,7 +59,11 @@ export default function Account() {
   const { mutateAsync: updateMe, isPending: isSaving } = useAppUpdateMe();
   const { mutateAsync: updateLocation } = useAppUpdateLocation();
   const { mutateAsync: uploadImage, isPending: isUploading } = useAppUploadImage();
+  const { mutateAsync: cancelOrder, isPending: isCancelling } = useAppCancelOrder();
+  const { mutateAsync: modifyOrder, isPending: isModifying } = useAppModifyOrder();
+  const { data: products } = useAppProducts();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const [editing, setEditing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -49,6 +81,14 @@ export default function Account() {
   const [mapLoc, setMapLoc] = useState<{ latitude: number; longitude: number } | null>(null);
   const [mapAddress, setMapAddress] = useState<string>('');
   const [locationZoneValid, setLocationZoneValid] = useState(true);
+
+  // Cancel order state
+  const [cancelTargetId, setCancelTargetId] = useState<number | null>(null);
+
+  // Modify order state
+  const [modifyTargetId, setModifyTargetId] = useState<number | null>(null);
+  const [editItems, setEditItems] = useState<EditItem[]>([]);
+  const [productSearch, setProductSearch] = useState('');
 
   const startEditing = () => {
     if (!user) return;
@@ -107,10 +147,8 @@ export default function Account() {
       }
 
       const updated = await updateMe({ data: payload });
-      // Update store immediately after profile save so UI reflects changes
       setAuth(token, updated);
 
-      // Update location separately if coordinates changed
       if (mapLoc && (mapLoc.latitude !== user?.latitude || mapLoc.longitude !== user?.longitude)) {
         const locUpdated = await updateLocation({
           data: {
@@ -132,6 +170,96 @@ export default function Account() {
       } else {
         toast({ title: t('updateFailed'), description: msg, variant: 'destructive' });
       }
+    }
+  };
+
+  // Cancel order
+  const handleCancelConfirm = async () => {
+    if (!cancelTargetId) return;
+    try {
+      await cancelOrder({ id: cancelTargetId });
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      toast({ title: t('cancelOrderSuccess'), description: t('cancelOrderSuccessDesc') });
+    } catch (err: unknown) {
+      toast({ title: t('cancelOrderFailed'), description: getErrorMessage(err), variant: 'destructive' });
+    } finally {
+      setCancelTargetId(null);
+    }
+  };
+
+  // Open modify dialog with pre-filled items
+  const openModifyDialog = (orderId: number) => {
+    const order = orders?.find(o => o.id === orderId);
+    if (!order) return;
+    setEditItems(order.items.map(item => ({
+      productId: item.productId,
+      productName: item.productName,
+      productNameAr: item.productNameAr,
+      unit: item.unit,
+      price: item.price,
+      quantity: item.quantity,
+    })));
+    setProductSearch('');
+    setModifyTargetId(orderId);
+  };
+
+  // Running total for modify dialog
+  const runningTotal = useMemo(
+    () => editItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    [editItems]
+  );
+
+  // Filtered products for adding (exclude already in list, filter by search, in-stock only)
+  const addableProducts = useMemo(() => {
+    if (!products) return [];
+    const inList = new Set(editItems.map(i => i.productId));
+    return products.filter(p =>
+      p.inStock &&
+      !inList.has(p.id) &&
+      (productSearch === '' ||
+        p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+        p.nameAr.includes(productSearch))
+    );
+  }, [products, editItems, productSearch]);
+
+  const updateQty = (productId: number, delta: number) => {
+    setEditItems(prev => prev.map(item => {
+      if (item.productId !== productId) return item;
+      const newQty = Math.max(0.5, +(item.quantity + delta).toFixed(2));
+      return { ...item, quantity: newQty };
+    }));
+  };
+
+  const removeItem = (productId: number) => {
+    setEditItems(prev => prev.filter(i => i.productId !== productId));
+  };
+
+  const addProductToEdit = (productId: number) => {
+    const p = products?.find(pr => pr.id === productId);
+    if (!p) return;
+    setEditItems(prev => [...prev, {
+      productId: p.id,
+      productName: p.name,
+      productNameAr: p.nameAr,
+      unit: p.unit,
+      price: p.price,
+      quantity: 1,
+    }]);
+    setProductSearch('');
+  };
+
+  const handleModifySave = async () => {
+    if (!modifyTargetId || editItems.length === 0) return;
+    try {
+      await modifyOrder({
+        id: modifyTargetId,
+        data: { items: editItems.map(i => ({ productId: i.productId, quantity: i.quantity })) },
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      toast({ title: t('modifyOrderSuccess'), description: t('modifyOrderSuccessDesc') });
+      setModifyTargetId(null);
+    } catch (err: unknown) {
+      toast({ title: t('modifyOrderFailed'), description: getErrorMessage(err), variant: 'destructive' });
     }
   };
 
@@ -355,14 +483,36 @@ export default function Account() {
                     </div>
                     <div className="flex items-center gap-4">
                       <p className="font-bold text-lg">{order.totalPrice.toFixed(2)} EGP</p>
-                      <Badge variant="outline" className={`px-3 py-1 text-sm border ${statusColors[order.status]}`}>
+                      <Badge variant="outline" className={`px-3 py-1 text-sm border ${statusColors[order.status] || ''}`}>
                         {t(`status.${order.status}`)}
                       </Badge>
                     </div>
                   </div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-muted-foreground mb-3">
                     {order.items.map(item => `${item.quantity}x ${lang === 'ar' ? item.productNameAr : item.productName}`).join(', ')}
                   </div>
+                  {order.status === 'waiting' && (
+                    <div className="flex gap-2 pt-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5 rounded-xl border-primary/20 text-primary hover:bg-primary/5"
+                        onClick={() => openModifyDialog(order.id)}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        {t('modifyOrder')}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5 rounded-xl border-destructive/30 text-destructive hover:bg-destructive/5"
+                        onClick={() => setCancelTargetId(order.id)}
+                      >
+                        <Ban className="w-3.5 h-3.5" />
+                        {t('cancelOrder')}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -370,6 +520,124 @@ export default function Account() {
         </div>
 
       </main>
+
+      {/* Cancel confirmation dialog */}
+      <AlertDialog open={cancelTargetId !== null} onOpenChange={open => { if (!open) setCancelTargetId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('cancelOrder')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('cancelOrderConfirm')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleCancelConfirm}
+              disabled={isCancelling}
+            >
+              {isCancelling ? <Loader2 className="w-4 h-4 animate-spin" /> : t('cancelOrder')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modify order dialog */}
+      <Dialog open={modifyTargetId !== null} onOpenChange={open => { if (!open) setModifyTargetId(null); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t('modifyOrderTitle')} #{modifyTargetId}</DialogTitle>
+          </DialogHeader>
+
+          {/* Current items */}
+          <div className="space-y-2 mt-2">
+            {editItems.map(item => (
+              <div key={item.productId} className="flex items-center gap-3 bg-muted/30 rounded-xl p-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {lang === 'ar' ? item.productNameAr : item.productName}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{item.price.toFixed(2)} EGP / {item.unit}</p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    className="w-6 h-6 rounded-full border border-border flex items-center justify-center hover:bg-muted"
+                    onClick={() => updateQty(item.productId, -0.5)}
+                  >
+                    <Minus className="w-3 h-3" />
+                  </button>
+                  <span className="w-10 text-center text-sm font-medium">{item.quantity}</span>
+                  <button
+                    className="w-6 h-6 rounded-full border border-border flex items-center justify-center hover:bg-muted"
+                    onClick={() => updateQty(item.productId, 0.5)}
+                  >
+                    <Plus className="w-3 h-3" />
+                  </button>
+                </div>
+                <span className="text-sm font-semibold w-16 text-right">
+                  {(item.price * item.quantity).toFixed(2)}
+                </span>
+                <button
+                  className="text-destructive hover:text-destructive/80 ml-1"
+                  onClick={() => removeItem(item.productId)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+            {editItems.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">{t('noProductsAvailable')}</p>
+            )}
+          </div>
+
+          {/* Add product section */}
+          <div className="border-t border-border/50 pt-4 mt-2 space-y-2">
+            <p className="text-sm font-semibold">{t('addProduct')}</p>
+            <Input
+              placeholder={t('findProduct')}
+              value={productSearch}
+              onChange={e => setProductSearch(e.target.value)}
+              className="h-9 rounded-xl text-sm"
+            />
+            {productSearch && (
+              <div className="max-h-40 overflow-y-auto space-y-1 rounded-xl border border-border/50 p-1 bg-card">
+                {addableProducts.length === 0 ? (
+                  <p className="text-xs text-muted-foreground p-2">{t('noProductsAvailable')}</p>
+                ) : (
+                  addableProducts.slice(0, 10).map(p => (
+                    <button
+                      key={p.id}
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-muted/50 text-left"
+                      onClick={() => addProductToEdit(p.id)}
+                    >
+                      <span className="text-sm">{lang === 'ar' ? p.nameAr : p.name}</span>
+                      <span className="text-xs text-muted-foreground ml-2">{p.price.toFixed(2)} EGP/{p.unit}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Running total */}
+          <div className="flex items-center justify-between bg-primary/5 rounded-xl px-4 py-3 mt-2">
+            <span className="font-semibold text-sm">{t('runningTotal')}</span>
+            <span className="font-bold text-primary">{runningTotal.toFixed(2)} EGP</span>
+          </div>
+
+          <DialogFooter className="mt-2">
+            <Button variant="outline" className="rounded-xl" onClick={() => setModifyTargetId(null)}>
+              {t('cancel')}
+            </Button>
+            <Button
+              className="rounded-xl shadow-sm shadow-primary/20"
+              onClick={handleModifySave}
+              disabled={isModifying || editItems.length === 0}
+            >
+              {isModifying ? <Loader2 className="w-4 h-4 animate-spin" /> : t('modifyOrderSave')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

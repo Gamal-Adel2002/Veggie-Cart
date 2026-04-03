@@ -136,6 +136,24 @@ export const dictionary = {
     order: "Order",
     pleaseLogin: "Please log in.",
 
+    // Order cancel / modify
+    cancelOrder: "Cancel Order",
+    modifyOrder: "Edit Order",
+    cancelOrderConfirm: "Are you sure you want to cancel this order?",
+    cancelOrderSuccess: "Order cancelled",
+    cancelOrderSuccessDesc: "Your order has been cancelled and stock restored.",
+    cancelOrderFailed: "Could not cancel order",
+    modifyOrderTitle: "Edit Order",
+    modifyOrderSave: "Save Changes",
+    modifyOrderSuccess: "Order updated",
+    modifyOrderSuccessDesc: "Your order has been updated.",
+    modifyOrderFailed: "Could not update order",
+    addProduct: "Add Product",
+    noProductsAvailable: "No products available",
+    findProduct: "Search products...",
+    runningTotal: "Running Total",
+    qty: "Qty",
+
     // Order status
     status: {
       waiting: "Waiting",
@@ -143,7 +161,8 @@ export const dictionary = {
       rejected: "Rejected",
       preparing: "Preparing",
       with_delivery: "With Delivery",
-      completed: "Completed"
+      completed: "Completed",
+      cancelled: "Cancelled"
     },
 
     // Admin — Delivery Zones
@@ -478,6 +497,24 @@ export const dictionary = {
     order: "طلب",
     pleaseLogin: "يرجى تسجيل الدخول.",
 
+    // Order cancel / modify
+    cancelOrder: "إلغاء الطلب",
+    modifyOrder: "تعديل الطلب",
+    cancelOrderConfirm: "هل أنت متأكد من إلغاء هذا الطلب؟",
+    cancelOrderSuccess: "تم إلغاء الطلب",
+    cancelOrderSuccessDesc: "تم إلغاء طلبك واستعادة المخزون.",
+    cancelOrderFailed: "تعذر إلغاء الطلب",
+    modifyOrderTitle: "تعديل الطلب",
+    modifyOrderSave: "حفظ التغييرات",
+    modifyOrderSuccess: "تم تحديث الطلب",
+    modifyOrderSuccessDesc: "تم تحديث طلبك بنجاح.",
+    modifyOrderFailed: "تعذر تحديث الطلب",
+    addProduct: "إضافة منتج",
+    noProductsAvailable: "لا توجد منتجات متاحة",
+    findProduct: "ابحث عن منتجات...",
+    runningTotal: "الإجمالي الحالي",
+    qty: "الكمية",
+
     // Order status
     status: {
       waiting: "قيد الانتظار",
@@ -485,7 +522,8 @@ export const dictionary = {
       rejected: "مرفوض",
       preparing: "قيد التجهيز",
       with_delivery: "مع المندوب",
-      completed: "مكتمل"
+      completed: "مكتمل",
+      cancelled: "ملغي"
     },
 
     // Admin — Delivery Zones

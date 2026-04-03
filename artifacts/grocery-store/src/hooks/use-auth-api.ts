@@ -3,7 +3,7 @@ import {
   useSignup, useLogin, useLogout, useGetMe, useUpdateLocation, useUpdateMe,
   useAdminLogin, useCreateCategory, useUpdateCategory, useDeleteCategory,
   useCreateProduct, useUpdateProduct, useDeleteProduct,
-  useGetOrders, useCreateOrder, useGetOrder,
+  useGetOrders, useCreateOrder, useGetOrder, useCancelOrder, useModifyOrder,
   useAdminGetOrders, useUpdateOrderStatus, useAssignDelivery,
   useGetDeliveryPersons, useCreateDeliveryPerson, useUpdateDeliveryPerson, useDeleteDeliveryPerson,
   useGetAdminStats, useUploadImage,
@@ -52,3 +52,6 @@ export function useAppUpdateAdmin() { return useUpdateAdmin(); }
 
 export function useAppLowStockProducts() { return useGetLowStockProducts(); }
 export function useAppOrderedProducts() { return useGetOrderedProducts(); }
+
+export function useAppCancelOrder() { return useCancelOrder(); }
+export function useAppModifyOrder() { return useModifyOrder(); }
