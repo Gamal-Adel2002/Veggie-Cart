@@ -264,40 +264,77 @@ router.put("/:id/cancel", authenticate(), async (req: AuthRequest, res) => {
     return;
   }
 
-  const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
-  if (!order) {
+  // Quick pre-check for 404/403 before taking locks
+  const [preCheck] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
+  if (!preCheck) {
     res.status(404).json({ error: "Order not found" });
     return;
   }
-  if (order.userId !== req.userId) {
+  if (preCheck.userId !== req.userId) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
-  if (order.status !== "waiting") {
+
+  type CancelErr = "NOT_FOUND" | "FORBIDDEN" | "CONFLICT";
+  let cancelError: CancelErr | null = null;
+
+  try {
+    await db.transaction(async (tx) => {
+      // Lock the order row so concurrent cancel/admin-status-change cannot race
+      const [order] = await tx
+        .select()
+        .from(ordersTable)
+        .where(eq(ordersTable.id, id))
+        .for("update");
+
+      if (!order) { cancelError = "NOT_FOUND"; tx.rollback(); return; }
+      if (order.userId !== req.userId) { cancelError = "FORBIDDEN"; tx.rollback(); return; }
+      if (order.status !== "waiting") { cancelError = "CONFLICT"; tx.rollback(); return; }
+
+      // Aggregate items to restore
+      const items = await tx.select().from(orderItemsTable).where(eq(orderItemsTable.orderId, id));
+      const qtyByProduct = new Map<number, number>();
+      for (const item of items) {
+        qtyByProduct.set(item.productId, (qtyByProduct.get(item.productId) ?? 0) + item.quantity);
+      }
+
+      // Restore stock — lock each product row and only restore if stock is finite (non-null)
+      for (const [productId, qty] of qtyByProduct.entries()) {
+        const [product] = await tx
+          .select()
+          .from(productsTable)
+          .where(eq(productsTable.id, productId))
+          .for("update");
+
+        if (product && product.quantity !== null && product.quantity !== undefined) {
+          const newQty = product.quantity + qty;
+          await tx
+            .update(productsTable)
+            .set({ quantity: newQty, inStock: newQty > 0 })
+            .where(eq(productsTable.id, productId));
+        }
+        // null-quantity products have unlimited/untracked stock — skip
+      }
+
+      // Mark order cancelled
+      await tx
+        .update(ordersTable)
+        .set({ status: "cancelled", updatedAt: new Date() })
+        .where(eq(ordersTable.id, id));
+    });
+  } catch {
+    if (cancelError === "NOT_FOUND") { res.status(404).json({ error: "Order not found" }); return; }
+    if (cancelError === "FORBIDDEN") { res.status(403).json({ error: "Forbidden" }); return; }
+    if (cancelError === "CONFLICT") { res.status(409).json({ error: "Only orders with status 'waiting' can be cancelled" }); return; }
+    throw new Error("Unexpected cancel transaction failure");
+  }
+
+  if (cancelError === "CONFLICT") {
     res.status(409).json({ error: "Only orders with status 'waiting' can be cancelled" });
     return;
   }
 
-  // Restore stock for all items in this order
-  const items = await db.select().from(orderItemsTable).where(eq(orderItemsTable.orderId, id));
-  const qtyByProduct = new Map<number, number>();
-  for (const item of items) {
-    qtyByProduct.set(item.productId, (qtyByProduct.get(item.productId) ?? 0) + item.quantity);
-  }
-  for (const [productId, qty] of qtyByProduct.entries()) {
-    await db.update(productsTable).set({
-      quantity: sql<number>`COALESCE(${productsTable.quantity}, 0) + ${qty}`,
-      inStock: sql<boolean>`(COALESCE(${productsTable.quantity}, 0) + ${qty}) > 0`,
-    }).where(eq(productsTable.id, productId));
-  }
-
-  const [updated] = await db
-    .update(ordersTable)
-    .set({ status: "cancelled", updatedAt: new Date() })
-    .where(eq(ordersTable.id, id))
-    .returning();
-
-  const full = await getFullOrder(updated.id);
+  const full = await getFullOrder(id);
   res.json(full);
 });
 
@@ -315,21 +352,18 @@ router.put("/:id", authenticate(), async (req: AuthRequest, res) => {
     return;
   }
 
-  const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
-  if (!order) {
+  // Quick pre-check for 404/403 before taking locks
+  const [preCheck] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
+  if (!preCheck) {
     res.status(404).json({ error: "Order not found" });
     return;
   }
-  if (order.userId !== req.userId) {
+  if (preCheck.userId !== req.userId) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
-  if (order.status !== "waiting") {
-    res.status(409).json({ error: "Only orders with status 'waiting' can be modified" });
-    return;
-  }
 
-  // Parse and validate new items
+  // Parse and validate new items (input validation only, no DB needed)
   const aggregatedQtys = new Map<number, number>();
   const rawItems: Array<{ productId: number; quantity: number }> = [];
   for (const item of items) {
@@ -347,21 +381,42 @@ router.put("/:id", authenticate(), async (req: AuthRequest, res) => {
     rawItems.push({ productId, quantity });
   }
 
-  let stockError: string | null = null;
+  type ModifyErr = "NOT_FOUND" | "FORBIDDEN" | "CONFLICT" | string;
+  let modifyError: ModifyErr | null = null;
 
   try {
     await db.transaction(async (tx) => {
-      // Step 1: Restore stock for all old items
+      // Step 0: Lock the order row to prevent concurrent cancel/admin-status-change races
+      const [order] = await tx
+        .select()
+        .from(ordersTable)
+        .where(eq(ordersTable.id, id))
+        .for("update");
+
+      if (!order) { modifyError = "NOT_FOUND"; tx.rollback(); return; }
+      if (order.userId !== req.userId) { modifyError = "FORBIDDEN"; tx.rollback(); return; }
+      if (order.status !== "waiting") { modifyError = "CONFLICT"; tx.rollback(); return; }
+
+      // Step 1: Restore stock for old items — lock each product and only restore if stock is finite
       const oldItems = await tx.select().from(orderItemsTable).where(eq(orderItemsTable.orderId, id));
       const oldQtyByProduct = new Map<number, number>();
       for (const item of oldItems) {
         oldQtyByProduct.set(item.productId, (oldQtyByProduct.get(item.productId) ?? 0) + item.quantity);
       }
       for (const [productId, qty] of oldQtyByProduct.entries()) {
-        await tx.update(productsTable).set({
-          quantity: sql<number>`COALESCE(${productsTable.quantity}, 0) + ${qty}`,
-          inStock: sql<boolean>`(COALESCE(${productsTable.quantity}, 0) + ${qty}) > 0`,
-        }).where(eq(productsTable.id, productId));
+        const [product] = await tx
+          .select()
+          .from(productsTable)
+          .where(eq(productsTable.id, productId))
+          .for("update");
+        if (product && product.quantity !== null && product.quantity !== undefined) {
+          const newQty = product.quantity + qty;
+          await tx
+            .update(productsTable)
+            .set({ quantity: newQty, inStock: newQty > 0 })
+            .where(eq(productsTable.id, productId));
+        }
+        // null-quantity (unlimited stock) — no restoration needed
       }
 
       // Step 2: Lock and validate new item stock
@@ -374,12 +429,12 @@ router.put("/:id", authenticate(), async (req: AuthRequest, res) => {
           .for("update");
 
         if (!product) {
-          stockError = `Product ${productId} not found`;
+          modifyError = `Product ${productId} not found`;
           tx.rollback();
           return;
         }
         if (product.quantity !== null && product.quantity !== undefined && product.quantity < totalQty) {
-          stockError = `Insufficient stock for "${product.name}". Available: ${product.quantity} ${product.unit}, requested: ${totalQty} ${product.unit}`;
+          modifyError = `Insufficient stock for "${product.name}". Available: ${product.quantity} ${product.unit}, requested: ${totalQty} ${product.unit}`;
           tx.rollback();
           return;
         }
@@ -408,30 +463,35 @@ router.put("/:id", authenticate(), async (req: AuthRequest, res) => {
         await tx.insert(orderItemsTable).values({ ...item, orderId: id });
       }
 
-      // Step 5: Deduct stock for new items
+      // Step 5: Deduct stock for new items (only finite-stock products)
       for (const [productId, totalQty] of aggregatedQtys.entries()) {
         const product = productCache.get(productId)!;
         if (product.quantity !== null && product.quantity !== undefined) {
-          await tx.update(productsTable).set({
-            quantity: sql<number>`${productsTable.quantity} - ${totalQty}`,
-            inStock: sql<boolean>`(${productsTable.quantity} - ${totalQty}) > 0`,
-          }).where(eq(productsTable.id, productId));
+          const newQty = product.quantity - totalQty;
+          await tx
+            .update(productsTable)
+            .set({ quantity: newQty, inStock: newQty > 0 })
+            .where(eq(productsTable.id, productId));
         }
       }
 
       // Step 6: Update order total
       await tx.update(ordersTable).set({ totalPrice, updatedAt: new Date() }).where(eq(ordersTable.id, id));
     });
-  } catch (err: unknown) {
-    if (stockError) {
-      res.status(400).json({ error: stockError });
-      return;
-    }
-    throw err;
+  } catch {
+    if (modifyError === "NOT_FOUND") { res.status(404).json({ error: "Order not found" }); return; }
+    if (modifyError === "FORBIDDEN") { res.status(403).json({ error: "Forbidden" }); return; }
+    if (modifyError === "CONFLICT") { res.status(409).json({ error: "Only orders with status 'waiting' can be modified" }); return; }
+    if (modifyError) { res.status(400).json({ error: modifyError }); return; }
+    throw new Error("Unexpected modify transaction failure");
   }
 
-  if (stockError) {
-    res.status(400).json({ error: stockError });
+  if (modifyError === "CONFLICT") {
+    res.status(409).json({ error: "Only orders with status 'waiting' can be modified" });
+    return;
+  }
+  if (modifyError) {
+    res.status(400).json({ error: modifyError });
     return;
   }
 
