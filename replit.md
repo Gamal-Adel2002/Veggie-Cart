@@ -174,3 +174,32 @@ When a delivery person is assigned to an order, a WhatsApp message is sent via T
 - 📍 Google Maps link to delivery location
 - 🛒 Order items with quantities and units
 - 💰 Total in EGP
+
+## Chat System
+
+### DB Tables (`lib/db/src/schema/chat.ts`)
+- `chatMessagesTable` — both public and private messages. `channel` ∈ {public, private}. `recipientId=null` means admin is recipient (customer→admin); `recipientId=customerId` means admin→customer.
+- `chatReactionsTable` — emoji reactions on public messages; unique per (messageId, userId, emoji), toggled.
+
+### Backend (`artifacts/api-server/src/routes/chat.ts`)
+- `GET /api/chat/public` — paginated public broadcast messages (open to all)
+- `POST /api/chat/public` — admin only: broadcast a message with optional media
+- `POST /api/chat/public/:id/react` — toggle emoji reaction (authenticated)
+- `GET /api/chat/private` — admin: list all conversations; customer: own thread summary
+- `GET /api/chat/private/:customerId` — full thread (admin sees all; customer only their own)
+- `POST /api/chat/private/:customerId` — send private message
+- `PUT /api/chat/private/:customerId/read` — mark all unread as read
+- `POST /api/chat/private/:customerId/typing` — emit typing indicator via SSE
+
+### SSE Events (`notifications.ts`)
+- `public_chat_message` — new public broadcast
+- `public_chat_reaction` — reaction toggled
+- `private_chat_message` — new private message (delivered only to affected parties)
+- `chat_read_receipt` — thread marked as read
+- `chat_typing` — typing indicator (delivered to other party)
+
+### Frontend Pages
+- `/feed` — `PublicFeed.tsx`: customer reads broadcasts and reacts with emoji
+- `/messages` — `Messages.tsx`: customer's private thread with support
+- `/admin/public-chat` — `PublicChat.tsx`: admin composes + views public broadcasts
+- `/admin/private-chats` — `PrivateChats.tsx`: two-panel inbox (conversation list + thread)

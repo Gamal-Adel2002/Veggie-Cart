@@ -24,13 +24,16 @@ import type {
   AuthResponse,
   Category,
   CategoryInput,
+  ChatMessage,
   CreateAdminInput,
   CreateOrderInput,
   CreateSupplierOrderInput,
+  CustomerThreadSummary,
   DeliveryPerson,
   DeliveryPersonInput,
   ErrorResponse,
   GetProductsParams,
+  GetPublicChatParams,
   HealthStatus,
   LocationInput,
   LoginInput,
@@ -38,8 +41,12 @@ import type {
   ModifyOrderInput,
   Order,
   OrderedProductsCategory,
+  PrivateConversation,
   Product,
   ProductInput,
+  ReactInput,
+  SendPrivateMessageInput,
+  SendPublicMessageInput,
   SignupInput,
   SuccessResponse,
   Supplier,
@@ -3039,6 +3046,697 @@ export const useUploadImage = <
   TContext
 > => {
   return useMutation(getUploadImageMutationOptions(options));
+};
+
+/**
+ * @summary Get public chat messages (paginated)
+ */
+export const getGetPublicChatUrl = (params?: GetPublicChatParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/chat/public?${stringifiedParams}`
+    : `/api/chat/public`;
+};
+
+export const getPublicChat = async (
+  params?: GetPublicChatParams,
+  options?: RequestInit,
+): Promise<ChatMessage[]> => {
+  return customFetch<ChatMessage[]>(getGetPublicChatUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetPublicChatQueryKey = (params?: GetPublicChatParams) => {
+  return [`/api/chat/public`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetPublicChatQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPublicChat>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetPublicChatParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPublicChat>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPublicChatQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicChat>>> = ({
+    signal,
+  }) => getPublicChat(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPublicChat>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetPublicChatQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPublicChat>>
+>;
+export type GetPublicChatQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get public chat messages (paginated)
+ */
+
+export function useGetPublicChat<
+  TData = Awaited<ReturnType<typeof getPublicChat>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetPublicChatParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPublicChat>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPublicChatQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Admin sends a public broadcast message
+ */
+export const getSendPublicChatMessageUrl = () => {
+  return `/api/chat/public`;
+};
+
+export const sendPublicChatMessage = async (
+  sendPublicMessageInput: SendPublicMessageInput,
+  options?: RequestInit,
+): Promise<ChatMessage> => {
+  return customFetch<ChatMessage>(getSendPublicChatMessageUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(sendPublicMessageInput),
+  });
+};
+
+export const getSendPublicChatMessageMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendPublicChatMessage>>,
+    TError,
+    { data: BodyType<SendPublicMessageInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof sendPublicChatMessage>>,
+  TError,
+  { data: BodyType<SendPublicMessageInput> },
+  TContext
+> => {
+  const mutationKey = ["sendPublicChatMessage"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof sendPublicChatMessage>>,
+    { data: BodyType<SendPublicMessageInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return sendPublicChatMessage(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SendPublicChatMessageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof sendPublicChatMessage>>
+>;
+export type SendPublicChatMessageMutationBody =
+  BodyType<SendPublicMessageInput>;
+export type SendPublicChatMessageMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Admin sends a public broadcast message
+ */
+export const useSendPublicChatMessage = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendPublicChatMessage>>,
+    TError,
+    { data: BodyType<SendPublicMessageInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof sendPublicChatMessage>>,
+  TError,
+  { data: BodyType<SendPublicMessageInput> },
+  TContext
+> => {
+  return useMutation(getSendPublicChatMessageMutationOptions(options));
+};
+
+/**
+ * @summary Toggle emoji reaction on a public message
+ */
+export const getReactToPublicMessageUrl = (id: number) => {
+  return `/api/chat/public/${id}/react`;
+};
+
+export const reactToPublicMessage = async (
+  id: number,
+  reactInput: ReactInput,
+  options?: RequestInit,
+): Promise<ChatMessage> => {
+  return customFetch<ChatMessage>(getReactToPublicMessageUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(reactInput),
+  });
+};
+
+export const getReactToPublicMessageMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof reactToPublicMessage>>,
+    TError,
+    { id: number; data: BodyType<ReactInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof reactToPublicMessage>>,
+  TError,
+  { id: number; data: BodyType<ReactInput> },
+  TContext
+> => {
+  const mutationKey = ["reactToPublicMessage"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof reactToPublicMessage>>,
+    { id: number; data: BodyType<ReactInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return reactToPublicMessage(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ReactToPublicMessageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof reactToPublicMessage>>
+>;
+export type ReactToPublicMessageMutationBody = BodyType<ReactInput>;
+export type ReactToPublicMessageMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Toggle emoji reaction on a public message
+ */
+export const useReactToPublicMessage = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof reactToPublicMessage>>,
+    TError,
+    { id: number; data: BodyType<ReactInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof reactToPublicMessage>>,
+  TError,
+  { id: number; data: BodyType<ReactInput> },
+  TContext
+> => {
+  return useMutation(getReactToPublicMessageMutationOptions(options));
+};
+
+/**
+ * @summary Admin - list conversations; Customer - own thread summary
+ */
+export const getGetPrivateConversationsUrl = () => {
+  return `/api/chat/private`;
+};
+
+export const getPrivateConversations = async (
+  options?: RequestInit,
+): Promise<PrivateConversation[] | CustomerThreadSummary> => {
+  return customFetch<PrivateConversation[] | CustomerThreadSummary>(
+    getGetPrivateConversationsUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetPrivateConversationsQueryKey = () => {
+  return [`/api/chat/private`] as const;
+};
+
+export const getGetPrivateConversationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPrivateConversations>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getPrivateConversations>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetPrivateConversationsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getPrivateConversations>>
+  > = ({ signal }) => getPrivateConversations({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPrivateConversations>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetPrivateConversationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPrivateConversations>>
+>;
+export type GetPrivateConversationsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Admin - list conversations; Customer - own thread summary
+ */
+
+export function useGetPrivateConversations<
+  TData = Awaited<ReturnType<typeof getPrivateConversations>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getPrivateConversations>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPrivateConversationsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get private thread messages
+ */
+export const getGetPrivateThreadUrl = (customerId: number) => {
+  return `/api/chat/private/${customerId}`;
+};
+
+export const getPrivateThread = async (
+  customerId: number,
+  options?: RequestInit,
+): Promise<ChatMessage[]> => {
+  return customFetch<ChatMessage[]>(getGetPrivateThreadUrl(customerId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetPrivateThreadQueryKey = (customerId: number) => {
+  return [`/api/chat/private/${customerId}`] as const;
+};
+
+export const getGetPrivateThreadQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPrivateThread>>,
+  TError = ErrorType<unknown>,
+>(
+  customerId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPrivateThread>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetPrivateThreadQueryKey(customerId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getPrivateThread>>
+  > = ({ signal }) =>
+    getPrivateThread(customerId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!customerId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPrivateThread>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetPrivateThreadQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPrivateThread>>
+>;
+export type GetPrivateThreadQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get private thread messages
+ */
+
+export function useGetPrivateThread<
+  TData = Awaited<ReturnType<typeof getPrivateThread>>,
+  TError = ErrorType<unknown>,
+>(
+  customerId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPrivateThread>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPrivateThreadQueryOptions(customerId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Send a private message in the thread
+ */
+export const getSendPrivateMessageUrl = (customerId: number) => {
+  return `/api/chat/private/${customerId}`;
+};
+
+export const sendPrivateMessage = async (
+  customerId: number,
+  sendPrivateMessageInput: SendPrivateMessageInput,
+  options?: RequestInit,
+): Promise<ChatMessage> => {
+  return customFetch<ChatMessage>(getSendPrivateMessageUrl(customerId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(sendPrivateMessageInput),
+  });
+};
+
+export const getSendPrivateMessageMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendPrivateMessage>>,
+    TError,
+    { customerId: number; data: BodyType<SendPrivateMessageInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof sendPrivateMessage>>,
+  TError,
+  { customerId: number; data: BodyType<SendPrivateMessageInput> },
+  TContext
+> => {
+  const mutationKey = ["sendPrivateMessage"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof sendPrivateMessage>>,
+    { customerId: number; data: BodyType<SendPrivateMessageInput> }
+  > = (props) => {
+    const { customerId, data } = props ?? {};
+
+    return sendPrivateMessage(customerId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SendPrivateMessageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof sendPrivateMessage>>
+>;
+export type SendPrivateMessageMutationBody = BodyType<SendPrivateMessageInput>;
+export type SendPrivateMessageMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Send a private message in the thread
+ */
+export const useSendPrivateMessage = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendPrivateMessage>>,
+    TError,
+    { customerId: number; data: BodyType<SendPrivateMessageInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof sendPrivateMessage>>,
+  TError,
+  { customerId: number; data: BodyType<SendPrivateMessageInput> },
+  TContext
+> => {
+  return useMutation(getSendPrivateMessageMutationOptions(options));
+};
+
+/**
+ * @summary Mark all unread messages in thread as read
+ */
+export const getMarkPrivateThreadReadUrl = (customerId: number) => {
+  return `/api/chat/private/${customerId}/read`;
+};
+
+export const markPrivateThreadRead = async (
+  customerId: number,
+  options?: RequestInit,
+): Promise<SuccessResponse> => {
+  return customFetch<SuccessResponse>(getMarkPrivateThreadReadUrl(customerId), {
+    ...options,
+    method: "PUT",
+  });
+};
+
+export const getMarkPrivateThreadReadMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof markPrivateThreadRead>>,
+    TError,
+    { customerId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof markPrivateThreadRead>>,
+  TError,
+  { customerId: number },
+  TContext
+> => {
+  const mutationKey = ["markPrivateThreadRead"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof markPrivateThreadRead>>,
+    { customerId: number }
+  > = (props) => {
+    const { customerId } = props ?? {};
+
+    return markPrivateThreadRead(customerId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type MarkPrivateThreadReadMutationResult = NonNullable<
+  Awaited<ReturnType<typeof markPrivateThreadRead>>
+>;
+
+export type MarkPrivateThreadReadMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Mark all unread messages in thread as read
+ */
+export const useMarkPrivateThreadRead = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof markPrivateThreadRead>>,
+    TError,
+    { customerId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof markPrivateThreadRead>>,
+  TError,
+  { customerId: number },
+  TContext
+> => {
+  return useMutation(getMarkPrivateThreadReadMutationOptions(options));
+};
+
+/**
+ * @summary Broadcast typing indicator to the other party
+ */
+export const getSendTypingIndicatorUrl = (customerId: number) => {
+  return `/api/chat/private/${customerId}/typing`;
+};
+
+export const sendTypingIndicator = async (
+  customerId: number,
+  options?: RequestInit,
+): Promise<SuccessResponse> => {
+  return customFetch<SuccessResponse>(getSendTypingIndicatorUrl(customerId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getSendTypingIndicatorMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendTypingIndicator>>,
+    TError,
+    { customerId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof sendTypingIndicator>>,
+  TError,
+  { customerId: number },
+  TContext
+> => {
+  const mutationKey = ["sendTypingIndicator"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof sendTypingIndicator>>,
+    { customerId: number }
+  > = (props) => {
+    const { customerId } = props ?? {};
+
+    return sendTypingIndicator(customerId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SendTypingIndicatorMutationResult = NonNullable<
+  Awaited<ReturnType<typeof sendTypingIndicator>>
+>;
+
+export type SendTypingIndicatorMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Broadcast typing indicator to the other party
+ */
+export const useSendTypingIndicator = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendTypingIndicator>>,
+    TError,
+    { customerId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof sendTypingIndicator>>,
+  TError,
+  { customerId: number },
+  TContext
+> => {
+  return useMutation(getSendTypingIndicatorMutationOptions(options));
 };
 
 /**

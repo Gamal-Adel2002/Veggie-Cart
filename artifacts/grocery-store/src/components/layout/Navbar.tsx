@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'wouter';
-import { ShoppingCart, User, LogOut, Languages, Sprout } from 'lucide-react';
+import { ShoppingCart, User, LogOut, Languages, Sprout, Megaphone, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/store';
 import { useTranslation } from '@/lib/i18n';
@@ -57,6 +57,20 @@ export function Navbar() {
                   {t('shop')}
                 </Button>
               </Link>
+              <Link href="/feed">
+                <Button variant={location === '/feed' ? 'secondary' : 'ghost'} className="rounded-full px-5 gap-1.5">
+                  <Megaphone className="w-4 h-4" />
+                  Feed
+                </Button>
+              </Link>
+              {user && user.role === 'customer' && (
+                <Link href="/messages">
+                  <Button variant={location === '/messages' ? 'secondary' : 'ghost'} className="rounded-full px-5 gap-1.5">
+                    <MessageCircle className="w-4 h-4" />
+                    Messages
+                  </Button>
+                </Link>
+              )}
             </nav>
           </div>
 

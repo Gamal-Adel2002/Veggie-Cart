@@ -18,6 +18,10 @@ export function authenticate(required = true) {
     if (authHeader?.startsWith("Bearer ")) {
       candidates.push(authHeader.slice(7));
     }
+    // Allow token in query string (needed for EventSource which cannot set headers)
+    if (typeof req.query?.token === "string" && req.query.token) {
+      candidates.push(req.query.token);
+    }
     if (req.cookies?.delivery_token) {
       candidates.push(req.cookies.delivery_token as string);
     }

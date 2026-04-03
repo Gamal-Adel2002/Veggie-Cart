@@ -12,6 +12,9 @@ import {
   useGetOrderedProducts,
   useAdminGetSuppliers, useAdminCreateSupplier, useAdminUpdateSupplier, useAdminDeleteSupplier,
   useAdminGetSupplierOrders, useAdminCreateSupplierOrder, useAdminGetSupplierOrder, useAdminDeleteSupplierOrder,
+  useGetPublicChat, useSendPublicChatMessage, useReactToPublicMessage,
+  useGetPrivateConversations, useGetPrivateThread, useSendPrivateMessage,
+  useMarkPrivateThreadRead, useSendTypingIndicator,
 } from '@workspace/api-client-react';
 
 export function useAppProducts(params?: Parameters<typeof useGetProducts>[0]) { return useGetProducts(params); }
@@ -67,3 +70,13 @@ export function useAppSupplierOrders() { return useAdminGetSupplierOrders(); }
 export function useAppCreateSupplierOrder() { return useAdminCreateSupplierOrder(); }
 export function useAppSupplierOrder(id: number) { return useAdminGetSupplierOrder(id); }
 export function useAppDeleteSupplierOrder() { return useAdminDeleteSupplierOrder(); }
+
+export function useAppPublicChat(params?: Parameters<typeof useGetPublicChat>[0]) { return useGetPublicChat(params); }
+export function useAppSendPublicMessage() { return useSendPublicChatMessage(); }
+export function useAppReactToPublicMessage() { return useReactToPublicMessage(); }
+
+export function useAppPrivateConversations() { return useGetPrivateConversations(); }
+export function useAppPrivateThread(customerId: number) { return useGetPrivateThread(customerId); }
+export function useAppSendPrivateMessage() { return useSendPrivateMessage(); }
+export function useAppMarkThreadRead() { return useMarkPrivateThreadRead(); }
+export function useAppSendTyping() { return useSendTypingIndicator(); }

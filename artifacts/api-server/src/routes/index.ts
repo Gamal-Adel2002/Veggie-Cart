@@ -12,6 +12,7 @@ import adminRouter from "./admin";
 import uploadRouter from "./upload";
 import zonesRouter from "./zones";
 import notificationsRouter from "./notifications";
+import chatRouter from "./chat";
 
 const router = Router();
 
@@ -29,5 +30,6 @@ router.use("/admin", adminRouter);
 router.use("/upload", uploadRouter);
 router.use("/delivery", deliveryPortalRouter);
 router.use("/notifications", notificationsRouter);
+router.use("/chat", chatRouter);
 
 export default router;

@@ -28,6 +28,10 @@ import Customers from "./pages/admin/Customers";
 import OrderedProducts from "./pages/admin/OrderedProducts";
 import Suppliers from "./pages/admin/Suppliers";
 import SupplierOrders from "./pages/admin/SupplierOrders";
+import PublicChat from "./pages/admin/PublicChat";
+import PrivateChats from "./pages/admin/PrivateChats";
+import PublicFeed from "./pages/PublicFeed";
+import Messages from "./pages/Messages";
 import DeliveryLogin from "./pages/delivery/DeliveryLogin";
 import DeliveryDashboard from "./pages/delivery/DeliveryDashboard";
 import { RequireDelivery } from "./components/delivery/RequireDelivery";
@@ -73,6 +77,11 @@ function Router() {
       <Route path="/admin/ordered-products" component={OrderedProducts} />
       <Route path="/admin/suppliers" component={Suppliers} />
       <Route path="/admin/supplier-orders" component={SupplierOrders} />
+      <Route path="/admin/public-chat" component={PublicChat} />
+      <Route path="/admin/private-chats" component={PrivateChats} />
+
+      <Route path="/feed" component={PublicFeed} />
+      <Route path="/messages" component={Messages} />
 
       <Route path="/delivery/login" component={DeliveryLogin} />
       <Route path="/delivery/dashboard">

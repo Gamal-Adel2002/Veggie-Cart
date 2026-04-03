@@ -915,6 +915,204 @@ export const UploadImageResponse = zod.object({
 });
 
 /**
+ * @summary Get public chat messages (paginated)
+ */
+export const getPublicChatQueryLimitDefault = 50;
+export const getPublicChatQueryOffsetDefault = 0;
+
+export const GetPublicChatQueryParams = zod.object({
+  limit: zod.coerce.number().default(getPublicChatQueryLimitDefault),
+  offset: zod.coerce.number().default(getPublicChatQueryOffsetDefault),
+});
+
+export const GetPublicChatResponseItem = zod.object({
+  id: zod.number(),
+  channel: zod.enum(["public", "private"]),
+  senderId: zod.number(),
+  senderRole: zod.enum(["admin", "customer"]),
+  recipientId: zod.number().nullish(),
+  content: zod.string().nullish(),
+  mediaUrl: zod.string().nullish(),
+  mediaType: zod.string().nullish(),
+  readAt: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date(),
+  reactions: zod.array(
+    zod.object({
+      emoji: zod.string(),
+      count: zod.number(),
+      userIds: zod.array(zod.number()),
+    }),
+  ),
+});
+export const GetPublicChatResponse = zod.array(GetPublicChatResponseItem);
+
+/**
+ * @summary Admin sends a public broadcast message
+ */
+export const SendPublicChatMessageBody = zod.object({
+  content: zod.string().optional(),
+  mediaUrl: zod.string().optional(),
+  mediaType: zod.string().optional(),
+});
+
+/**
+ * @summary Toggle emoji reaction on a public message
+ */
+export const ReactToPublicMessageParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ReactToPublicMessageBody = zod.object({
+  emoji: zod.string(),
+});
+
+export const ReactToPublicMessageResponse = zod.object({
+  id: zod.number(),
+  channel: zod.enum(["public", "private"]),
+  senderId: zod.number(),
+  senderRole: zod.enum(["admin", "customer"]),
+  recipientId: zod.number().nullish(),
+  content: zod.string().nullish(),
+  mediaUrl: zod.string().nullish(),
+  mediaType: zod.string().nullish(),
+  readAt: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date(),
+  reactions: zod.array(
+    zod.object({
+      emoji: zod.string(),
+      count: zod.number(),
+      userIds: zod.array(zod.number()),
+    }),
+  ),
+});
+
+/**
+ * @summary Admin - list conversations; Customer - own thread summary
+ */
+export const GetPrivateConversationsResponse = zod.union([
+  zod.array(
+    zod.object({
+      customerId: zod.number(),
+      customerName: zod.string(),
+      customerPhone: zod.string(),
+      customerImage: zod.string().nullish(),
+      lastMessage: zod
+        .object({
+          id: zod.number(),
+          channel: zod.enum(["public", "private"]),
+          senderId: zod.number(),
+          senderRole: zod.enum(["admin", "customer"]),
+          recipientId: zod.number().nullish(),
+          content: zod.string().nullish(),
+          mediaUrl: zod.string().nullish(),
+          mediaType: zod.string().nullish(),
+          readAt: zod.coerce.date().nullish(),
+          createdAt: zod.coerce.date(),
+          reactions: zod.array(
+            zod.object({
+              emoji: zod.string(),
+              count: zod.number(),
+              userIds: zod.array(zod.number()),
+            }),
+          ),
+        })
+        .nullish(),
+      unreadCount: zod.number(),
+    }),
+  ),
+  zod.object({
+    customerId: zod.number(),
+    unreadCount: zod.number(),
+    lastMessage: zod
+      .object({
+        id: zod.number(),
+        channel: zod.enum(["public", "private"]),
+        senderId: zod.number(),
+        senderRole: zod.enum(["admin", "customer"]),
+        recipientId: zod.number().nullish(),
+        content: zod.string().nullish(),
+        mediaUrl: zod.string().nullish(),
+        mediaType: zod.string().nullish(),
+        readAt: zod.coerce.date().nullish(),
+        createdAt: zod.coerce.date(),
+        reactions: zod.array(
+          zod.object({
+            emoji: zod.string(),
+            count: zod.number(),
+            userIds: zod.array(zod.number()),
+          }),
+        ),
+      })
+      .nullish(),
+  }),
+]);
+
+/**
+ * @summary Get private thread messages
+ */
+export const GetPrivateThreadParams = zod.object({
+  customerId: zod.coerce.number(),
+});
+
+export const GetPrivateThreadResponseItem = zod.object({
+  id: zod.number(),
+  channel: zod.enum(["public", "private"]),
+  senderId: zod.number(),
+  senderRole: zod.enum(["admin", "customer"]),
+  recipientId: zod.number().nullish(),
+  content: zod.string().nullish(),
+  mediaUrl: zod.string().nullish(),
+  mediaType: zod.string().nullish(),
+  readAt: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date(),
+  reactions: zod.array(
+    zod.object({
+      emoji: zod.string(),
+      count: zod.number(),
+      userIds: zod.array(zod.number()),
+    }),
+  ),
+});
+export const GetPrivateThreadResponse = zod.array(GetPrivateThreadResponseItem);
+
+/**
+ * @summary Send a private message in the thread
+ */
+export const SendPrivateMessageParams = zod.object({
+  customerId: zod.coerce.number(),
+});
+
+export const SendPrivateMessageBody = zod.object({
+  content: zod.string().optional(),
+  mediaUrl: zod.string().optional(),
+  mediaType: zod.string().optional(),
+});
+
+/**
+ * @summary Mark all unread messages in thread as read
+ */
+export const MarkPrivateThreadReadParams = zod.object({
+  customerId: zod.coerce.number(),
+});
+
+export const MarkPrivateThreadReadResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string().optional(),
+});
+
+/**
+ * @summary Broadcast typing indicator to the other party
+ */
+export const SendTypingIndicatorParams = zod.object({
+  customerId: zod.coerce.number(),
+});
+
+export const SendTypingIndicatorResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string().optional(),
+});
+
+/**
  * @summary Admin - list all suppliers
  */
 export const AdminGetSuppliersResponseItem = zod.object({

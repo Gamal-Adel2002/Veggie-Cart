@@ -75,6 +75,36 @@ export function broadcastToDeliveryPerson(deliveryPersonId: number, event: strin
   }
 }
 
+export function broadcastToUser(userId: number, event: string, data: unknown) {
+  const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+  for (const client of sseClients.values()) {
+    if (client.userId === userId) {
+      try { client.res.write(payload); } catch {}
+    }
+  }
+}
+
+export function broadcastToAll(event: string, data: unknown) {
+  const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+  for (const client of sseClients.values()) {
+    try { client.res.write(payload); } catch {}
+  }
+}
+
+export function isUserConnected(userId: number): boolean {
+  for (const client of sseClients.values()) {
+    if (client.userId === userId) return true;
+  }
+  return false;
+}
+
+export function isAnyAdminConnected(): boolean {
+  for (const client of sseClients.values()) {
+    if (client.role === "admin") return true;
+  }
+  return false;
+}
+
 async function sendPushToSubs(
   subs: Array<{ id: number; endpoint: string; keys: string }>,
   payload: object
@@ -151,6 +181,30 @@ export async function sendPushToDeliveryPerson(deliveryPersonId: number, payload
   await sendPushToSubs(subs, payload);
 }
 
+export async function sendPushToCustomer(userId: number, payload: {
+  title: string; titleAr: string;
+  body: string; bodyAr: string;
+  url?: string;
+}) {
+  const subs = await db
+    .select({
+      id: pushSubscriptionsTable.id,
+      endpoint: pushSubscriptionsTable.endpoint,
+      keys: pushSubscriptionsTable.keys,
+    })
+    .from(pushSubscriptionsTable)
+    .innerJoin(usersTable, eq(pushSubscriptionsTable.userId, usersTable.id))
+    .where(
+      and(
+        eq(pushSubscriptionsTable.userId, userId),
+        isNull(pushSubscriptionsTable.deliveryPersonId),
+        eq(usersTable.role, "customer")
+      )
+    );
+
+  await sendPushToSubs(subs, payload);
+}
+
 // GET /notifications/vapid-public-key
 router.get("/vapid-public-key", (_req, res) => {
   res.json({ publicKey: VAPID_PUBLIC_KEY });
@@ -201,10 +255,6 @@ router.post("/subscribe", authenticate(false), async (req: AuthRequest, res) => 
   }
 
   const role = req.userRole;
-  if (role !== "admin" && role !== "delivery") {
-    res.status(403).json({ error: "Only admin and delivery users can subscribe to push notifications" });
-    return;
-  }
 
   const { endpoint, keys } = req.body;
   if (!endpoint || !keys || !keys.auth || !keys.p256dh) {

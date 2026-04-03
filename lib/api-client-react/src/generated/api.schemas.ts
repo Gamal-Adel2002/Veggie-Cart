@@ -341,6 +341,73 @@ export interface CreateSupplierOrderInput {
   items: SupplierOrderItemInput[];
 }
 
+export interface ChatReaction {
+  emoji: string;
+  count: number;
+  userIds: number[];
+}
+
+export type ChatMessageChannel =
+  (typeof ChatMessageChannel)[keyof typeof ChatMessageChannel];
+
+export const ChatMessageChannel = {
+  public: "public",
+  private: "private",
+} as const;
+
+export type ChatMessageSenderRole =
+  (typeof ChatMessageSenderRole)[keyof typeof ChatMessageSenderRole];
+
+export const ChatMessageSenderRole = {
+  admin: "admin",
+  customer: "customer",
+} as const;
+
+export interface ChatMessage {
+  id: number;
+  channel: ChatMessageChannel;
+  senderId: number;
+  senderRole: ChatMessageSenderRole;
+  recipientId?: number | null;
+  content?: string | null;
+  mediaUrl?: string | null;
+  mediaType?: string | null;
+  readAt?: string | null;
+  createdAt: string;
+  reactions: ChatReaction[];
+}
+
+export interface PrivateConversation {
+  customerId: number;
+  customerName: string;
+  customerPhone: string;
+  customerImage?: string | null;
+  lastMessage?: ChatMessage | null;
+  unreadCount: number;
+}
+
+export interface CustomerThreadSummary {
+  customerId: number;
+  unreadCount: number;
+  lastMessage?: ChatMessage | null;
+}
+
+export interface SendPublicMessageInput {
+  content?: string;
+  mediaUrl?: string;
+  mediaType?: string;
+}
+
+export interface SendPrivateMessageInput {
+  content?: string;
+  mediaUrl?: string;
+  mediaType?: string;
+}
+
+export interface ReactInput {
+  emoji: string;
+}
+
 export type GetProductsParams = {
   search?: string;
   categoryId?: number;
@@ -353,4 +420,9 @@ export type AdminGetOrdersParams = {
 
 export type UploadImageBody = {
   file?: Blob;
+};
+
+export type GetPublicChatParams = {
+  limit?: number;
+  offset?: number;
 };

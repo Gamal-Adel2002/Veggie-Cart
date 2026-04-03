@@ -21,6 +21,8 @@ tags:
     description: Admin operations
   - name: delivery
     description: Delivery persons
+  - name: chat
+    description: Chat messaging
 
 paths:
   /healthz:
@@ -782,6 +784,173 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UploadResponse"
+
+  /chat/public:
+    get:
+      operationId: getPublicChat
+      tags: [chat]
+      summary: Get public chat messages (paginated)
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatMessage"
+    post:
+      operationId: sendPublicChatMessage
+      tags: [chat]
+      summary: Admin sends a public broadcast message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendPublicMessageInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessage"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /chat/public/{id}/react:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    post:
+      operationId: reactToPublicMessage
+      tags: [chat]
+      summary: Toggle emoji reaction on a public message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReactInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessage"
+
+  /chat/private:
+    get:
+      operationId: getPrivateConversations
+      tags: [chat]
+      summary: Admin - list conversations; Customer - own thread summary
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: array
+                    items:
+                      $ref: "#/components/schemas/PrivateConversation"
+                  - $ref: "#/components/schemas/CustomerThreadSummary"
+
+  /chat/private/{customerId}:
+    parameters:
+      - name: customerId
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      operationId: getPrivateThread
+      tags: [chat]
+      summary: Get private thread messages
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatMessage"
+    post:
+      operationId: sendPrivateMessage
+      tags: [chat]
+      summary: Send a private message in the thread
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendPrivateMessageInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessage"
+
+  /chat/private/{customerId}/read:
+    parameters:
+      - name: customerId
+        in: path
+        required: true
+        schema:
+          type: integer
+    put:
+      operationId: markPrivateThreadRead
+      tags: [chat]
+      summary: Mark all unread messages in thread as read
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /chat/private/{customerId}/typing:
+    parameters:
+      - name: customerId
+        in: path
+        required: true
+        schema:
+          type: integer
+    post:
+      operationId: sendTypingIndicator
+      tags: [chat]
+      summary: Broadcast typing indicator to the other party
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
 
   /admin/suppliers:
     get:
@@ -1645,3 +1814,128 @@ components:
         - supplierId
         - orderedAt
         - items
+
+    ChatReaction:
+      type: object
+      properties:
+        emoji:
+          type: string
+        count:
+          type: integer
+        userIds:
+          type: array
+          items:
+            type: integer
+      required:
+        - emoji
+        - count
+        - userIds
+
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        channel:
+          type: string
+          enum: [public, private]
+        senderId:
+          type: integer
+        senderRole:
+          type: string
+          enum: [admin, customer]
+        recipientId:
+          type: integer
+          nullable: true
+        content:
+          type: string
+          nullable: true
+        mediaUrl:
+          type: string
+          nullable: true
+        mediaType:
+          type: string
+          nullable: true
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        reactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatReaction"
+      required:
+        - id
+        - channel
+        - senderId
+        - senderRole
+        - createdAt
+        - reactions
+
+    PrivateConversation:
+      type: object
+      properties:
+        customerId:
+          type: integer
+        customerName:
+          type: string
+        customerPhone:
+          type: string
+        customerImage:
+          type: string
+          nullable: true
+        lastMessage:
+          $ref: "#/components/schemas/ChatMessage"
+          nullable: true
+        unreadCount:
+          type: integer
+      required:
+        - customerId
+        - customerName
+        - customerPhone
+        - unreadCount
+
+    CustomerThreadSummary:
+      type: object
+      properties:
+        customerId:
+          type: integer
+        unreadCount:
+          type: integer
+        lastMessage:
+          $ref: "#/components/schemas/ChatMessage"
+          nullable: true
+      required:
+        - customerId
+        - unreadCount
+
+    SendPublicMessageInput:
+      type: object
+      properties:
+        content:
+          type: string
+        mediaUrl:
+          type: string
+        mediaType:
+          type: string
+
+    SendPrivateMessageInput:
+      type: object
+      properties:
+        content:
+          type: string
+        mediaUrl:
+          type: string
+        mediaType:
+          type: string
+
+    ReactInput:
+      type: object
+      properties:
+        emoji:
+          type: string
+      required:
+        - emoji
