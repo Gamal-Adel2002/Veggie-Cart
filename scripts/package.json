@@ -8,6 +8,7 @@
     "seed": "tsx ./src/seed.ts",
     "setup-db": "tsx ./setup-database.ts",
     "migrate-data": "tsx ./migrate-data.ts",
+    "check-db": "tsx ./check-database.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
