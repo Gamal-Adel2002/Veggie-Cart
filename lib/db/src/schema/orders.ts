@@ -3,6 +3,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
 import { productsTable } from "./products";
+import { promoCodesTable } from "./promoCodes";
 
 export const orderStatusEnum = pgEnum("order_status", [
   "waiting",
@@ -28,7 +29,17 @@ export const ordersTable = pgTable("orders", {
   notes: text("notes"),
   status: orderStatusEnum("status").notNull().default("waiting"),
   totalPrice: real("total_price").notNull(),
+  discountAmount: real("discount_amount").default(0),
+  finalPrice: real("final_price"),
+  promoCodeId: integer("promo_code_id").references(() => promoCodesTable.id),
+  voucherId: integer("voucher_id"),
+  deliveryFee: real("delivery_fee").default(0),
   deliveryPersonId: integer("delivery_person_id"),
+  paymentMethod: text("payment_method"), // 'cash' or 'card'
+  paymentStatus: text("payment_status"), // 'pending', 'paid', 'failed', 'refunded'
+  paymentTransactionId: text("payment_transaction_id"),
+  paymentPaidAt: timestamp("payment_paid_at"),
+  paymentGateway: text("payment_gateway"), // 'paymob' or null
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

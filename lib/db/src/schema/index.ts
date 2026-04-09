@@ -7,3 +7,7 @@ export * from "./deliveryZones";
 export * from "./pushSubscriptions";
 export * from "./suppliers";
 export * from "./chat";
+export * from "./storeSettings";
+export * from "./promoCodes";
+export * from "./vouchers";
+export * from "./deliverySettings";
