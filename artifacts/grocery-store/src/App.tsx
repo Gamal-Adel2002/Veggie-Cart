@@ -30,6 +30,10 @@ import Suppliers from "./pages/admin/Suppliers";
 import SupplierOrders from "./pages/admin/SupplierOrders";
 import PublicChat from "./pages/admin/PublicChat";
 import PrivateChats from "./pages/admin/PrivateChats";
+import PromoCodes from "./pages/admin/PromoCodes";
+import Vouchers from "./pages/admin/Vouchers";
+import StoreHours from "./pages/admin/StoreHours";
+import DeliveryFee from "./pages/dashboard/DeliveryFee";
 import PublicFeed from "./pages/PublicFeed";
 import Messages from "./pages/Messages";
 import DeliveryLogin from "./pages/delivery/DeliveryLogin";
@@ -79,6 +83,10 @@ function Router() {
       <Route path="/admin/supplier-orders" component={SupplierOrders} />
       <Route path="/admin/public-chat" component={PublicChat} />
       <Route path="/admin/private-chats" component={PrivateChats} />
+      <Route path="/admin/promo-codes" component={PromoCodes} />
+      <Route path="/admin/vouchers" component={Vouchers} />
+      <Route path="/admin/store-hours" component={StoreHours} />
+      <Route path="/admin/delivery-fee" component={DeliveryFee} />
 
       <Route path="/feed" component={PublicFeed} />
       <Route path="/messages" component={Messages} />

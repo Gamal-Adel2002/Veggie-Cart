@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
-import { Package, ShoppingBag, Truck, Grid, LayoutDashboard, LogOut, UserCog, MapPin, Users, ClipboardList, Building2, ShoppingCart, Megaphone, MessageCircle } from 'lucide-react';
+import { Package, ShoppingBag, Truck, Grid, LayoutDashboard, LogOut, UserCog, MapPin, Users, ClipboardList, Building2, ShoppingCart, Megaphone, MessageCircle, Tag, Gift, Clock, BadgeDollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/store';
 import { useAppLogout } from '@/hooks/use-auth-api';
@@ -30,6 +30,10 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     { href: '/admin/supplier-orders', icon: ShoppingCart, label: 'Purchase Orders' },
     { href: '/admin/public-chat', icon: Megaphone, label: 'Public Chat' },
     { href: '/admin/private-chats', icon: MessageCircle, label: 'Private Chats' },
+    { href: '/admin/promo-codes', icon: Tag, label: 'Promo Codes' },
+    { href: '/admin/vouchers', icon: Gift, label: 'Vouchers' },
+    { href: '/admin/delivery-fee', icon: BadgeDollarSign, label: 'Delivery Fee' },
+    { href: '/admin/store-hours', icon: Clock, label: 'Store Hours' },
   ];
 
   const handleLogout = () => {
