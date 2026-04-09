@@ -9,6 +9,7 @@
     "setup-db": "tsx ./setup-database.ts",
     "migrate-data": "tsx ./migrate-data.ts",
     "check-db": "tsx ./check-database.ts",
+    "find-databases": "tsx ./find-databases.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
