@@ -6,9 +6,13 @@ import {
   productsTable,
   deliveryPersonsTable,
   deliveryZonesTable,
+  promoCodesTable,
+  vouchersTable,
+  deliverySettingsTable,
 } from "@workspace/db/schema";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, and, lte } from "drizzle-orm";
 import { authenticate, type AuthRequest } from "../middlewares/authenticate";
+import { isStoreOpenNow } from "../lib/storeHours";
 import { broadcastToAdmins, sendPushToAdmins } from "./notifications";
 import pino from "pino";
 
@@ -59,11 +63,24 @@ router.get("/", authenticate(), async (req: AuthRequest, res) => {
 
 // Accepts orders from both guests (no token) and authenticated users
 router.post("/", authenticate(false), async (req: AuthRequest, res) => {
-  const { customerName, customerPhone, deliveryAddress, latitude, longitude, notes, items } =
+  const { customerName, customerPhone, deliveryAddress, latitude, longitude, notes, items, promoCode, voucherId, paymentMethod } =
     req.body;
+
+  // Force paymentMethod to cash since PayMob is disabled
+  const finalPaymentMethod = "cash";
 
   if (!customerName || !customerPhone || !items || !Array.isArray(items) || items.length === 0) {
     res.status(400).json({ error: "customerName, customerPhone, and items are required" });
+    return;
+  }
+
+  // Check if store is open
+  const open = await isStoreOpenNow();
+  if (!open) {
+    res.status(422).json({
+      error: "STORE_CLOSED",
+      message: "The store is currently closed. Orders are not accepted at this time.",
+    });
     return;
   }
 
@@ -177,6 +194,54 @@ router.post("/", authenticate(false), async (req: AuthRequest, res) => {
         });
       }
 
+      // ── Discount calculation ──────────────────────────────────────────────────
+      let discountAmount = 0;
+      let deliveryFee = 0;
+      let appliedPromCodeId: number | null = null;
+      let appliedVoucherId: number | null = null;
+
+      if (promoCode && typeof promoCode === "string" && promoCode.trim()) {
+        const [promo] = await tx.select().from(promoCodesTable).where(eq(promoCodesTable.code, promoCode.trim().toUpperCase())).limit(1);
+        if (promo && promo.active) {
+          const now = new Date();
+          const dateValid = (!promo.validFrom || now >= promo.validFrom) && (!promo.validUntil || now <= promo.validUntil);
+          const usesValid = promo.maxUses == null || promo.usedCount < promo.maxUses;
+          if (dateValid && usesValid) {
+            if (promo.discountType === "percentage") {
+              discountAmount = totalPrice * (promo.discountValue / 100);
+            } else {
+              discountAmount = promo.discountValue;
+            }
+            discountAmount = Math.min(discountAmount, totalPrice);
+            appliedPromCodeId = promo.id;
+          }
+        }
+      } else if (voucherId) {
+        const [voucher] = await tx.select().from(vouchersTable).where(eq(vouchersTable.id, Number(voucherId))).limit(1);
+        if (voucher && !voucher.used && voucher.validUntil > new Date()) {
+          if (req.userId && voucher.userId === req.userId) {
+            discountAmount = Math.min(voucher.amount, totalPrice);
+            appliedVoucherId = voucher.id;
+          }
+        }
+      }
+
+      // ── Delivery fee calculation ──────────────────────────────────────────────
+      const [deliverySettings] = await tx.select().from(deliverySettingsTable).limit(1);
+      if (deliverySettings) {
+        if (deliverySettings.feeType === "percentage") {
+          deliveryFee = totalPrice * (deliverySettings.feeValue / 100);
+        } else {
+          deliveryFee = deliverySettings.feeValue;
+        }
+        if (deliverySettings.minimumFee > 0) {
+          deliveryFee = Math.max(deliveryFee, deliverySettings.minimumFee);
+        }
+      }
+      // ── End discount / delivery fee ───────────────────────────────────────────
+
+      const finalPrice = totalPrice - discountAmount + deliveryFee;
+
       // Insert order
       const [order] = await tx
         .insert(ordersTable)
@@ -190,10 +255,24 @@ router.post("/", authenticate(false), async (req: AuthRequest, res) => {
           notes: notes || null,
           status: "waiting",
           totalPrice,
+          discountAmount,
+          deliveryFee,
+          finalPrice,
+          promoCodeId: appliedPromCodeId,
+          voucherId: appliedVoucherId,
+          paymentMethod: finalPaymentMethod, // Forced to cash since PayMob is disabled
         })
         .returning();
 
       orderId = order.id;
+
+      // Update promo used count or mark voucher used
+      if (appliedPromCodeId) {
+        await tx.update(promoCodesTable).set({ usedCount: sql<number>`${promoCodesTable.usedCount} + 1` }).where(eq(promoCodesTable.id, appliedPromCodeId));
+      }
+      if (appliedVoucherId) {
+        await tx.update(vouchersTable).set({ used: true, usedAt: new Date(), usedInOrderId: order.id }).where(eq(vouchersTable.id, appliedVoucherId));
+      }
 
       // Insert order items
       for (const item of enrichedItems) {
@@ -316,10 +395,18 @@ router.put("/:id/cancel", authenticate(), async (req: AuthRequest, res) => {
         // null-quantity products have unlimited/untracked stock — skip
       }
 
+      // Restore promo/voucher if used
+      if (order.promoCodeId) {
+        await tx.update(promoCodesTable).set({ usedCount: sql<number>`${promoCodesTable.usedCount} - 1` }).where(eq(promoCodesTable.id, order.promoCodeId));
+      }
+      if (order.voucherId) {
+        await tx.update(vouchersTable).set({ used: false, usedAt: null, usedInOrderId: null }).where(eq(vouchersTable.id, order.voucherId));
+      }
+
       // Mark order cancelled
       await tx
         .update(ordersTable)
-        .set({ status: "cancelled", updatedAt: new Date() })
+        .set({ status: "cancelled", updatedAt: new Date(), finalPrice: 0 })
         .where(eq(ordersTable.id, id));
     });
   } catch (err) {
@@ -470,8 +557,21 @@ router.put("/:id", authenticate(), async (req: AuthRequest, res) => {
         }
       }
 
-      // Step 6: Update order total
-      await tx.update(ordersTable).set({ totalPrice, updatedAt: new Date() }).where(eq(ordersTable.id, id));
+      // Step 6: Recompute delivery fee and update order total
+      let newDeliveryFee = 0;
+      const [deliverySettings] = await tx.select().from(deliverySettingsTable).limit(1);
+      if (deliverySettings) {
+        if (deliverySettings.feeType === "percentage") {
+          newDeliveryFee = totalPrice * (deliverySettings.feeValue / 100);
+        } else {
+          newDeliveryFee = deliverySettings.feeValue;
+        }
+        if (deliverySettings.minimumFee > 0) {
+          newDeliveryFee = Math.max(newDeliveryFee, deliverySettings.minimumFee);
+        }
+      }
+      const newFinalPrice = totalPrice + newDeliveryFee;
+      await tx.update(ordersTable).set({ totalPrice, deliveryFee: newDeliveryFee, finalPrice: newFinalPrice, updatedAt: new Date() }).where(eq(ordersTable.id, id));
     });
   } catch (err) {
     if (modifyError === "NOT_FOUND") { res.status(404).json({ error: "Order not found" }); return; }
