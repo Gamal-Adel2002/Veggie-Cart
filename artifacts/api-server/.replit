@@ -22,6 +22,10 @@ command = "pnpm install && pnpm run build"
 port = 8080
 
 [userenv.shared]
-DATABASE_URL = ""
-JWT_SECRET = ""
+# Set these values in Replit Settings -> Environment:
+# DATABASE_URL = "postgresql://user:password@localhost:5432/veggie_cart"
+# JWT_SECRET = "generate_a_secure_random_string_min_32_chars"
 PORT = 8080
+
+[tool.volumes]
+db = "/data/db"
