@@ -1,0 +1,27 @@
+language = "nodejs"
+modules = ["nodejs-24"]
+
+[deployment]
+router = "application"
+deploymentTarget = "autoscale"
+run = "node --enable-source-maps dist/index.mjs"
+
+[deployment.preBuild]
+command = "pnpm install && pnpm run build"
+
+[deployment.postBuild]
+command = "pnpm prune"
+
+[nix]
+channel = "stable-25_05"
+
+[postBuild]
+command = "pnpm install && pnpm run build"
+
+[service]
+port = 8080
+
+[userenv.shared]
+DATABASE_URL = ""
+JWT_SECRET = ""
+PORT = 8080

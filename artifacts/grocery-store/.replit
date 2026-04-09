@@ -1,0 +1,22 @@
+language = "nodejs"
+modules = ["nodejs-24"]
+
+[deployment]
+router = "application"
+deploymentTarget = "autoscale"
+run = "vite --host 0.0.0.0"
+
+[deployment.preBuild]
+command = "pnpm install"
+
+[deployment.postBuild]
+command = "pnpm prune"
+
+[nix]
+channel = "stable-25_05"
+
+[service]
+port = 22204
+
+[proxy]
+reverseProxy = true
