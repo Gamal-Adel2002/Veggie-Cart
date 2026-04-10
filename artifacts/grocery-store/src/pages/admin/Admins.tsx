@@ -63,7 +63,7 @@ export default function Admins() {
   };
 
   const handleSave = async () => {
-    const EGYPTIAN_PHONE = /^0(10|11|12|15)\d{7}$/;
+    const EGYPTIAN_PHONE = /^0(10|11|12|15)\d{8}$/;
     if (mode === 'new') {
       if (!formData.name.trim() || !formData.phone.trim() || !formData.password.trim()) {
         toast({ title: "Validation Error", description: "Name, phone, and password are all required.", variant: "destructive" });

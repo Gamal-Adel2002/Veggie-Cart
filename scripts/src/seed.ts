@@ -53,10 +53,11 @@ async function seed() {
     { name: "Admin", phone: "01000000000", password: adminPassword, role: "admin" },
   ]);
 
+  const deliveryPassword = await bcrypt.hash("delivery123", 10);
   await db.insert(deliveryPersonsTable).values([
-    { name: "Ahmed Hassan", phone: "01111111111", active: true },
-    { name: "Mohamed Ali", phone: "01222222222", active: true },
-    { name: "Khaled Ibrahim", phone: "01333333333", active: true },
+    { name: "Ahmed Hassan", phone: "01111111111", active: true, username: "ahmed", password: deliveryPassword },
+    { name: "Mohamed Ali", phone: "01222222222", active: true, username: "mohamed", password: deliveryPassword },
+    { name: "Khaled Ibrahim", phone: "01333333333", active: true, username: "khaled", password: deliveryPassword },
   ]);
 
   console.log("✅ Seeding complete!");

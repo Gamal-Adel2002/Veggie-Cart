@@ -17,7 +17,7 @@ export default function Login() {
   const { t } = useTranslation();
 
   const schema = z.object({
-    phone: z.string().regex(/^0(10|11|12|15)\d{7}$/, t('invalidEgyptianPhone')),
+    phone: z.string().regex(/^0(10|11|12|15)\d{8}$/, t('invalidEgyptianPhone')),
     password: z.string().min(4, t('passwordRequired'))
   });
 

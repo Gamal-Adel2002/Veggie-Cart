@@ -50,7 +50,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
         </div>
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
-            const active = location === item.href || (item.href !== '/admin' && location.startsWith(item.href));
+            const active = location === item.href || (item.href !== '/admin' && location.startsWith(item.href + '/'));
             return (
               <Link key={item.href} href={item.href}>
                 <Button
