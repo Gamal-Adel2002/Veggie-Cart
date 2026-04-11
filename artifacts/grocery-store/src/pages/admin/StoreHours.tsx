@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useStoreSettings, useUpdateStoreSettings } from "@/hooks/use-store-status";
-import { useTranslation } from "@/lib/i18n";
+import { useAdminTranslation as useTranslation } from '@/lib/portalI18n';
 import { Loader2, Save, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 

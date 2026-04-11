@@ -1,6 +1,6 @@
 import { useStore, Language } from '@/store';
 
-export const dictionary: Record<string, any> = {
+export const dictionary = {
   en: {
     // Nav
     home: "Home",
@@ -478,6 +478,24 @@ export const dictionary: Record<string, any> = {
     adminQtyCol: "Qty",
     adminSubtotalCol: "Subtotal",
     adminTotal: "Total",
+
+    // Admin — Public Chat
+    adminPublicChatTitle: "Public Broadcast",
+    adminPublicChatSubtitle: "— visible to all customers",
+    adminPublicChatEmpty: "No messages yet. Broadcast your first message below.",
+    adminPublicChatPlaceholder: "Type a broadcast message… (Enter to send)",
+    adminPublicChatBroadcast: "Broadcast",
+    adminUploadFailed: "Upload failed",
+    adminDownloadFile: "Download file",
+
+    // Admin — Private Chats
+    adminPrivateChatsTitle: "Private Chats",
+    adminPrivateChatsEmpty: "No conversations yet.",
+    adminPrivateChatNoMessages: "No messages yet. Start the conversation.",
+    adminPrivateChatPlaceholder: "Type a message…",
+    adminPrivateChatIsTyping: (name: string) => `${name} is typing…`,
+    adminPrivateChatYou: "You: ",
+    adminPrivateChatSelect: "Select a conversation to start chatting",
 
     // Admin Portal — nav & layout
     adminPanelTitle: "Admin Panel",
@@ -1035,6 +1053,24 @@ export const dictionary: Record<string, any> = {
     adminQtyCol: "الكمية",
     adminSubtotalCol: "المجموع الفرعي",
     adminTotal: "الإجمالي",
+
+    // Admin — Public Chat
+    adminPublicChatTitle: "البث العام",
+    adminPublicChatSubtitle: "— مرئي لجميع العملاء",
+    adminPublicChatEmpty: "لا توجد رسائل بعد. أرسل أول رسالة بث.",
+    adminPublicChatPlaceholder: "اكتب رسالة بث… (Enter للإرسال)",
+    adminPublicChatBroadcast: "بث",
+    adminUploadFailed: "فشل الرفع",
+    adminDownloadFile: "تحميل الملف",
+
+    // Admin — Private Chats
+    adminPrivateChatsTitle: "الدردشات الخاصة",
+    adminPrivateChatsEmpty: "لا توجد محادثات بعد.",
+    adminPrivateChatNoMessages: "لا توجد رسائل بعد. ابدأ المحادثة.",
+    adminPrivateChatPlaceholder: "اكتب رسالة…",
+    adminPrivateChatIsTyping: (name: string) => `${name} يكتب…`,
+    adminPrivateChatYou: "أنت: ",
+    adminPrivateChatSelect: "اختر محادثة للبدء في الدردشة",
 
     // Admin Portal — nav & layout
     adminPanelTitle: "لوحة الإدارة",

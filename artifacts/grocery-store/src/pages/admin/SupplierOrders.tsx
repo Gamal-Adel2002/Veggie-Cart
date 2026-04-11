@@ -74,7 +74,7 @@ export default function SupplierOrders() {
 
   const handleSave = async () => {
     if (!supplierId) {
-      toast({ title: t('adminPurchaseOrderSupplierReq'), description: t('adminPurchaseOrderItemsAddOne'), variant: 'destructive' });
+      toast({ title: t('adminPurchaseOrderSupplierReq'), description: t('adminPurchaseOrderSelectSupplier'), variant: 'destructive' });
       return;
     }
     const validLines = lines.filter(l => l.productName.trim());

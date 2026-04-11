@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/lib/utils';
 import { useStore } from '@/store';
 import { format } from 'date-fns';
+import { useAdminTranslation } from '@/lib/portalI18n';
 import type { ChatMessage } from '@workspace/api-client-react';
 
 const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
@@ -20,6 +21,7 @@ export default function PublicChat() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const token = useStore(s => s.token);
+  const { t } = useAdminTranslation();
 
   const [content, setContent] = useState('');
   const [sending, setSending] = useState(false);
@@ -28,7 +30,6 @@ export default function PublicChat() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
-  // SSE for real-time updates
   useEffect(() => {
     if (!token) return;
     const es = new EventSource(`/api/notifications/stream?token=${encodeURIComponent(token)}`);
@@ -42,7 +43,6 @@ export default function PublicChat() {
     return () => { es.close(); };
   }, [token, queryClient]);
 
-  // Scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -55,7 +55,7 @@ export default function PublicChat() {
       queryClient.invalidateQueries({ queryKey: ['/api/chat/public'] });
       setContent('');
     } catch (e) {
-      toast({ title: 'Error', description: getErrorMessage(e), variant: 'destructive' });
+      toast({ title: t('adminOrderError'), description: getErrorMessage(e), variant: 'destructive' });
     } finally {
       setSending(false);
     }
@@ -71,7 +71,7 @@ export default function PublicChat() {
       await sendMsg({ data: { mediaUrl: (result as { url: string }).url, mediaType } });
       queryClient.invalidateQueries({ queryKey: ['/api/chat/public'] });
     } catch (e) {
-      toast({ title: 'Upload failed', description: getErrorMessage(e), variant: 'destructive' });
+      toast({ title: t('adminUploadFailed'), description: getErrorMessage(e), variant: 'destructive' });
     } finally {
       setUploadingImg(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -87,15 +87,14 @@ export default function PublicChat() {
       <div className="flex flex-col h-[calc(100vh-10rem)]">
         <div className="flex items-center gap-2 mb-4">
           <Megaphone className="w-5 h-5 text-primary" />
-          <h2 className="text-xl font-bold">Public Broadcast</h2>
-          <span className="text-sm text-muted-foreground ms-1">— visible to all customers</span>
+          <h2 className="text-xl font-bold">{t('adminPublicChatTitle')}</h2>
+          <span className="text-sm text-muted-foreground ms-1">{t('adminPublicChatSubtitle')}</span>
         </div>
 
-        {/* Message feed */}
         <div className="flex-1 overflow-y-auto space-y-4 bg-muted/20 rounded-2xl p-4 border border-border">
-          {isLoading && <p className="text-center py-8 text-muted-foreground">Loading...</p>}
+          {isLoading && <p className="text-center py-8 text-muted-foreground">{t('adminLoading')}</p>}
           {!isLoading && (!messages || messages.length === 0) && (
-            <p className="text-center py-8 text-muted-foreground">No messages yet. Broadcast your first message below.</p>
+            <p className="text-center py-8 text-muted-foreground">{t('adminPublicChatEmpty')}</p>
           )}
           {(messages || []).map((msg: ChatMessage) => (
             <div key={msg.id} className="bg-card border border-border rounded-2xl p-4 shadow-sm">
@@ -113,7 +112,7 @@ export default function PublicChat() {
                   rel="noopener noreferrer"
                   className="mt-2 flex items-center gap-2 text-xs text-primary underline"
                 >
-                  📎 {msg.mediaUrl.split('/').pop() || 'Download file'}
+                  📎 {msg.mediaUrl.split('/').pop() || t('adminDownloadFile')}
                 </a>
               )}
               <div className="flex items-center gap-3 mt-3">
@@ -135,13 +134,12 @@ export default function PublicChat() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Composer */}
         <div className="mt-3 bg-card border border-border rounded-2xl p-3 shadow-sm">
           <Textarea
             value={content}
             onChange={e => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type a broadcast message… (Enter to send)"
+            placeholder={t('adminPublicChatPlaceholder')}
             className="resize-none border-0 bg-transparent text-sm focus-visible:ring-0 p-0"
             rows={2}
           />
@@ -171,7 +169,7 @@ export default function PublicChat() {
               className="gap-2"
             >
               {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              Broadcast
+              {t('adminPublicChatBroadcast')}
             </Button>
           </div>
         </div>
