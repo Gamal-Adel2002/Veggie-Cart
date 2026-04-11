@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { MapPicker } from '@/components/MapPicker';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { Sprout, Loader2, Camera } from 'lucide-react';
+import { Plant, CircleNotch, Camera } from '@phosphor-icons/react';
 import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
@@ -84,7 +84,7 @@ export default function Signup() {
       <div className="max-w-xl mx-auto space-y-8 bg-card border border-border/50 p-8 rounded-3xl shadow-xl shadow-black/5">
         <div className="text-center">
           <Link href="/" className="inline-flex items-center gap-2 mb-6 text-primary">
-            <Sprout className="w-8 h-8" />
+            <Plant className="w-8 h-8" weight="fill" />
             <span className="font-display font-bold text-2xl text-foreground">FreshVeg</span>
           </Link>
           <h1 className="text-3xl font-display font-bold">{t('createAccount')}</h1>
@@ -127,7 +127,7 @@ export default function Signup() {
             )} />
 
             <Button type="submit" disabled={isPending || uploading} className="w-full h-14 rounded-xl text-lg font-bold shadow-lg shadow-primary/20">
-              {isPending || uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : t('signUp')}
+              {isPending || uploading ? <CircleNotch className="w-5 h-5 animate-spin" /> : t('signUp')}
             </Button>
           </form>
         </Form>

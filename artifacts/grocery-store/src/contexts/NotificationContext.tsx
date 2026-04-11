@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { useStore } from '@/store';
-import { Bell, VolumeX, X } from 'lucide-react';
+import { Bell, SpeakerSimpleSlash, X } from '@phosphor-icons/react';
 
 export interface NotificationItem {
   id: string;
@@ -356,7 +356,7 @@ export function NotificationProvider({ children, role, token, onNotification }: 
           dir={lang === 'ar' ? 'rtl' : 'ltr'}
           onClick={unmuteSound}
         >
-          <VolumeX className="w-5 h-5 flex-shrink-0 text-zinc-400" />
+          <SpeakerSimpleSlash className="w-5 h-5 flex-shrink-0 text-zinc-400" />
           <p className="text-sm flex-1">{unmuteText}</p>
           <button
             onClick={(e) => { e.stopPropagation(); setShowUnmutePrompt(false); }}

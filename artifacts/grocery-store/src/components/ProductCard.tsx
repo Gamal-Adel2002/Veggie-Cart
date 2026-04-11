@@ -1,8 +1,6 @@
 import React from 'react';
 import { Link } from 'wouter';
-import { Plus } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Plus, ShoppingBag } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
 import { useStore } from '@/store';
 import { useTranslation } from '@/lib/i18n';
@@ -15,7 +13,6 @@ export function ProductCard({ product }: { product: Product }) {
   const { toast } = useToast();
 
   const isOutOfStock = !product.inStock || (product.quantity !== null && product.quantity !== undefined && product.quantity <= 0);
-
   const name = lang === 'ar' ? product.nameAr : product.name;
 
   const handleAdd = (e: React.MouseEvent) => {
@@ -31,62 +28,74 @@ export function ProductCard({ product }: { product: Product }) {
 
   return (
     <Link href={`/product/${product.id}`}>
-      <Card className="h-full flex flex-col group cursor-pointer overflow-hidden border-border/50 hover:border-primary/30 transition-all duration-500 hover:shadow-xl hover:shadow-primary/5 bg-card">
-        <div className="relative aspect-[4/3] bg-muted/30 p-6 flex items-center justify-center overflow-hidden">
+      <div className="group cursor-pointer h-full flex flex-col bg-card border border-border/50 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/10 hover:border-primary/30">
+        
+        {/* Image Area */}
+        <div className="relative aspect-[4/3] bg-gradient-to-br from-muted/60 to-muted/20 overflow-hidden">
           {product.image ? (
             <img
               src={product.image}
               alt={name}
-              className={`w-full h-full object-contain transition-transform duration-700 ease-out ${isOutOfStock ? 'grayscale opacity-60' : 'group-hover:scale-110'}`}
+              className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out ${
+                isOutOfStock ? 'grayscale opacity-50' : 'group-hover:scale-105'
+              }`}
             />
           ) : (
-            <div className="w-full h-full bg-secondary rounded-xl flex items-center justify-center text-muted-foreground">
-              {t('noImage')}
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
+              <ShoppingBag className="w-10 h-10 opacity-30 mb-1" weight="thin" />
+              <span className="text-xs">{t('noImage')}</span>
             </div>
           )}
+
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+          {/* Status / Featured badge */}
           {isOutOfStock ? (
-            <Badge className="absolute top-3 start-3 bg-destructive text-destructive-foreground border-none">
+            <Badge className="absolute top-3 start-3 bg-destructive/90 text-destructive-foreground border-none backdrop-blur-sm text-[11px] px-2 py-0.5">
               {t('outOfStock')}
             </Badge>
           ) : product.featured ? (
-            <Badge className="absolute top-3 start-3 bg-accent text-accent-foreground border-none">
+            <Badge className="absolute top-3 start-3 bg-accent/90 text-accent-foreground border-none backdrop-blur-sm text-[11px] px-2 py-0.5">
               {t('featured')}
             </Badge>
           ) : null}
+
+          {/* Price badge on image */}
+          <div className="absolute bottom-3 end-3">
+            <span className="inline-flex items-baseline gap-1 bg-background/90 dark:bg-card/90 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-sm border border-border/30 text-foreground font-bold text-sm">
+              {product.price}
+              <span className="text-[10px] text-muted-foreground font-normal">EGP</span>
+            </span>
+          </div>
+
+          {/* Quick-add overlay button (slides up on hover) */}
+          {!isOutOfStock && (
+            <div className="absolute inset-x-3 bottom-3 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 ease-out">
+              <button
+                onClick={handleAdd}
+                className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground font-semibold text-sm py-2.5 rounded-xl shadow-lg hover:bg-primary/90 active:scale-[0.98] transition-all duration-150"
+              >
+                <Plus className="w-4 h-4" weight="bold" />
+                {t('addToCart')}
+              </button>
+            </div>
+          )}
         </div>
-        <CardContent className="p-5 flex-1 flex flex-col gap-1">
-          <div className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">
+
+        {/* Content Area */}
+        <div className="p-4 flex-1 flex flex-col gap-1">
+          <div className="text-[11px] font-semibold text-primary uppercase tracking-wider">
             {lang === 'ar' ? product.category?.nameAr : product.category?.name}
           </div>
-          <h3 className="font-display font-bold text-lg text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+          <h3 className="font-display font-bold text-base text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors duration-200">
             {name}
           </h3>
-          <p className="text-muted-foreground font-medium mt-auto text-lg flex items-baseline gap-1">
-            <span className="text-foreground">{product.price}</span>
-            <span className="text-sm">EGP / {t('unitLabel')(product.unit)}</span>
+          <p className="text-xs text-muted-foreground mt-auto pt-1">
+            {t('unitLabel')(product.unit)}
           </p>
-        </CardContent>
-        <div className="px-5 pb-5 pt-0">
-          <Button
-            onClick={handleAdd}
-            disabled={isOutOfStock}
-            className={`w-full rounded-xl font-bold shadow-none transition-all duration-300 group/btn ${
-              isOutOfStock
-                ? 'bg-muted text-muted-foreground cursor-not-allowed opacity-60'
-                : 'bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground hover:shadow-lg hover:shadow-primary/25'
-            }`}
-          >
-            {isOutOfStock ? (
-              t('outOfStock')
-            ) : (
-              <>
-                <Plus className="w-4 h-4 me-2 group-hover/btn:rotate-90 transition-transform duration-300" />
-                {t('addToCart')}
-              </>
-            )}
-          </Button>
         </div>
-      </Card>
+      </div>
     </Link>
   );
 }

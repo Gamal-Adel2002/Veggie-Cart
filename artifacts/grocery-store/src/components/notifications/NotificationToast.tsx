@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Bell } from 'lucide-react';
+import { X, Bell } from '@phosphor-icons/react';
 import { NotificationItem } from '@/contexts/NotificationContext';
 import { useLocation } from 'wouter';
 

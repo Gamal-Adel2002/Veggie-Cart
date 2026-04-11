@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, X, ChevronRight } from 'lucide-react';
+import { Bell, X, CaretRight } from '@phosphor-icons/react';
 import { useNotifications, NotificationItem } from '@/contexts/NotificationContext';
 import { useTranslation } from '@/lib/i18n';
 import { useLocation } from 'wouter';
@@ -106,7 +106,7 @@ export function NotificationBell() {
                     <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{item.body}</p>
                     <span className="text-xs text-muted-foreground/60 mt-1">{timeAgo(item.timestamp, lang)}</span>
                   </div>
-                  {item.url && <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />}
+                  {item.url && <CaretRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />}
                 </button>
               ))
             )}

@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MessageCircle, Send, Loader2, ImagePlus, Check, CheckCheck } from 'lucide-react';
+import { ChatCircle, PaperPlaneRight, CircleNotch, ImageSquare, Check, Checks } from '@phosphor-icons/react';
 import { format } from 'date-fns';
 import { useState } from 'react';
 import type { ChatMessage } from '@workspace/api-client-react';
@@ -126,7 +126,7 @@ export default function Messages() {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
-          <MessageCircle className="w-12 h-12 mb-3 opacity-20" />
+          <ChatCircle className="w-12 h-12 mb-3 opacity-20" />
           <p>Please log in to view your messages.</p>
         </div>
       </div>
@@ -140,7 +140,7 @@ export default function Messages() {
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-            <MessageCircle className="w-5 h-5 text-primary" />
+            <ChatCircle className="w-5 h-5 text-primary" />
           </div>
           <div>
             <p className="font-semibold">Support Chat</p>
@@ -152,7 +152,7 @@ export default function Messages() {
         <div className="flex-1 overflow-y-auto bg-muted/20 rounded-2xl border border-border p-4 space-y-3 min-h-96">
           {msgList.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full py-12 text-muted-foreground">
-              <MessageCircle className="w-12 h-12 mb-3 opacity-20" />
+              <ChatCircle className="w-12 h-12 mb-3 opacity-20" />
               <p className="text-sm">No messages yet. Send us a message!</p>
             </div>
           )}
@@ -187,7 +187,7 @@ export default function Messages() {
                     </span>
                     {isMine && (
                       msg.readAt
-                        ? <CheckCheck className="w-3 h-3 text-primary-foreground/70" />
+                        ? <Checks className="w-3 h-3 text-primary-foreground/70" />
                         : <Check className="w-3 h-3 text-primary-foreground/50" />
                     )}
                   </div>
@@ -210,7 +210,7 @@ export default function Messages() {
           <div className="flex items-center gap-2">
             <input ref={fileInputRef} type="file" accept="image/*,video/mp4,video/webm,video/quicktime,.pdf,.doc,.docx" className="hidden" onChange={handleMediaUpload} />
             <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={uploadingImg} className="text-muted-foreground hover:text-primary shrink-0">
-              {uploadingImg ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
+              {uploadingImg ? <CircleNotch className="w-4 h-4 animate-spin" /> : <ImageSquare className="w-4 h-4" />}
             </Button>
             <Input
               value={text}
@@ -220,7 +220,7 @@ export default function Messages() {
               className="flex-1"
             />
             <Button size="icon" onClick={handleSend} disabled={sending || !text.trim()} className="shrink-0">
-              {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {sending ? <CircleNotch className="w-4 h-4 animate-spin" /> : <PaperPlaneRight className="w-4 h-4" />}
             </Button>
           </div>
         </div>

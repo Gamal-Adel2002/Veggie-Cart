@@ -2,7 +2,7 @@ import React from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { useRoute, Link } from 'wouter';
 import { useAppOrder } from '@/hooks/use-auth-api';
-import { CheckCircle, Package, MapPin, Loader2 } from 'lucide-react';
+import { CheckCircle, Package, MapPin, CircleNotch } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/lib/i18n';
 
@@ -17,7 +17,7 @@ export default function OrderConfirmation() {
       <Navbar />
       <main className="flex-1 flex flex-col items-center justify-center p-4">
         {isLoading ? (
-          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+          <CircleNotch className="w-10 h-10 animate-spin text-primary" />
         ) : !order ? (
           <p>{t('orderNotFound')}</p>
         ) : (

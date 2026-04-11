@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import L from 'leaflet';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { MapPin, Navigation, Search, Loader2 } from 'lucide-react';
+import { MapPin, NavigationArrow, MagnifyingGlass, CircleNotch } from '@phosphor-icons/react';
 
 // Fix leaflet icon paths in react
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -199,9 +199,9 @@ export function MapPicker({ location, onChange, onAddressChange, onZoneValidatio
             className="shrink-0"
           >
             {loading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <CircleNotch className="w-4 h-4 animate-spin" />
             ) : (
-              <Search className="w-4 h-4" />
+              <MagnifyingGlass className="w-4 h-4" />
             )}
           </Button>
         </div>
@@ -239,7 +239,7 @@ export function MapPicker({ location, onChange, onAddressChange, onZoneValidatio
             onClick={handleCurrentLocation}
             className="rounded-full shadow-lg"
           >
-            <Navigation className="w-4 h-4" />
+            <NavigationArrow className="w-4 h-4" />
           </Button>
         </div>
         <div className="h-64 sm:h-80 w-full rounded-2xl overflow-hidden border border-border shadow-sm">

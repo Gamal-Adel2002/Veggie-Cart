@@ -1,12 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
-import { ShoppingCart, User, LogOut, Languages, Sprout, Megaphone, MessageCircle } from 'lucide-react';
+import {
+  ShoppingCart,
+  User,
+  SignOut,
+  Translate,
+  Plant,
+  Megaphone,
+  ChatCircle,
+  Sun,
+  Moon,
+} from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/store';
 import { useTranslation } from '@/lib/i18n';
 import { Badge } from '@/components/ui/badge';
 import { useAppLogout } from '@/hooks/use-auth-api';
 import { motion } from 'framer-motion';
+import { useTheme } from 'next-themes';
 
 export function Navbar() {
   const { t, lang } = useTranslation();
@@ -16,22 +27,22 @@ export function Navbar() {
   const logoutAction = useStore(s => s.logout);
   const { mutate: logoutApi } = useAppLogout();
   const [location] = useLocation();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   const cartItemsCount = cart.reduce((acc, item) => acc + item.cartQuantity, 0);
-
   const toggleLang = () => setLang(lang === 'en' ? 'ar' : 'en');
-
-  const handleLogout = () => {
-    logoutApi();
-    logoutAction();
-  };
-
+  const handleLogout = () => { logoutApi(); logoutAction(); };
   const langLabel = lang === 'en' ? 'ع' : 'EN';
+  const isDark = theme === 'dark';
 
   return (
     <motion.header
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
       className="sticky top-0 z-[100] w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 shadow-sm"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -39,7 +50,7 @@ export function Navbar() {
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2 group">
               <div className="bg-primary/10 p-2 rounded-xl text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
-                <Sprout className="w-6 h-6" />
+                <Plant className="w-6 h-6" weight="fill" />
               </div>
               <span className="font-display font-bold text-xl tracking-tight text-foreground hidden sm:block">
                 FreshVeg
@@ -59,14 +70,14 @@ export function Navbar() {
               </Link>
               <Link href="/feed">
                 <Button variant={location === '/feed' ? 'secondary' : 'ghost'} className="rounded-full px-5 gap-1.5">
-                  <Megaphone className="w-4 h-4" />
+                  <Megaphone className="w-4 h-4" weight="fill" />
                   Feed
                 </Button>
               </Link>
               {user && user.role === 'customer' && (
                 <Link href="/messages">
                   <Button variant={location === '/messages' ? 'secondary' : 'ghost'} className="rounded-full px-5 gap-1.5">
-                    <MessageCircle className="w-4 h-4" />
+                    <ChatCircle className="w-4 h-4" weight="fill" />
                     Messages
                   </Button>
                 </Link>
@@ -75,13 +86,28 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center gap-1">
+            {mounted && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                className="rounded-full px-3 text-muted-foreground hover:text-primary"
+                aria-label="Toggle theme"
+              >
+                {isDark
+                  ? <Sun className="w-4 h-4" weight="bold" />
+                  : <Moon className="w-4 h-4" weight="bold" />
+                }
+              </Button>
+            )}
+
             <Button
               variant="ghost"
               size="sm"
               onClick={toggleLang}
               className="rounded-full px-3 gap-1.5 text-muted-foreground hover:text-primary"
             >
-              <Languages className="w-4 h-4" />
+              <Translate className="w-4 h-4" weight="bold" />
               <span className="font-semibold text-sm">{langLabel}</span>
             </Button>
 
@@ -91,7 +117,7 @@ export function Navbar() {
                 size="sm"
                 className="relative rounded-full px-3 gap-1.5 hover:text-primary"
               >
-                <ShoppingCart className="w-4 h-4" />
+                <ShoppingCart className="w-4 h-4" weight={location === '/cart' ? 'fill' : 'regular'} />
                 <span className="hidden sm:inline">{t('cart')}</span>
                 {cartItemsCount > 0 && (
                   <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 min-w-[1.25rem] h-5 flex items-center justify-center rounded-full text-[10px]">
@@ -112,7 +138,7 @@ export function Navbar() {
                     {user.profileImage ? (
                       <img src={user.profileImage} alt={user.name} className="w-5 h-5 rounded-full object-cover" />
                     ) : (
-                      <User className="w-4 h-4" />
+                      <User className="w-4 h-4" weight="bold" />
                     )}
                     <span className="hidden sm:inline">{user.role === 'admin' ? t('admin') : t('account')}</span>
                   </Button>
@@ -123,7 +149,7 @@ export function Navbar() {
                   onClick={handleLogout}
                   className="rounded-full px-3 gap-1.5 text-destructive hover:bg-destructive/10"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <SignOut className="w-4 h-4" weight="bold" />
                   <span className="hidden sm:inline">{t('logout')}</span>
                 </Button>
               </>

@@ -2,7 +2,7 @@ import React, { useState, useRef, useMemo } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { useStore } from '@/store';
 import { useAppOrders, useAppUpdateMe, useAppUpdateLocation, useAppUploadImage, useAppCancelOrder, useAppModifyOrder, useAppProducts } from '@/hooks/use-auth-api';
-import { MapPin, User as UserIcon, Package, Edit2, Camera, X, Loader2, AlertTriangle, Pencil, Ban, Plus, Minus, Trash2 } from 'lucide-react';
+import { MapPin, User as UserIcon, Package, PencilSimple, Camera, X, CircleNotch, Warning, PencilLine, Prohibit, Plus, Minus, Trash } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -290,7 +290,7 @@ export default function Account() {
                 className="mt-4 rounded-xl gap-2 border-primary/20 text-primary hover:bg-primary/5"
                 onClick={startEditing}
               >
-                <Edit2 className="w-4 h-4" /> {t('editProfile')}
+                <PencilSimple className="w-4 h-4" /> {t('editProfile')}
               </Button>
 
               {(user.latitude && user.longitude) && (
@@ -431,7 +431,7 @@ export default function Account() {
                 </div>
                 {!locationZoneValid && mapLoc && (
                   <div className="flex items-start gap-2 bg-destructive/10 border border-destructive/30 rounded-xl p-3 text-destructive">
-                    <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                    <Warning className="w-4 h-4 mt-0.5 shrink-0" />
                     <p className="text-xs font-medium">{t('outsideDeliveryZoneDesc')}</p>
                   </div>
                 )}
@@ -453,7 +453,7 @@ export default function Account() {
                   className="flex-1 rounded-xl shadow-sm shadow-primary/20"
                   disabled={isSaving || isUploading || (!!mapLoc && !locationZoneValid)}
                 >
-                  {isSaving || isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : t('saveChanges')}
+                  {isSaving || isUploading ? <CircleNotch className="w-4 h-4 animate-spin" /> : t('saveChanges')}
                 </Button>
               </div>
             </form>
@@ -499,7 +499,7 @@ export default function Account() {
                         className="gap-1.5 rounded-xl border-primary/20 text-primary hover:bg-primary/5"
                         onClick={() => openModifyDialog(order.id)}
                       >
-                        <Pencil className="w-3.5 h-3.5" />
+                        <PencilLine className="w-3.5 h-3.5" />
                         {t('modifyOrder')}
                       </Button>
                       <Button
@@ -508,7 +508,7 @@ export default function Account() {
                         className="gap-1.5 rounded-xl border-destructive/30 text-destructive hover:bg-destructive/5"
                         onClick={() => setCancelTargetId(order.id)}
                       >
-                        <Ban className="w-3.5 h-3.5" />
+                        <Prohibit className="w-3.5 h-3.5" />
                         {t('cancelOrder')}
                       </Button>
                     </div>
@@ -535,7 +535,7 @@ export default function Account() {
               onClick={handleCancelConfirm}
               disabled={isCancelling}
             >
-              {isCancelling ? <Loader2 className="w-4 h-4 animate-spin" /> : t('cancelOrder')}
+              {isCancelling ? <CircleNotch className="w-4 h-4 animate-spin" /> : t('cancelOrder')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -580,7 +580,7 @@ export default function Account() {
                   className="text-destructive hover:text-destructive/80 ml-1"
                   onClick={() => removeItem(item.productId)}
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash className="w-4 h-4" />
                 </button>
               </div>
             ))}
@@ -633,7 +633,7 @@ export default function Account() {
               onClick={handleModifySave}
               disabled={isModifying || editItems.length === 0}
             >
-              {isModifying ? <Loader2 className="w-4 h-4 animate-spin" /> : t('modifyOrderSave')}
+              {isModifying ? <CircleNotch className="w-4 h-4 animate-spin" /> : t('modifyOrderSave')}
             </Button>
           </DialogFooter>
         </DialogContent>

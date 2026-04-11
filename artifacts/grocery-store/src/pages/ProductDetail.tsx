@@ -4,7 +4,7 @@ import { useAppProduct } from '@/hooks/use-auth-api';
 import { useTranslation } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { useRoute } from 'wouter';
-import { Loader2, Minus, Plus, ShoppingCart, ArrowLeft } from 'lucide-react';
+import { CircleNotch, Minus, Plus, ShoppingCart, ArrowLeft } from '@phosphor-icons/react';
 import { useStore } from '@/store';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -18,7 +18,7 @@ export default function ProductDetail() {
   const [qty, setQty] = useState(1);
   const { toast } = useToast();
 
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center"><CircleNotch className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!product) return <div>{t('productNotFound')}</div>;
 
   const name = lang === 'ar' ? product.nameAr : product.name;

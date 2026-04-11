@@ -11,7 +11,7 @@ import { MapPicker } from '@/components/MapPicker';
 import { useAppCreateOrder } from '@/hooks/use-auth-api';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Clock, MapPin, CheckCircle2, Loader2, AlertTriangle, Leaf, ShoppingBag, Tag, Sparkles, Ticket, Trash2 } from 'lucide-react';
+import { Clock, MapPin, CheckCircle, CircleNotch, Warning, Leaf, ShoppingBag, Tag, Sparkle, Ticket, Trash } from '@phosphor-icons/react';
 import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -240,7 +240,7 @@ export default function Checkout() {
         <Navbar />
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="bg-white border border-red-100/60 rounded-3xl p-12 text-center max-w-md shadow-sm">
-            <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-6" />
+            <Warning className="w-16 h-16 text-red-500 mx-auto mb-6" />
             <h2 className="text-2xl font-bold text-foreground mb-2">{t('storeClosedTitle')}</h2>
             <p className="text-muted-foreground mb-6">{t('storeClosedDesc')}</p>
             <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
@@ -260,7 +260,7 @@ export default function Checkout() {
   if (storeStatusLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-[#FAFAFA] items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        <CircleNotch className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -387,7 +387,7 @@ export default function Checkout() {
                   </div>
                   {!savedZoneValid && (
                     <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4 text-destructive">
-                      <AlertTriangle className="w-5 h-5 mt-0.5 shrink-0" />
+                      <Warning className="w-5 h-5 mt-0.5 shrink-0" />
                       <p className="text-sm font-medium">{t('outsideDeliveryZoneDesc')}</p>
                     </div>
                   )}
@@ -401,7 +401,7 @@ export default function Checkout() {
                   />
                   {!mapZoneValid && mapLoc && (
                     <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4 text-destructive">
-                      <AlertTriangle className="w-5 h-5 mt-0.5 shrink-0" />
+                      <Warning className="w-5 h-5 mt-0.5 shrink-0" />
                       <p className="text-sm font-medium">{t('outsideDeliveryZoneDesc')}</p>
                     </div>
                   )}
@@ -496,7 +496,7 @@ export default function Checkout() {
                     </span>
                   </div>
                   <button type="button" onClick={clearDiscount} className="text-muted-foreground hover:text-destructive transition-colors">
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash className="w-3.5 h-3.5" />
                   </button>
                 </div>
                 <div className="flex justify-between text-sm">
@@ -524,7 +524,7 @@ export default function Checkout() {
                     size="sm"
                     className="rounded-xl h-10 px-3 bg-[#16a34a] hover:bg-[#15803d] text-white"
                   >
-                    {promoValidating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                    {promoValidating ? <CircleNotch className="w-3.5 h-3.5 animate-spin" /> : <Sparkle className="w-3.5 h-3.5" />}
                   </Button>
                 </div>
                 {promoResult && !promoResult.valid && (
@@ -591,9 +591,9 @@ export default function Checkout() {
                 : 'bg-blue-50 text-blue-800 border-blue-200'
             }`}>
               {paymentMethod === 'cash' ? (
-                <CheckCircle2 className="w-5 h-5 shrink-0" />
+                <CheckCircle className="w-5 h-5 shrink-0" />
               ) : (
-                <Loader2 className={`w-5 h-5 shrink-0 ${isProcessingPayment ? 'animate-spin' : ''}`} />
+                <CircleNotch className={`w-5 h-5 shrink-0 ${isProcessingPayment ? 'animate-spin' : ''}`} />
               )}
               <span className="text-sm font-medium">
                 {paymentMethod === 'cash' ? t('paymentCash') : t('paymentCard')}
@@ -609,7 +609,7 @@ export default function Checkout() {
                 size="lg"
                 className="w-full text-lg font-bold rounded-2xl h-14 bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white border-0 shadow-brand btn-shine"
               >
-                {(isPending || isProcessingPayment) ? <Loader2 className="w-5 h-5 animate-spin" /> : t('confirmOrder')}
+                {(isPending || isProcessingPayment) ? <CircleNotch className="w-5 h-5 animate-spin" /> : t('confirmOrder')}
               </Button>
             </motion.div>
           </div>

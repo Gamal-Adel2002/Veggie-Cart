@@ -8,7 +8,7 @@ import { useLocation, Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { Sprout, Loader2 } from 'lucide-react';
+import { Plant, CircleNotch } from '@phosphor-icons/react';
 import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
@@ -43,7 +43,7 @@ export default function Login() {
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
             <Link href="/" className="inline-flex items-center gap-2 mb-8 text-primary">
-              <Sprout className="w-8 h-8" />
+              <Plant className="w-8 h-8" weight="fill" />
               <span className="font-display font-bold text-2xl text-foreground">FreshVeg</span>
             </Link>
             <h1 className="text-3xl font-display font-bold mb-2">{t('welcomeBack')}</h1>
@@ -67,7 +67,7 @@ export default function Login() {
                 </FormItem>
               )} />
               <Button type="submit" disabled={isPending} className="w-full h-12 rounded-xl text-lg font-bold shadow-lg shadow-primary/20">
-                {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : t('logIn')}
+                {isPending ? <CircleNotch className="w-5 h-5 animate-spin" /> : t('logIn')}
               </Button>
             </form>
           </Form>

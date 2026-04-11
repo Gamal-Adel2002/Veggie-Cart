@@ -4,7 +4,7 @@ import { useStore } from '@/store';
 import { useTranslation } from '@/lib/i18n';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { Minus, Plus, Trash2, ArrowRight } from 'lucide-react';
+import { Minus, Plus, Trash, ArrowRight } from '@phosphor-icons/react';
 
 export default function Cart() {
   const { t, lang } = useTranslation();
@@ -41,15 +41,15 @@ export default function Cart() {
                   <div className="flex flex-col items-end gap-3 shrink-0">
                     <div className="flex items-center border border-border rounded-lg h-10 bg-background">
                       <button className="w-10 h-full flex items-center justify-center hover:bg-muted text-muted-foreground" onClick={() => updateQty(item.id, item.cartQuantity - 1)}>
-                        <Minus className="w-3 h-3" />
+                        <Minus className="w-3 h-3" weight="bold" />
                       </button>
                       <span className="w-8 text-center font-semibold text-sm">{item.cartQuantity}</span>
                       <button className="w-10 h-full flex items-center justify-center hover:bg-muted text-muted-foreground" onClick={() => updateQty(item.id, item.cartQuantity + 1)}>
-                        <Plus className="w-3 h-3" />
+                        <Plus className="w-3 h-3" weight="bold" />
                       </button>
                     </div>
                     <button onClick={() => remove(item.id)} className="text-xs text-destructive flex items-center hover:underline">
-                      <Trash2 className="w-3 h-3 me-1" /> {t('remove')}
+                      <Trash className="w-3 h-3 me-1" /> {t('remove')}
                     </button>
                   </div>
                 </div>
@@ -75,7 +75,7 @@ export default function Cart() {
                 </div>
                 <Link href="/checkout">
                   <Button size="lg" className="w-full rounded-xl h-14 text-lg font-bold shadow-lg shadow-primary/20">
-                    {t('checkout')} <ArrowRight className="ms-2 w-5 h-5" />
+                    {t('checkout')} <ArrowRight className="ms-2 w-5 h-5" weight="bold" />
                   </Button>
                 </Link>
               </div>

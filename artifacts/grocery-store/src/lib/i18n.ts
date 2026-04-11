@@ -14,6 +14,11 @@ export const dictionary = {
 
     // Hero
     farmFreshDaily: "Farm Fresh Daily",
+    freeDelivery: "Free Delivery",
+    topRated: "Top Rated",
+    easyCheckout: "Easy Checkout",
+    explore: "Explore",
+    handpicked: "Handpicked",
     heroTitle1: "Fresh Greens,",
     heroTitle2: "Delivered",
     heroSubtitle: "Skip the lines. Get farm-fresh vegetables and fruits delivered straight to your door in 45 minutes or less.",
@@ -486,6 +491,11 @@ export const dictionary = {
 
     // Hero
     farmFreshDaily: "طازج من المزرعة يومياً",
+    freeDelivery: "توصيل مجاني",
+    topRated: "الأعلى تقييماً",
+    easyCheckout: "دفع سهل",
+    explore: "استكشف",
+    handpicked: "مختار بعناية",
     heroTitle1: "خضار طازجة،",
     heroTitle2: "توصيل لبابك",
     heroSubtitle: "تجنب الانتظار. احصل على خضار وفواكه طازجة توصل إلى بابك في 45 دقيقة أو أقل.",

@@ -5,7 +5,7 @@ import { useStore } from '@/store';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/lib/utils';
-import { Megaphone } from 'lucide-react';
+import { Megaphone } from '@phosphor-icons/react';
 import { format } from 'date-fns';
 import type { ChatMessage } from '@workspace/api-client-react';
 
