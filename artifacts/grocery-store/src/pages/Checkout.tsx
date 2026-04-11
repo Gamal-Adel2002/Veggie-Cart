@@ -182,12 +182,16 @@ export default function Checkout() {
   const selectVoucher = (voucher: Voucher) => {
     setPromoResult(null);
     setPromoCode('');
-    const amt = Math.min(voucher.amount, total);
-    setDiscountDisplay({
-      amount: Math.round(amt * 100) / 100,
-      label: t('voucherLabel'),
-    });
     setSelectedVoucher(voucher);
+    const amt = Math.min(Number(voucher.amount), total);
+    // Defer discountDisplay update to next tick so Radix Select can finish
+    // closing its dropdown before the component unmounts the selector
+    setTimeout(() => {
+      setDiscountDisplay({
+        amount: Math.round(amt * 100) / 100,
+        label: String(t('voucherLabel')),
+      });
+    }, 0);
   };
 
   const clearDiscount = () => {
@@ -535,7 +539,8 @@ export default function Checkout() {
                       <SelectContent>
                         {myVouchers.map(v => (
                           <SelectItem key={v.id} value={String(v.id)}>
-                            {v.amount.toFixed(2)} EGP — {t('voucherExpires')} {new Date(v.validUntil).toLocaleDateString()}
+                            {Number(v.amount).toFixed(2)} EGP — {t('voucherExpires')}{' '}
+                            {v.validUntil ? new Date(v.validUntil).toLocaleDateString() : ''}
                           </SelectItem>
                         ))}
                       </SelectContent>

@@ -40,6 +40,7 @@ import DeliveryLogin from "./pages/delivery/DeliveryLogin";
 import DeliveryDashboard from "./pages/delivery/DeliveryDashboard";
 import { RequireDelivery } from "./components/delivery/RequireDelivery";
 import NotFound from "./pages/not-found";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: false, retry: 1 } }
@@ -62,7 +63,9 @@ function Router() {
       <Route path="/shop" component={Shop} />
       <Route path="/product/:id" component={ProductDetail} />
       <Route path="/cart" component={Cart} />
-      <Route path="/checkout" component={Checkout} />
+      <Route path="/checkout">
+        {() => <ErrorBoundary><Checkout /></ErrorBoundary>}
+      </Route>
       <Route path="/order-confirmed/:id" component={OrderConfirmation} />
       
       <Route path="/auth/login" component={Login} />
