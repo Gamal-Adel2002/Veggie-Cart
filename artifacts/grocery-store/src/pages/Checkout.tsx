@@ -183,9 +183,14 @@ export default function Checkout() {
     setPromoResult(null);
     setPromoCode('');
     setSelectedVoucher(voucher);
-    const amt = Math.min(Number(voucher.amount), total);
-    // Defer discountDisplay update to next tick so Radix Select can finish
-    // closing its dropdown before the component unmounts the selector
+    const raw = Number(voucher.amount);
+    const safeAmt = Number.isFinite(raw) && raw > 0 ? raw : 0;
+    const amt = Math.min(safeAmt, total);
+    // Defer discountDisplay update to next tick: Radix Select fires
+    // onValueChange then closes its dropdown. If we call setDiscountDisplay
+    // synchronously here, React batches it with the same render, unmounts the
+    // Select before Radix finishes cleanup, and throws an error. Deferring
+    // allows Radix to complete its teardown first.
     setTimeout(() => {
       setDiscountDisplay({
         amount: Math.round(amt * 100) / 100,
