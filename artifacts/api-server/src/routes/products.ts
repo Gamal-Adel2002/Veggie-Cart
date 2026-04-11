@@ -1,13 +1,17 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { productsTable, categoriesTable } from "@workspace/db/schema";
-import { eq, like, and, sql } from "drizzle-orm";
+import { eq, ilike, or, and, sql } from "drizzle-orm";
 import { authenticate, requireAdmin, type AuthRequest } from "../middlewares/authenticate";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
 
 const router = Router();
+
+function stripTashkeel(str: string): string {
+  return str.replace(/[\u064B-\u065F\u0670]/g, "");
+}
 
 const uploadDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
@@ -67,7 +71,15 @@ router.get("/", async (req, res) => {
   const { search, categoryId, featured } = req.query;
 
   const conditions = [];
-  if (search) conditions.push(like(productsTable.name, `%${search}%`));
+  if (search) {
+    const normalized = stripTashkeel(String(search));
+    conditions.push(
+      or(
+        ilike(productsTable.name, `%${normalized}%`),
+        ilike(productsTable.nameAr, `%${normalized}%`)
+      )
+    );
+  }
   if (categoryId) conditions.push(eq(productsTable.categoryId, parseInt(String(categoryId))));
   if (featured === "true") conditions.push(eq(productsTable.featured, true));
 

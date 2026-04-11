@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { useAppCategories, useAppProducts } from '@/hooks/use-auth-api';
 import { ProductCard } from '@/components/ProductCard';
@@ -7,11 +7,22 @@ import { Input } from '@/components/ui/input';
 import { MagnifyingGlass, CircleNotch, Funnel } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
+import { useSearch } from 'wouter';
+
+function isArabicText(text: string) {
+  return /[\u0600-\u06FF]/.test(text);
+}
 
 export default function Shop() {
   const { t, lang } = useTranslation();
-  const [search, setSearch] = useState("");
+  const qs = useSearch();
+  const urlSearch = new URLSearchParams(qs).get('search') ?? '';
+  const [search, setSearch] = useState(urlSearch);
   const [activeCat, setActiveCat] = useState<number | null>(null);
+
+  useEffect(() => {
+    setSearch(urlSearch);
+  }, [urlSearch]);
 
   const { data: categories } = useAppCategories();
   const { data: products, isLoading } = useAppProducts({
@@ -34,6 +45,7 @@ export default function Shop() {
               placeholder={t('searchVegetables')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              dir={isArabicText(search) ? 'rtl' : 'ltr'}
             />
           </div>
 

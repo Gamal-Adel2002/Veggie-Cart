@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAppLogout } from '@/hooks/use-auth-api';
 import { motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
+import { NavSearch } from '@/components/NavSearch';
 
 export function Navbar() {
   const { t, lang } = useTranslation();
@@ -83,6 +84,10 @@ export function Navbar() {
                 </Link>
               )}
             </nav>
+          </div>
+
+          <div className="hidden md:flex flex-1 max-w-sm mx-6">
+            <NavSearch />
           </div>
 
           <div className="flex items-center gap-1">

@@ -12,6 +12,13 @@ export const dictionary = {
     signup: "Sign Up",
     logout: "Logout",
 
+    // Navbar search
+    navSearchPlaceholder: "Search vegetables, fruits...",
+    navSearchDeliveryTo: (area: string) => `Delivery available to: ${area}`,
+    navSearchViewAll: (q: string) => `View all results for "${q}"`,
+    navSearchNoResults: "No products found",
+    navSearchCurrencyLabel: "EGP",
+
     // Hero
     farmFreshDaily: "Farm Fresh Daily",
     freeDelivery: "Free Delivery",
@@ -703,6 +710,13 @@ export const dictionary = {
     login: "تسجيل الدخول",
     signup: "حساب جديد",
     logout: "تسجيل الخروج",
+
+    // Navbar search
+    navSearchPlaceholder: "ابحث عن خضروات، فواكه...",
+    navSearchDeliveryTo: (area: string) => `التوصيل متاح إلى: ${area}`,
+    navSearchViewAll: (q: string) => `عرض كل نتائج "${q}"`,
+    navSearchNoResults: "لم يتم العثور على منتجات",
+    navSearchCurrencyLabel: "ج.م",
 
     // Hero
     farmFreshDaily: "طازج من المزرعة يومياً",
