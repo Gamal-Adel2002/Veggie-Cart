@@ -176,7 +176,7 @@ export default function Vouchers() {
                   <span className="font-medium">{v.user?.name || v.customerPhone || '—'}</span>
                   {v.user && <span className="text-sm text-muted-foreground ms-2 font-mono">({v.user.phone})</span>}
                 </TableCell>
-                <TableCell className="font-medium">{v.amount.toFixed(2)} EGP</TableCell>
+                <TableCell className="font-medium">{v.amount.toFixed(2)} {t('adminCurrencyLabel')}</TableCell>
                 <TableCell>
                   {v.used ? (
                     <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" />{t('adminVoucherUsed')}</Badge>
@@ -226,12 +226,12 @@ export default function Vouchers() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-sm font-semibold block mb-1">{t('adminVoucherAmountLabel')} (EGP)</label>
-                <Input type="number" min="1" step="1" value={amount} onChange={e => setAmount(e.target.value)} placeholder="e.g. 50" />
+                <label className="text-sm font-semibold block mb-1">{t('adminVoucherAmountLabel')} ({t('adminCurrencyLabel')})</label>
+                <Input type="number" min="1" step="1" value={amount} onChange={e => setAmount(e.target.value)} placeholder={t('adminVoucherAmountPlaceholder')} />
               </div>
               <div>
                 <label className="text-sm font-semibold block mb-1">{t('adminVoucherValidDaysLabel')}</label>
-                <Input type="number" min="1" step="1" value={validDays} onChange={e => setValidDays(e.target.value)} placeholder="e.g. 7" />
+                <Input type="number" min="1" step="1" value={validDays} onChange={e => setValidDays(e.target.value)} placeholder={t('adminVoucherValidDaysPlaceholder')} />
               </div>
             </div>
 

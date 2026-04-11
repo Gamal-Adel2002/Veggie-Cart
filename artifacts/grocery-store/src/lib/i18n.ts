@@ -586,6 +586,29 @@ export const dictionary = {
     adminPurchaseOrderEntry: (id: number) => `Order #${id}`,
     adminPurchaseOrderSupplierFallback: (id: number) => `Supplier #${id}`,
 
+    // Order statuses
+    orderStatusWaiting: "Waiting",
+    orderStatusAccepted: "Accepted",
+    orderStatusRejected: "Rejected",
+    orderStatusPreparing: "Preparing",
+    orderStatusWithDelivery: "With Delivery",
+    orderStatusCompleted: "Completed",
+    orderStatusCancelled: "Cancelled",
+
+    // Currency
+    adminCurrencyLabel: "EGP",
+
+    // Admin — Delivery Fee placeholders
+    adminDeliveryFeeValuePlaceholderFixed: "e.g. 30",
+    adminDeliveryFeeValuePlaceholderPct: "e.g. 10",
+    adminDeliveryFeeMinPlaceholder: "e.g. 15",
+
+    // Admin — Voucher & PromoCode placeholders
+    adminVoucherAmountPlaceholder: "e.g. 50",
+    adminVoucherValidDaysPlaceholder: "e.g. 7",
+    adminPromoMaxUsesPlaceholder: "e.g. 100",
+    adminPurchaseOrderProductNamePlaceholder: "e.g. Tomatoes",
+
     // Admin — Store Hours
     adminStoreHoursDesc: "Set the store's working hours and days. Orders placed outside these times will be rejected.",
     adminStoreHoursDay: "Day",
@@ -1240,6 +1263,29 @@ export const dictionary = {
     adminPurchaseOrderItemsCount: (n: number) => `${n} منتجات`,
     adminPurchaseOrderEntry: (id: number) => `الطلب #${id}`,
     adminPurchaseOrderSupplierFallback: (id: number) => `المورد #${id}`,
+
+    // Order statuses
+    orderStatusWaiting: "قيد الانتظار",
+    orderStatusAccepted: "مقبول",
+    orderStatusRejected: "مرفوض",
+    orderStatusPreparing: "جارٍ التحضير",
+    orderStatusWithDelivery: "مع المندوب",
+    orderStatusCompleted: "مكتمل",
+    orderStatusCancelled: "ملغى",
+
+    // Currency
+    adminCurrencyLabel: "ج.م",
+
+    // Admin — Delivery Fee placeholders
+    adminDeliveryFeeValuePlaceholderFixed: "مثال: 30",
+    adminDeliveryFeeValuePlaceholderPct: "مثال: 10",
+    adminDeliveryFeeMinPlaceholder: "مثال: 15",
+
+    // Admin — Voucher & PromoCode placeholders
+    adminVoucherAmountPlaceholder: "مثال: 50",
+    adminVoucherValidDaysPlaceholder: "مثال: 7",
+    adminPromoMaxUsesPlaceholder: "مثال: 100",
+    adminPurchaseOrderProductNamePlaceholder: "مثال: طماطم",
 
     // Admin — Store Hours
     adminStoreHoursDesc: "حدد ساعات وأيام عمل المتجر. سيتم رفض الطلبات المقدمة خارج هذه الأوقات.",

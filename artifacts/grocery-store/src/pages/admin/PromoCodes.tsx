@@ -220,7 +220,7 @@ export default function PromoCodes() {
                   </Badge>
                 </TableCell>
                 <TableCell className="font-medium">
-                  {promo.discountType === 'percentage' ? `${promo.discountValue}%` : `${promo.discountValue} EGP`}
+                  {promo.discountType === 'percentage' ? `${promo.discountValue}%` : `${promo.discountValue} ${t('adminCurrencyLabel')}`}
                 </TableCell>
                 <TableCell>{promo.maxUses ?? <span className="text-muted-foreground">{t('adminPromoUnlimited')}</span>}</TableCell>
                 <TableCell><Badge variant="secondary">{promo.usedCount}</Badge></TableCell>
@@ -283,7 +283,7 @@ export default function PromoCodes() {
                 <label htmlFor="unlimited" className="text-sm">{t('adminPromoUnlimited')}</label>
               </div>
               {!unlimited && (
-                <Input type="number" min="1" className="mt-2" placeholder="e.g. 100" value={formData.maxUses} onChange={e => setFormData({...formData, maxUses: e.target.value})} />
+                <Input type="number" min="1" className="mt-2" placeholder={t('adminPromoMaxUsesPlaceholder')} value={formData.maxUses} onChange={e => setFormData({...formData, maxUses: e.target.value})} />
               )}
             </div>
 

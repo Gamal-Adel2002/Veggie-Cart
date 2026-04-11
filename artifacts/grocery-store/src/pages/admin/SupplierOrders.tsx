@@ -170,7 +170,7 @@ export default function SupplierOrders() {
                 </p>
               </div>
               <div className="flex items-center gap-3 shrink-0">
-                <span className="font-bold text-lg">{order.totalPrice.toFixed(2)} EGP</span>
+                <span className="font-bold text-lg">{order.totalPrice.toFixed(2)} {t('adminCurrencyLabel')}</span>
                 <Button
                   variant="ghost" size="icon"
                   onClick={() => setExpandedId(expandedId === order.id ? null : order.id)}
@@ -210,7 +210,7 @@ export default function SupplierOrders() {
                   <tfoot>
                     <tr>
                       <td colSpan={3} className="pt-2 text-end font-bold">{t('adminTotal')}</td>
-                      <td className="pt-2 text-end font-bold text-primary">{order.totalPrice.toFixed(2)} EGP</td>
+                      <td className="pt-2 text-end font-bold text-primary">{order.totalPrice.toFixed(2)} {t('adminCurrencyLabel')}</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -289,7 +289,7 @@ export default function SupplierOrders() {
                             <Input
                               value={line.productName}
                               onChange={e => updateLine(idx, 'productName', e.target.value)}
-                              placeholder="e.g. Tomatoes"
+                              placeholder={t('adminPurchaseOrderProductNamePlaceholder')}
                               className="h-8 text-sm"
                             />
                           </td>
@@ -331,7 +331,7 @@ export default function SupplierOrders() {
 
             <div className="flex items-center justify-between bg-primary/5 rounded-xl px-4 py-3">
               <span className="font-semibold text-sm">{t('adminTotal')}</span>
-              <span className="font-bold text-primary">{runningTotal.toFixed(2)} EGP</span>
+              <span className="font-bold text-primary">{runningTotal.toFixed(2)} {t('adminCurrencyLabel')}</span>
             </div>
           </div>
 

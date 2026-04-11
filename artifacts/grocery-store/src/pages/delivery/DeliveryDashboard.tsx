@@ -12,6 +12,16 @@ import { NotificationProvider } from '@/contexts/NotificationContext';
 import { NotificationToast } from '@/components/notifications/NotificationToast';
 import { useNotifications } from '@/contexts/NotificationContext';
 
+const STATUS_KEY: Record<string, string> = {
+  waiting: 'orderStatusWaiting',
+  accepted: 'orderStatusAccepted',
+  rejected: 'orderStatusRejected',
+  preparing: 'orderStatusPreparing',
+  with_delivery: 'orderStatusWithDelivery',
+  completed: 'orderStatusCompleted',
+  cancelled: 'orderStatusCancelled',
+};
+
 interface OrderItem {
   id: number;
   productName: string;
@@ -183,7 +193,7 @@ function OrderCard({ order, lang, t, onComplete, isCompleting }: {
           <p className="text-zinc-400 text-xs">{format(new Date(order.createdAt), 'dd MMM yyyy, HH:mm')}</p>
         </div>
         <Badge className={`text-xs shrink-0 ${isActive ? 'bg-primary/20 text-primary border-primary/30' : 'bg-green-500/20 text-green-400 border-green-500/30'}`}>
-          {order.status}
+          {t(STATUS_KEY[order.status] || order.status)}
         </Badge>
       </div>
 

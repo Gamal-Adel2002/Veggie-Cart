@@ -121,7 +121,7 @@ export default function DeliveryFee() {
                 step="0.01"
                 value={formData.feeValue}
                 onChange={e => setFormData({...formData, feeValue: e.target.value})}
-                placeholder={formData.feeType === 'fixed' ? 'e.g. 30' : 'e.g. 10'}
+                placeholder={formData.feeType === 'fixed' ? t('adminDeliveryFeeValuePlaceholderFixed') : t('adminDeliveryFeeValuePlaceholderPct')}
               />
             </div>
           </div>
@@ -134,7 +134,7 @@ export default function DeliveryFee() {
               step="0.01"
               value={formData.minimumFee}
               onChange={e => setFormData({...formData, minimumFee: e.target.value})}
-              placeholder="e.g. 15"
+              placeholder={t('adminDeliveryFeeMinPlaceholder')}
             />
           </div>
 
@@ -144,8 +144,8 @@ export default function DeliveryFee() {
             <div className="space-y-1">
               {calculatedPreview().map(p => (
                 <div key={p.total} className="flex justify-between text-sm">
-                  <span>{p.total.toFixed(2)} EGP</span>
-                  <span>→ {p.fee.toFixed(2)} EGP</span>
+                  <span>{p.total.toFixed(2)} {t('adminCurrencyLabel')}</span>
+                  <span>→ {p.fee.toFixed(2)} {t('adminCurrencyLabel')}</span>
                 </div>
               ))}
             </div>

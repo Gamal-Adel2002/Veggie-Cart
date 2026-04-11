@@ -17,6 +17,16 @@ import { Search } from 'lucide-react';
 
 const updatableStatuses = Object.values(UpdateOrderStatusInputStatus) as Array<typeof UpdateOrderStatusInputStatus[keyof typeof UpdateOrderStatusInputStatus]>;
 
+const STATUS_KEY: Record<string, string> = {
+  waiting: 'orderStatusWaiting',
+  accepted: 'orderStatusAccepted',
+  rejected: 'orderStatusRejected',
+  preparing: 'orderStatusPreparing',
+  with_delivery: 'orderStatusWithDelivery',
+  completed: 'orderStatusCompleted',
+  cancelled: 'orderStatusCancelled',
+};
+
 export default function Orders() {
   const { data: orders } = useAppAdminOrders();
   const { data: deliveryPersons } = useAppDeliveryPersons();
@@ -114,8 +124,8 @@ export default function Orders() {
                 <TableCell className="font-medium">#{order.id}</TableCell>
                 <TableCell>{order.customerName}</TableCell>
                 <TableCell>{format(new Date(order.createdAt), 'MMM dd, HH:mm')}</TableCell>
-                <TableCell>{order.totalPrice} EGP</TableCell>
-                <TableCell><Badge variant="outline">{order.status}</Badge></TableCell>
+                <TableCell>{order.totalPrice} {t('adminCurrencyLabel')}</TableCell>
+                <TableCell><Badge variant="outline">{t(STATUS_KEY[order.status] || order.status)}</Badge></TableCell>
                 <TableCell>
                   <Button variant="secondary" size="sm" onClick={() => {
                     setSelectedOrder(order);
@@ -140,7 +150,7 @@ export default function Orders() {
                 <Select value={newStatus} onValueChange={(v) => setNewStatus(v as typeof updatableStatuses[number])}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {updatableStatuses.map(s => <SelectItem key={s} value={s}>{s.replace('_', ' ')}</SelectItem>)}
+                    {updatableStatuses.map(s => <SelectItem key={s} value={s}>{t(STATUS_KEY[s] || s)}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Button onClick={handleUpdateStatus}>{t('adminOrderUpdate')}</Button>
