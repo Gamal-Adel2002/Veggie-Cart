@@ -9,6 +9,26 @@ import { NotificationProvider, useNotifications } from '@/contexts/NotificationC
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { NotificationToast } from '@/components/notifications/NotificationToast';
 
+const ROUTE_TITLE_KEYS: Record<string, string> = {
+  '/admin': 'adminNavDashboard',
+  '/admin/orders': 'adminNavOrders',
+  '/admin/products': 'adminNavProducts',
+  '/admin/categories': 'adminNavCategories',
+  '/admin/customers': 'adminCustomers',
+  '/admin/delivery': 'adminNavDeliveryStaff',
+  '/admin/delivery-zones': 'adminDeliveryZones',
+  '/admin/admins': 'adminAdminAccounts',
+  '/admin/ordered-products': 'adminNavOrderedProducts',
+  '/admin/suppliers': 'adminSuppliersTitle',
+  '/admin/supplier-orders': 'adminPurchaseOrdersTitle',
+  '/admin/public-chat': 'adminNavPublicChat',
+  '/admin/private-chats': 'adminNavPrivateChats',
+  '/admin/promo-codes': 'adminNavPromosLabel',
+  '/admin/vouchers': 'adminNavVouchersLabel',
+  '/admin/delivery-fee': 'adminNavDeliveryFeeLabel',
+  '/admin/store-hours': 'adminNavStoreHours',
+};
+
 function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const logoutAction = useStore(s => s.logout);
@@ -74,8 +94,8 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
       <main className="flex-1 ms-64 min-h-screen">
         <header className="h-16 border-b border-border bg-card/80 backdrop-blur flex items-center justify-between px-8 sticky top-0 z-40">
-          <h1 className="text-lg font-semibold text-foreground capitalize">
-            {location.split('/').pop() || t('adminNavDashboard')}
+          <h1 className="text-lg font-semibold text-foreground">
+            {t(ROUTE_TITLE_KEYS[location] || 'adminNavDashboard')}
           </h1>
           <div className="flex items-center gap-3">
             <button

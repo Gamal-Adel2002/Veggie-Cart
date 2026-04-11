@@ -3,11 +3,11 @@ import { useStore } from '@/store';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { DeliveryLangProvider, useDeliveryTranslation } from '@/lib/portalI18n';
+import { useDeliveryTranslation } from '@/lib/portalI18n';
 import { useToast } from '@/hooks/use-toast';
 import { Truck, Loader2, Globe } from 'lucide-react';
 
-function DeliveryLoginInner() {
+export default function DeliveryLogin() {
   const { t, lang, setLang } = useDeliveryTranslation();
   const { toast } = useToast();
   const setDeliveryAuth = useStore(s => s.setDeliveryAuth);
@@ -94,13 +94,5 @@ function DeliveryLoginInner() {
         </form>
       </div>
     </div>
-  );
-}
-
-export default function DeliveryLogin() {
-  return (
-    <DeliveryLangProvider>
-      <DeliveryLoginInner />
-    </DeliveryLangProvider>
   );
 }

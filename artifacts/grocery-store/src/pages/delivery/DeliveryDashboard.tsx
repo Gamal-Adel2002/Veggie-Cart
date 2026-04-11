@@ -4,7 +4,7 @@ import { useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { DeliveryLangProvider, useDeliveryTranslation } from '@/lib/portalI18n';
+import { useDeliveryTranslation } from '@/lib/portalI18n';
 import { useToast } from '@/hooks/use-toast';
 import { Truck, LogOut, MapPin, Package, CheckCircle2, Loader2, Phone, Globe } from 'lucide-react';
 import { format } from 'date-fns';
@@ -434,10 +434,8 @@ function DeliveryDashboardInner() {
 export default function DeliveryDashboard() {
   const deliveryToken = useStore(s => s.deliveryToken);
   return (
-    <DeliveryLangProvider>
-      <NotificationProvider role="delivery" token={deliveryToken}>
-        <DeliveryDashboardInner />
-      </NotificationProvider>
-    </DeliveryLangProvider>
+    <NotificationProvider role="delivery" token={deliveryToken}>
+      <DeliveryDashboardInner />
+    </NotificationProvider>
   );
 }

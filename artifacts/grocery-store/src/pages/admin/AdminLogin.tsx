@@ -11,14 +11,14 @@ import { Form, FormField, FormItem, FormLabel, FormControl } from '@/components/
 import { Shield, Loader2, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/lib/utils';
-import { AdminLangProvider, useAdminTranslation } from '@/lib/portalI18n';
+import { useAdminTranslation } from '@/lib/portalI18n';
 
 const schema = z.object({
   phone: z.string().min(1, "Required"),
   password: z.string().min(1, "Required")
 });
 
-function AdminLoginInner() {
+export default function AdminLogin() {
   const form = useForm({ resolver: zodResolver(schema), defaultValues: { phone: '', password: '' } });
   const { mutateAsync: login, isPending } = useAppAdminLogin();
   const setAuth = useStore(s => s.setAuth);
@@ -71,13 +71,5 @@ function AdminLoginInner() {
         </Form>
       </div>
     </div>
-  );
-}
-
-export default function AdminLogin() {
-  return (
-    <AdminLangProvider>
-      <AdminLoginInner />
-    </AdminLangProvider>
   );
 }

@@ -84,13 +84,13 @@ export default function SupplierOrders() {
     }
     for (const l of validLines) {
       if (!l.productName.trim() || !l.quantity || !l.unitPrice) {
-        toast({ title: t('adminPurchaseOrderIncompleteItem'), description: `Fill in all fields for "${l.productName || 'item'}".`, variant: 'destructive' });
+        toast({ title: t('adminPurchaseOrderIncompleteItem'), description: t('adminPurchaseOrderFillFields')(l.productName || 'item'), variant: 'destructive' });
         return;
       }
       const q = parseFloat(l.quantity);
       const p = parseFloat(l.unitPrice);
       if (isNaN(q) || q <= 0 || isNaN(p) || p < 0) {
-        toast({ title: t('adminPurchaseOrderInvalidValues'), description: `Quantity and unit price must be positive numbers.`, variant: 'destructive' });
+        toast({ title: t('adminPurchaseOrderInvalidValues'), description: t('adminPurchaseOrderPositiveNumbers'), variant: 'destructive' });
         return;
       }
     }

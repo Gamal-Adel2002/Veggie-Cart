@@ -586,6 +586,34 @@ export const dictionary = {
     adminPurchaseOrderEntry: (id: number) => `Order #${id}`,
     adminPurchaseOrderSupplierFallback: (id: number) => `Supplier #${id}`,
 
+    // Admin — Store Hours
+    adminStoreHoursDesc: "Set the store's working hours and days. Orders placed outside these times will be rejected.",
+    adminStoreHoursDay: "Day",
+    adminStoreHoursOpen: "Open",
+    adminStoreHoursFrom: "From",
+    adminStoreHoursTo: "To",
+    adminDayMonday: "Monday",
+    adminDayTuesday: "Tuesday",
+    adminDayWednesday: "Wednesday",
+    adminDayThursday: "Thursday",
+    adminDayFriday: "Friday",
+    adminDaySaturday: "Saturday",
+    adminDaySunday: "Sunday",
+
+    // Admin — Suppliers (placeholders)
+    adminSupplierNamePlaceholder: "e.g. Cairo Fresh Farms",
+    adminSupplierAddressPlaceholder: "e.g. 12 Agri Zone, Giza",
+
+    // Admin — Delivery Zones (placeholders)
+    adminZoneNamePlaceholder: "e.g. Cairo Downtown",
+    adminZoneLatPlaceholder: "30.04442",
+    adminZoneLngPlaceholder: "31.23571",
+    adminZoneRadiusPlaceholder: "5",
+
+    // Admin — Purchase Order validation descriptions
+    adminPurchaseOrderFillFields: (name: string) => `Fill in all fields for "${name}".`,
+    adminPurchaseOrderPositiveNumbers: "Quantity and unit price must be positive numbers.",
+
     // Admin — Categories
     adminCategoriesTitle: "Categories",
     adminAddCategory: "Add Category",
@@ -1212,6 +1240,34 @@ export const dictionary = {
     adminPurchaseOrderItemsCount: (n: number) => `${n} منتجات`,
     adminPurchaseOrderEntry: (id: number) => `الطلب #${id}`,
     adminPurchaseOrderSupplierFallback: (id: number) => `المورد #${id}`,
+
+    // Admin — Store Hours
+    adminStoreHoursDesc: "حدد ساعات وأيام عمل المتجر. سيتم رفض الطلبات المقدمة خارج هذه الأوقات.",
+    adminStoreHoursDay: "اليوم",
+    adminStoreHoursOpen: "مفتوح",
+    adminStoreHoursFrom: "من",
+    adminStoreHoursTo: "إلى",
+    adminDayMonday: "الاثنين",
+    adminDayTuesday: "الثلاثاء",
+    adminDayWednesday: "الأربعاء",
+    adminDayThursday: "الخميس",
+    adminDayFriday: "الجمعة",
+    adminDaySaturday: "السبت",
+    adminDaySunday: "الأحد",
+
+    // Admin — Suppliers (placeholders)
+    adminSupplierNamePlaceholder: "مثال: مزارع القاهرة الطازجة",
+    adminSupplierAddressPlaceholder: "مثال: 12 منطقة الجيزة الزراعية",
+
+    // Admin — Delivery Zones (placeholders)
+    adminZoneNamePlaceholder: "مثال: وسط القاهرة",
+    adminZoneLatPlaceholder: "30.04442",
+    adminZoneLngPlaceholder: "31.23571",
+    adminZoneRadiusPlaceholder: "5",
+
+    // Admin — Purchase Order validation descriptions
+    adminPurchaseOrderFillFields: (name: string) => `أكمل جميع حقول "${name}".`,
+    adminPurchaseOrderPositiveNumbers: "يجب أن تكون الكمية وسعر الوحدة أرقاماً موجبة.",
 
     // Admin — Categories
     adminCategoriesTitle: "التصنيفات",

@@ -153,7 +153,7 @@ export default function Suppliers() {
           <div className="space-y-3 pt-1">
             <div>
               <label className="text-sm font-semibold block mb-1">{t('adminNameLabel')} *</label>
-              <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Cairo Fresh Farms" />
+              <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder={t('adminSupplierNamePlaceholder')} />
             </div>
             <div>
               <label className="text-sm font-semibold block mb-1">{t('adminPhoneLabel')}</label>
@@ -161,7 +161,7 @@ export default function Suppliers() {
             </div>
             <div>
               <label className="text-sm font-semibold block mb-1">{t('adminSuppliersAddress')}</label>
-              <Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="e.g. 12 Agri Zone, Giza" />
+              <Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder={t('adminSupplierAddressPlaceholder')} />
             </div>
           </div>
           <DialogFooter className="mt-4">

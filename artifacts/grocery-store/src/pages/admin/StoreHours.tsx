@@ -21,8 +21,18 @@ const DAYS = [
 type Day = typeof DAYS[number];
 type DayEntry = { enabled: boolean; startTime: string; endTime: string };
 
+const DAY_KEYS: Record<string, string> = {
+  monday: "adminDayMonday",
+  tuesday: "adminDayTuesday",
+  wednesday: "adminDayWednesday",
+  thursday: "adminDayThursday",
+  friday: "adminDayFriday",
+  saturday: "adminDaySaturday",
+  sunday: "adminDaySunday",
+};
+
 export default function StoreHours() {
-  const { t, lang } = useTranslation();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const { data, isLoading } = useStoreSettings();
   const { mutateAsync, isPending } = useUpdateStoreSettings();
@@ -31,7 +41,6 @@ export default function StoreHours() {
 
   const [edited, setEdited] = useState<Record<string, DayEntry>>({});
 
-  // Sync edited state when data arrives from the server
   useEffect(() => {
     const entries: Record<string, DayEntry> = {};
     for (const day of DAYS) {
@@ -62,22 +71,6 @@ export default function StoreHours() {
     }
   };
 
-  const dayLabel = (day: string) => {
-    if (lang === "ar") {
-      const arLabels: Record<string, string> = {
-        monday: "\u0627\u0644\u0627\u062B\u0646\u064A\u0646",
-        tuesday: "\u0627\u0644\u062B\u0644\u0627\u062B\u0627\u0621",
-        wednesday: "\u0627\u0644\u0623\u0631\u0628\u0639\u0627\u0621",
-        thursday: "\u0627\u0644\u062E\u0645\u064A\u0633",
-        friday: "\u0627\u0644\u062C\u0645\u0639\u0629",
-        saturday: "\u0627\u0644\u0633\u0628\u062A",
-        sunday: "\u0627\u0644\u0623\u062D\u062F",
-      };
-      return arLabels[day] || day;
-    }
-    return day.charAt(0).toUpperCase() + day.slice(1);
-  };
-
   if (isLoading || Object.keys(edited).length === 0) {
     return (
       <AdminLayout>
@@ -98,9 +91,7 @@ export default function StoreHours() {
           <div>
             <h2 className="text-xl font-bold">{t("storeHoursTitle")}</h2>
             <p className="text-sm text-muted-foreground">
-              {lang === "ar"
-                ? "\u062A\u062D\u062F\u064A\u062F \u0633\u0627\u0639\u0627\u062A \u0627\u0644\u0639\u0645\u0644 \u0644\u0644\u0645\u062A\u062C\u0631"
-                : "Set the store's working hours and days. Orders placed outside these times will be rejected."}
+              {t("adminStoreHoursDesc")}
             </p>
           </div>
         </div>
@@ -121,27 +112,27 @@ export default function StoreHours() {
       <div className="bg-white border border-green-100/60 rounded-2xl overflow-hidden shadow-sm">
         <div className="grid grid-cols-[1fr_auto_auto_auto] gap-4 items-center px-6 py-3 border-b border-green-100/60 bg-muted/20">
           <p className="font-semibold text-sm text-muted-foreground">
-            {lang === "ar" ? "\u0627\u0644\u064A\u0648\u0645" : "Day"}
+            {t("adminStoreHoursDay")}
           </p>
           <p className="font-semibold text-sm text-muted-foreground w-16 text-center">
-            {lang === "ar" ? "\u0645\u0641\u062A\u0648\u062D" : "Open"}
+            {t("adminStoreHoursOpen")}
           </p>
           <p className="font-semibold text-sm text-muted-foreground">
-            {lang === "ar" ? "\u0645\u0646" : "From"}
+            {t("adminStoreHoursFrom")}
           </p>
           <p className="font-semibold text-sm text-muted-foreground">
-            {lang === "ar" ? "\u0625\u0644\u0649" : "To"}
+            {t("adminStoreHoursTo")}
           </p>
         </div>
 
-        {DAYS.map((day, i) => (
+        {DAYS.map((day) => (
           <div
             key={day}
             className={`grid grid-cols-[1fr_auto_auto_auto] gap-4 items-center px-6 py-4 border-b border-green-100/40 last:border-b-0 ${
               !edited[day].enabled ? "opacity-50" : ""
             }`}
           >
-            <p className="font-medium text-foreground">{dayLabel(day)}</p>
+            <p className="font-medium text-foreground">{t(DAY_KEYS[day])}</p>
 
             <div className="w-16 flex justify-center">
               <Switch

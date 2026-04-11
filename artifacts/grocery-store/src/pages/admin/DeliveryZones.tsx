@@ -177,7 +177,7 @@ export default function DeliveryZones() {
                   <Label>{t('adminZoneName')}</Label>
                   <Input
                     required
-                    placeholder="e.g. Cairo Downtown"
+                    placeholder={t('adminZoneNamePlaceholder')}
                     value={form.name}
                     onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                   />
@@ -189,7 +189,7 @@ export default function DeliveryZones() {
                     type="number"
                     min="0.1"
                     step="0.1"
-                    placeholder="5"
+                    placeholder={t('adminZoneRadiusPlaceholder')}
                     value={form.radiusKm}
                     onChange={e => setForm(f => ({ ...f, radiusKm: parseFloat(e.target.value) || '' }))}
                   />
@@ -217,7 +217,7 @@ export default function DeliveryZones() {
                     <Input
                       type="number"
                       step="0.00001"
-                      placeholder="30.04442"
+                      placeholder={t('adminZoneLatPlaceholder')}
                       value={form.centerLat}
                       onChange={e => {
                         const val = parseFloat(e.target.value);
@@ -233,7 +233,7 @@ export default function DeliveryZones() {
                     <Input
                       type="number"
                       step="0.00001"
-                      placeholder="31.23571"
+                      placeholder={t('adminZoneLngPlaceholder')}
                       value={form.centerLng}
                       onChange={e => {
                         const val = parseFloat(e.target.value);
