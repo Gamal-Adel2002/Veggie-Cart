@@ -4,6 +4,23 @@
 
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
 
+## Key Features
+
+- **Bilingual store (EN/AR)**: Full RTL support, per-user language stored in localStorage
+- **Admin portal**: Separate EN/AR language toggle (key: `admin_lang`), RTL layout flip
+- **Delivery portal**: Separate EN/AR language toggle (key: `delivery_lang`), RTL layout flip
+- **Cart, checkout**: Promo codes, vouchers, 30 EGP delivery fee
+- **Real-time chat**: SSE-based public + private chat
+- **WhatsApp notifications**: Sends order updates
+- **Push notifications**: VAPID-based web push
+- **Store hours management**: Admin can control open/closed state
+
+## i18n Architecture
+
+- `src/lib/i18n.ts` — master `dictionary` with `en` + `ar` objects; `useTranslation()` for the customer storefront
+- `src/lib/portalI18n.tsx` — `createPortalI18n(storageKey)` factory; produces `AdminLangProvider`/`useAdminTranslation` (key: `admin_lang`) and `DeliveryLangProvider`/`useDeliveryTranslation` (key: `delivery_lang`)
+- Portal translations fall back to EN if a key is missing in AR
+
 ## Stack
 
 - **Monorepo tool**: pnpm workspaces

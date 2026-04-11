@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from '@/lib/i18n';
+import { useAdminTranslation as useTranslation } from '@/lib/portalI18n';
 import { Search, Ticket, Plus, CheckCircle2, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 

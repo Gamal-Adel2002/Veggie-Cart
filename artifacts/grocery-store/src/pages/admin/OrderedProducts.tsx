@@ -2,31 +2,33 @@ import React from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useAppOrderedProducts } from '@/hooks/use-auth-api';
 import { ClipboardList } from 'lucide-react';
+import { useAdminTranslation } from '@/lib/portalI18n';
 
 export default function OrderedProducts() {
   const { data: categories, isLoading } = useAppOrderedProducts();
+  const { t } = useAdminTranslation();
 
   return (
     <AdminLayout>
       <div className="mb-6">
         <h2 className="text-xl font-bold flex items-center gap-2">
           <ClipboardList className="w-5 h-5 text-primary" />
-          Order's Products
+          {t('adminOrderedProductsTitle')}
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Aggregated product quantities from all active orders (waiting, accepted, preparing)
+          {t('adminOrderedProductsDesc')}
         </p>
       </div>
 
       {isLoading && (
-        <div className="text-center py-16 text-muted-foreground">Loading…</div>
+        <div className="text-center py-16 text-muted-foreground">{t('adminLoading')}</div>
       )}
 
       {!isLoading && (!categories || categories.length === 0) && (
         <div className="text-center py-16 text-muted-foreground">
           <ClipboardList className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p className="text-lg font-medium">No active order products</p>
-          <p className="text-sm mt-1">Products from waiting, accepted, and preparing orders will appear here.</p>
+          <p className="text-lg font-medium">{t('adminOrderedProductsEmpty')}</p>
+          <p className="text-sm mt-1">{t('adminOrderedProductsEmptyDesc')}</p>
         </div>
       )}
 
@@ -44,7 +46,7 @@ export default function OrderedProducts() {
                   <p className="text-xs text-muted-foreground" dir="rtl">{cat.categoryNameAr}</p>
                 </div>
                 <span className="ms-auto text-xs text-muted-foreground font-medium">
-                  {cat.products.length} product{cat.products.length !== 1 ? 's' : ''}
+                  {t('adminProductCount')(cat.products.length)}
                 </span>
               </div>
 

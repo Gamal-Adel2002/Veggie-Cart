@@ -12,7 +12,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { type Order, UpdateOrderStatusInputStatus } from '@workspace/api-client-react';
 import { getErrorMessage } from '@/lib/utils';
-import { useTranslation } from '@/lib/i18n';
+import { useAdminTranslation as useTranslation } from '@/lib/portalI18n';
 import { Search } from 'lucide-react';
 
 const updatableStatuses = Object.values(UpdateOrderStatusInputStatus) as Array<typeof UpdateOrderStatusInputStatus[keyof typeof UpdateOrderStatusInputStatus]>;

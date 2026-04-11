@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { useTranslation } from '@/lib/i18n';
+import { useAdminTranslation as useTranslation } from '@/lib/portalI18n';
 import { Search } from 'lucide-react';
 import { useAppProducts, useAppCategories, useAppCreateProduct, useAppUpdateProduct, useAppDeleteProduct, useAppUploadImage } from '@/hooks/use-auth-api';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';

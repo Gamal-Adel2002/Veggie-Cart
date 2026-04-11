@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/lib/utils';
+import { useAdminTranslation } from '@/lib/portalI18n';
 import type { SupplierOrder } from '@workspace/api-client-react';
 
 interface LineItem { productName: string; quantity: string; unitPrice: string; }
@@ -24,6 +25,7 @@ export default function SupplierOrders() {
   const { mutateAsync: deleteOrder } = useAppDeleteSupplierOrder();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { t } = useAdminTranslation();
 
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -32,7 +34,6 @@ export default function SupplierOrders() {
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Form state
   const [supplierId, setSupplierId] = useState('');
   const [orderedAt, setOrderedAt] = useState(() => new Date().toISOString().slice(0, 16));
   const [notes, setNotes] = useState('');
@@ -73,23 +74,23 @@ export default function SupplierOrders() {
 
   const handleSave = async () => {
     if (!supplierId) {
-      toast({ title: 'Supplier required', description: 'Please select a supplier.', variant: 'destructive' });
+      toast({ title: t('adminPurchaseOrderSupplierReq'), description: t('adminPurchaseOrderItemsAddOne'), variant: 'destructive' });
       return;
     }
     const validLines = lines.filter(l => l.productName.trim());
     if (validLines.length === 0) {
-      toast({ title: 'Items required', description: 'Add at least one line item.', variant: 'destructive' });
+      toast({ title: t('adminPurchaseOrderItemsRequired'), description: t('adminPurchaseOrderItemsAddOne'), variant: 'destructive' });
       return;
     }
     for (const l of validLines) {
       if (!l.productName.trim() || !l.quantity || !l.unitPrice) {
-        toast({ title: 'Incomplete item', description: `Fill in all fields for "${l.productName || 'item'}".`, variant: 'destructive' });
+        toast({ title: t('adminPurchaseOrderIncompleteItem'), description: `Fill in all fields for "${l.productName || 'item'}".`, variant: 'destructive' });
         return;
       }
       const q = parseFloat(l.quantity);
       const p = parseFloat(l.unitPrice);
       if (isNaN(q) || q <= 0 || isNaN(p) || p < 0) {
-        toast({ title: 'Invalid values', description: `Quantity and unit price must be positive numbers.`, variant: 'destructive' });
+        toast({ title: t('adminPurchaseOrderInvalidValues'), description: `Quantity and unit price must be positive numbers.`, variant: 'destructive' });
         return;
       }
     }
@@ -109,10 +110,10 @@ export default function SupplierOrders() {
         }
       });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/supplier-orders'] });
-      toast({ title: 'Purchase order created' });
+      toast({ title: t('adminPurchaseOrderCreated') });
       setDialogOpen(false);
     } catch (e) {
-      toast({ title: 'Error', description: getErrorMessage(e), variant: 'destructive' });
+      toast({ title: t('adminOrderError'), description: getErrorMessage(e), variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -124,9 +125,9 @@ export default function SupplierOrders() {
     try {
       await deleteOrder({ id: deleteTarget.id });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/supplier-orders'] });
-      toast({ title: 'Purchase order deleted' });
+      toast({ title: t('adminPurchaseOrderDeleted') });
     } catch (e) {
-      toast({ title: 'Error', description: getErrorMessage(e), variant: 'destructive' });
+      toast({ title: t('adminOrderError'), description: getErrorMessage(e), variant: 'destructive' });
     } finally {
       setDeleting(false);
       setDeleteTarget(null);
@@ -137,21 +138,21 @@ export default function SupplierOrders() {
     <AdminLayout>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold flex items-center gap-2">
-          <ShoppingCart className="w-5 h-5 text-primary" /> Supplier Purchase Orders
+          <ShoppingCart className="w-5 h-5 text-primary" /> {t('adminPurchaseOrdersTitle')}
         </h2>
-        <Button onClick={openNew}><Plus className="w-4 h-4 me-2" /> New Order</Button>
+        <Button onClick={openNew}><Plus className="w-4 h-4 me-2" /> {t('adminPurchaseOrdersNewBtn')}</Button>
       </div>
 
       <div className="relative mb-4">
         <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by order # or supplier name..." className="ps-9" />
+        <Input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('adminPurchaseOrdersSearch')} className="ps-9" />
       </div>
 
       <div className="space-y-3">
-        {isLoading && <p className="text-center py-8 text-muted-foreground">Loading...</p>}
+        {isLoading && <p className="text-center py-8 text-muted-foreground">{t('adminLoading')}</p>}
         {!isLoading && filtered.length === 0 && (
           <div className="bg-card border border-border rounded-2xl p-12 text-center text-muted-foreground">
-            {search ? 'No orders match your search.' : 'No purchase orders yet. Create one above.'}
+            {search ? t('adminPurchaseOrdersNoMatch') : t('adminPurchaseOrdersEmpty')}
           </div>
         )}
         {filtered.map(order => (
@@ -159,13 +160,13 @@ export default function SupplierOrders() {
             <div className="flex items-center justify-between gap-4 px-5 py-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3">
-                  <span className="font-bold">Order #{order.id}</span>
+                  <span className="font-bold">{t('adminPurchaseOrderEntry')(order.id)}</span>
                   <span className="text-sm text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                    {order.supplier?.name || `Supplier #${order.supplierId}`}
+                    {order.supplier?.name || t('adminPurchaseOrderSupplierFallback')(order.supplierId)}
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  {format(new Date(order.orderedAt), 'MMM dd, yyyy – hh:mm a')} · {order.items.length} items
+                  {format(new Date(order.orderedAt), 'MMM dd, yyyy – hh:mm a')} · {t('adminPurchaseOrderItemsCount')(order.items.length)}
                 </p>
               </div>
               <div className="flex items-center gap-3 shrink-0">
@@ -190,10 +191,10 @@ export default function SupplierOrders() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-muted-foreground border-b border-border/50">
-                      <th className="text-start pb-2 font-medium">Product</th>
-                      <th className="text-end pb-2 font-medium">Qty</th>
-                      <th className="text-end pb-2 font-medium">Unit Price</th>
-                      <th className="text-end pb-2 font-medium">Subtotal</th>
+                      <th className="text-start pb-2 font-medium">{t('adminPurchaseOrderProduct')}</th>
+                      <th className="text-end pb-2 font-medium">{t('adminQtyCol')}</th>
+                      <th className="text-end pb-2 font-medium">{t('adminPurchaseOrderUnitPrice')}</th>
+                      <th className="text-end pb-2 font-medium">{t('adminSubtotalCol')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -208,7 +209,7 @@ export default function SupplierOrders() {
                   </tbody>
                   <tfoot>
                     <tr>
-                      <td colSpan={3} className="pt-2 text-end font-bold">Total</td>
+                      <td colSpan={3} className="pt-2 text-end font-bold">{t('adminTotal')}</td>
                       <td className="pt-2 text-end font-bold text-primary">{order.totalPrice.toFixed(2)} EGP</td>
                     </tr>
                   </tfoot>
@@ -219,32 +220,29 @@ export default function SupplierOrders() {
         ))}
       </div>
 
-      {/* Create dialog */}
       <Dialog open={dialogOpen} onOpenChange={open => { if (!open) setDialogOpen(false); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>New Purchase Order</DialogTitle>
+            <DialogTitle>{t('adminPurchaseOrderNew')}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 pt-1">
-            {/* Supplier selector */}
             <div>
-              <label className="text-sm font-semibold block mb-1">Supplier *</label>
+              <label className="text-sm font-semibold block mb-1">{t('adminPurchaseOrderSupplierReq')}</label>
               <select
                 value={supplierId}
                 onChange={e => setSupplierId(e.target.value)}
                 className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm"
               >
-                <option value="">Select a supplier...</option>
+                <option value="">{t('adminPurchaseOrderSelectSupplier')}</option>
                 {(suppliers || []).map(s => (
                   <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
               </select>
             </div>
 
-            {/* Date/time */}
             <div>
-              <label className="text-sm font-semibold block mb-1">Order Date & Time *</label>
+              <label className="text-sm font-semibold block mb-1">{t('adminPurchaseOrderDateTime')}</label>
               <Input
                 type="datetime-local"
                 value={orderedAt}
@@ -253,32 +251,30 @@ export default function SupplierOrders() {
               />
             </div>
 
-            {/* Notes */}
             <div>
-              <label className="text-sm font-semibold block mb-1">Notes</label>
+              <label className="text-sm font-semibold block mb-1">{t('adminPurchaseOrderNotes')}</label>
               <Input
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
-                placeholder="Optional notes..."
+                placeholder={t('adminPurchaseOrderNotesPlaceholder')}
               />
             </div>
 
-            {/* Line items */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-semibold">Items *</label>
+                <label className="text-sm font-semibold">{t('adminPurchaseOrderItemsLabel')}</label>
                 <Button variant="outline" size="sm" onClick={addLine} className="h-7 text-xs gap-1">
-                  <Plus className="w-3 h-3" /> Add Row
+                  <Plus className="w-3 h-3" /> {t('adminPurchaseOrderAddRow')}
                 </Button>
               </div>
               <div className="border border-border rounded-xl overflow-hidden">
                 <table className="w-full text-sm">
                   <thead className="bg-muted/40">
                     <tr>
-                      <th className="text-start px-3 py-2 font-medium">Product Name</th>
-                      <th className="text-end px-3 py-2 font-medium w-24">Qty</th>
-                      <th className="text-end px-3 py-2 font-medium w-28">Unit Price</th>
-                      <th className="text-end px-3 py-2 font-medium w-24">Subtotal</th>
+                      <th className="text-start px-3 py-2 font-medium">{t('adminPurchaseOrderProductName')}</th>
+                      <th className="text-end px-3 py-2 font-medium w-24">{t('adminQtyCol')}</th>
+                      <th className="text-end px-3 py-2 font-medium w-28">{t('adminPurchaseOrderUnitPrice')}</th>
+                      <th className="text-end px-3 py-2 font-medium w-24">{t('adminSubtotalCol')}</th>
                       <th className="w-8"></th>
                     </tr>
                   </thead>
@@ -299,9 +295,7 @@ export default function SupplierOrders() {
                           </td>
                           <td className="px-3 py-1.5">
                             <Input
-                              type="number"
-                              min="0"
-                              step="0.01"
+                              type="number" min="0" step="0.01"
                               value={line.quantity}
                               onChange={e => updateLine(idx, 'quantity', e.target.value)}
                               placeholder="0"
@@ -310,9 +304,7 @@ export default function SupplierOrders() {
                           </td>
                           <td className="px-3 py-1.5">
                             <Input
-                              type="number"
-                              min="0"
-                              step="0.01"
+                              type="number" min="0" step="0.01"
                               value={line.unitPrice}
                               onChange={e => updateLine(idx, 'unitPrice', e.target.value)}
                               placeholder="0.00"
@@ -320,7 +312,7 @@ export default function SupplierOrders() {
                             />
                           </td>
                           <td className="px-3 py-1.5 text-end font-medium text-sm">
-                            {sub !== null ? `${sub}` : '—'}
+                            {sub !== null ? sub : '—'}
                           </td>
                           <td className="px-2 py-1.5">
                             {lines.length > 1 && (
@@ -337,35 +329,33 @@ export default function SupplierOrders() {
               </div>
             </div>
 
-            {/* Running total */}
             <div className="flex items-center justify-between bg-primary/5 rounded-xl px-4 py-3">
-              <span className="font-semibold text-sm">Total</span>
+              <span className="font-semibold text-sm">{t('adminTotal')}</span>
               <span className="font-bold text-primary">{runningTotal.toFixed(2)} EGP</span>
             </div>
           </div>
 
           <DialogFooter className="mt-2">
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('adminZoneCancel')}</Button>
             <Button onClick={handleSave} disabled={saving}>
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Order'}
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t('adminPurchaseOrderCreate')}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirmation */}
       <AlertDialog open={deleteTarget !== null} onOpenChange={open => { if (!open) setDeleteTarget(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Purchase Order</AlertDialogTitle>
+            <AlertDialogTitle>{t('adminPurchaseOrderDelete')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Delete order <strong>#{deleteTarget?.id}</strong>? This also removes its line items. Cannot be undone.
+              {deleteTarget && t('adminPurchaseOrderDeleteConfirm')(deleteTarget.id)}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('adminZoneCancel')}</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={handleDelete} disabled={deleting}>
-              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Delete'}
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : t('adminCustomerDelete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

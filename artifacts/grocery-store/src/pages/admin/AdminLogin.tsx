@@ -8,21 +8,23 @@ import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
-import { Shield, Loader2 } from 'lucide-react';
+import { Shield, Loader2, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/lib/utils';
+import { AdminLangProvider, useAdminTranslation } from '@/lib/portalI18n';
 
 const schema = z.object({
   phone: z.string().min(1, "Required"),
   password: z.string().min(1, "Required")
 });
 
-export default function AdminLogin() {
+function AdminLoginInner() {
   const form = useForm({ resolver: zodResolver(schema), defaultValues: { phone: '', password: '' } });
   const { mutateAsync: login, isPending } = useAppAdminLogin();
   const setAuth = useStore(s => s.setAuth);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { t, lang, setLang } = useAdminTranslation();
 
   const onSubmit = async (data: z.infer<typeof schema>) => {
     try {
@@ -31,7 +33,7 @@ export default function AdminLogin() {
       setAuth(res.token, res.user);
       setLocation('/admin');
     } catch (e: unknown) {
-      toast({ title: "Access Denied", description: getErrorMessage(e) || "Invalid admin credentials", variant: "destructive" });
+      toast({ title: t('adminAccessDenied'), description: getErrorMessage(e) || t('adminInvalidAdminCreds'), variant: "destructive" });
     }
   };
 
@@ -43,22 +45,39 @@ export default function AdminLogin() {
             <Shield className="w-8 h-8" />
           </div>
         </div>
-        <h1 className="text-2xl font-bold text-white text-center mb-8">Admin Portal</h1>
-        
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-bold text-white">{t('adminPortalTitle')}</h1>
+          <button
+            onClick={() => setLang(lang === 'en' ? 'ar' : 'en')}
+            className="flex items-center gap-1 text-sm font-semibold text-zinc-400 hover:text-white transition-colors"
+          >
+            <Globe className="w-4 h-4" />
+            <span>{lang === 'en' ? 'AR' : 'EN'}</span>
+          </button>
+        </div>
+
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
             <FormField control={form.control} name="phone" render={({ field }) => (
-              <FormItem><FormLabel className="text-zinc-400">Admin Phone</FormLabel><FormControl><Input {...field} className="bg-zinc-800 border-zinc-700 text-white h-12" /></FormControl></FormItem>
+              <FormItem><FormLabel className="text-zinc-400">{t('adminLoginPhone')}</FormLabel><FormControl><Input {...field} className="bg-zinc-800 border-zinc-700 text-white h-12" /></FormControl></FormItem>
             )} />
             <FormField control={form.control} name="password" render={({ field }) => (
-              <FormItem><FormLabel className="text-zinc-400">Password</FormLabel><FormControl><Input type="password" {...field} className="bg-zinc-800 border-zinc-700 text-white h-12" /></FormControl></FormItem>
+              <FormItem><FormLabel className="text-zinc-400">{t('password')}</FormLabel><FormControl><Input type="password" {...field} className="bg-zinc-800 border-zinc-700 text-white h-12" /></FormControl></FormItem>
             )} />
             <Button type="submit" disabled={isPending} className="w-full h-12 mt-4 text-lg">
-              {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : "Authenticate"}
+              {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : t('adminAuthenticate')}
             </Button>
           </form>
         </Form>
       </div>
     </div>
+  );
+}
+
+export default function AdminLogin() {
+  return (
+    <AdminLangProvider>
+      <AdminLoginInner />
+    </AdminLangProvider>
   );
 }

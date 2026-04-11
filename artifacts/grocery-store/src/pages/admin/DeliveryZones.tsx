@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { MapPicker } from '@/components/MapPicker';
 import { Plus, Pencil, Trash2, X, Check, MapPin, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from '@/lib/i18n';
+import { useAdminTranslation as useTranslation } from '@/lib/portalI18n';
 
 interface DeliveryZone {
   id: number;

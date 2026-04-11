@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from '@/lib/i18n';
+import { useAdminTranslation as useTranslation } from '@/lib/portalI18n';
 import { Edit, Trash2, Search, Users, KeyRound } from 'lucide-react';
 import { format } from 'date-fns';
 import { getErrorMessage } from '@/lib/utils';

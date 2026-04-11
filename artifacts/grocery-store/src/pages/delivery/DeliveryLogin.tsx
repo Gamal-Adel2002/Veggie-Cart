@@ -3,12 +3,12 @@ import { useStore } from '@/store';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useTranslation } from '@/lib/i18n';
+import { DeliveryLangProvider, useDeliveryTranslation } from '@/lib/portalI18n';
 import { useToast } from '@/hooks/use-toast';
-import { Truck, Loader2 } from 'lucide-react';
+import { Truck, Loader2, Globe } from 'lucide-react';
 
-export default function DeliveryLogin() {
-  const { t } = useTranslation();
+function DeliveryLoginInner() {
+  const { t, lang, setLang } = useDeliveryTranslation();
   const { toast } = useToast();
   const setDeliveryAuth = useStore(s => s.setDeliveryAuth);
   const deliveryToken = useStore(s => s.deliveryToken);
@@ -54,10 +54,21 @@ export default function DeliveryLogin() {
             <Truck className="w-8 h-8" />
           </div>
         </div>
-        <h1 className="text-2xl font-bold text-white text-center mb-2">{t('deliveryLoginTitle')}</h1>
-        <p className="text-zinc-400 text-center mb-8 text-sm">{t('deliveryLoginSubtitle')}</p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-white">{t('deliveryLoginTitle')}</h1>
+            <p className="text-zinc-400 text-sm mt-1">{t('deliveryLoginSubtitle')}</p>
+          </div>
+          <button
+            onClick={() => setLang(lang === 'en' ? 'ar' : 'en')}
+            className="flex items-center gap-1 text-sm font-semibold text-zinc-400 hover:text-white transition-colors"
+          >
+            <Globe className="w-4 h-4" />
+            <span>{lang === 'en' ? 'AR' : 'EN'}</span>
+          </button>
+        </div>
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-4" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
           <div>
             <label className="text-zinc-400 text-sm block mb-1">{t('deliveryUsername')}</label>
             <Input
@@ -83,5 +94,13 @@ export default function DeliveryLogin() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function DeliveryLogin() {
+  return (
+    <DeliveryLangProvider>
+      <DeliveryLoginInner />
+    </DeliveryLangProvider>
   );
 }

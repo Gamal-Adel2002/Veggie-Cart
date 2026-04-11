@@ -4,9 +4,9 @@ import { useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useTranslation } from '@/lib/i18n';
+import { DeliveryLangProvider, useDeliveryTranslation } from '@/lib/portalI18n';
 import { useToast } from '@/hooks/use-toast';
-import { Truck, LogOut, MapPin, Package, CheckCircle2, Loader2, Phone } from 'lucide-react';
+import { Truck, LogOut, MapPin, Package, CheckCircle2, Loader2, Phone, Globe } from 'lucide-react';
 import { format } from 'date-fns';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { NotificationToast } from '@/components/notifications/NotificationToast';
@@ -265,7 +265,7 @@ function OrderCard({ order, lang, t, onComplete, isCompleting }: {
 }
 
 function DeliveryDashboardInner() {
-  const { t, lang } = useTranslation();
+  const { t, lang, setLang } = useDeliveryTranslation();
   const { toast } = useToast();
   const { notifications } = useNotifications();
   const deliveryToken = useStore(s => s.deliveryToken);
@@ -328,7 +328,7 @@ function DeliveryDashboardInner() {
   const groups = groupOrdersByZoneAndProximity(activeOrders);
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    <div className="min-h-screen bg-zinc-950 text-white" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <header className="bg-zinc-900 border-b border-zinc-800 px-4 py-4 flex items-center justify-between sticky top-0 z-10">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-primary/20 rounded-full flex items-center justify-center text-primary">
@@ -339,10 +339,19 @@ function DeliveryDashboardInner() {
             <p className="font-semibold text-sm">{deliveryPerson ? t('deliveryWelcome')(deliveryPerson.name) : ''}</p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={handleLogout} className="text-zinc-400 hover:text-white">
-          <LogOut className="w-4 h-4 me-2" />
-          {t('deliveryLogout')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setLang(lang === 'en' ? 'ar' : 'en')}
+            className="flex items-center gap-1 text-sm font-semibold text-zinc-400 hover:text-white transition-colors px-2 py-1 rounded-lg hover:bg-zinc-800"
+          >
+            <Globe className="w-4 h-4" />
+            <span>{lang === 'en' ? 'AR' : 'EN'}</span>
+          </button>
+          <Button variant="ghost" size="sm" onClick={handleLogout} className="text-zinc-400 hover:text-white">
+            <LogOut className="w-4 h-4 me-2" />
+            {t('deliveryLogout')}
+          </Button>
+        </div>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6">
@@ -425,8 +434,10 @@ function DeliveryDashboardInner() {
 export default function DeliveryDashboard() {
   const deliveryToken = useStore(s => s.deliveryToken);
   return (
-    <NotificationProvider role="delivery" token={deliveryToken}>
-      <DeliveryDashboardInner />
-    </NotificationProvider>
+    <DeliveryLangProvider>
+      <NotificationProvider role="delivery" token={deliveryToken}>
+        <DeliveryDashboardInner />
+      </NotificationProvider>
+    </DeliveryLangProvider>
   );
 }
