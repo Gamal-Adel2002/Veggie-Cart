@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { useAppCategories, useAppProducts } from '@/hooks/use-auth-api';
 import { ProductCard } from '@/components/ProductCard';
@@ -6,7 +6,7 @@ import { useTranslation } from '@/lib/i18n';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Leaf, CircleNotch, ShoppingBag, Truck, Star } from '@phosphor-icons/react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 
 const stagger = {
   hidden: {},
@@ -18,17 +18,23 @@ const fadeUp = {
   visible: { y: 0, opacity: 1, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } }
 };
 
-const TRUST_BADGES = [
-  { icon: Leaf,        key: 'farmFreshDaily' },
-  { icon: Truck,       key: 'freeDelivery'   },
-  { icon: Star,        key: 'topRated'       },
-  { icon: ShoppingBag, key: 'easyCheckout'   },
-] as const;
-
 export default function Home() {
   const { t, lang } = useTranslation();
   const { data: categories, isLoading: catLoading } = useAppCategories();
   const { data: products, isLoading: prodLoading } = useAppProducts({ featured: true });
+
+  const heroRef = useRef<HTMLElement>(null);
+  const { scrollY } = useScroll();
+  const bgY = useTransform(scrollY, [0, 500], ['0%', '18%']);
+  const bgOpacity = useTransform(scrollY, [0, 350], [1, 0.7]);
+  const floatY = useTransform(scrollY, [0, 500], ['0%', '-12%']);
+
+  const trustBadges = [
+    { icon: Leaf,        label: t('farmFreshDaily') },
+    { icon: Truck,       label: t('freeDelivery')   },
+    { icon: Star,        label: t('topRated')       },
+    { icon: ShoppingBag, label: t('easyCheckout')   },
+  ];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -36,20 +42,25 @@ export default function Home() {
 
       <main className="flex-1">
         {/* ── Hero Banner ── */}
-        <section className="relative min-h-[520px] lg:min-h-[620px] flex items-center overflow-hidden">
-          {/* Animated gradient background */}
-          <div className="absolute inset-0 hero-animated-bg" />
+        <section ref={heroRef} className="relative min-h-[520px] lg:min-h-[620px] flex items-center overflow-hidden">
+          {/* Animated gradient background — parallax layer */}
+          <motion.div
+            className="absolute inset-0 hero-animated-bg"
+            style={{ y: bgY, opacity: bgOpacity, scale: 1.1 }}
+          />
 
-          {/* Decorative floating shapes */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
+          {/* Decorative floating shapes — parallax layer (moves less than scroll) */}
+          <motion.div
+            className="absolute inset-0 overflow-hidden pointer-events-none select-none"
+            style={{ y: floatY }}
+          >
             <div className="float-slow absolute -top-8 -end-8 w-72 h-72 rounded-full bg-white/5 blur-3xl" />
             <div className="float-med absolute bottom-8 start-1/4 w-48 h-48 rounded-full bg-white/5 blur-2xl" />
             <div className="float-slow absolute top-1/3 end-1/4 w-32 h-32 rounded-full bg-emerald-300/10 blur-xl" />
-            {/* Giant leaf emoji floaters */}
             <span className="float-slow absolute top-10 end-16 text-7xl lg:text-9xl opacity-20 select-none">🥦</span>
             <span className="float-med absolute bottom-12 end-1/3 text-5xl lg:text-7xl opacity-15 select-none">🥬</span>
             <span className="float-slow absolute top-1/2 end-8 text-4xl opacity-10 select-none">🌿</span>
-          </div>
+          </motion.div>
 
           {/* Dark gradient on left so text is readable */}
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
@@ -79,7 +90,7 @@ export default function Home() {
                 <Link href="/shop">
                   <Button
                     size="lg"
-                    className="rounded-full text-base px-8 h-14 bg-white text-primary font-bold shadow-2xl shadow-black/30 hover:bg-white/90 hover:shadow-3xl hover:-translate-y-1 transition-all duration-300 gap-2"
+                    className="rounded-full text-base px-8 h-14 bg-white text-primary font-bold shadow-2xl shadow-black/30 hover:bg-white/90 hover:-translate-y-1 transition-all duration-300 gap-2"
                   >
                     {t('startShopping')}
                     <ArrowRight className={`w-5 h-5 ${lang === 'ar' ? 'rotate-180' : ''}`} weight="bold" />
@@ -103,12 +114,12 @@ export default function Home() {
         <section className="bg-primary py-5 border-b border-primary-border/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {TRUST_BADGES.map(({ icon: Icon, key }) => (
-                <div key={key} className="flex items-center gap-2.5 text-primary-foreground/90">
+              {trustBadges.map(({ icon: Icon, label }) => (
+                <div key={label} className="flex items-center gap-2.5 text-primary-foreground/90">
                   <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
                     <Icon className="w-4 h-4" weight="fill" />
                   </div>
-                  <span className="text-sm font-semibold">{t(key as any)}</span>
+                  <span className="text-sm font-semibold">{label}</span>
                 </div>
               ))}
             </div>
