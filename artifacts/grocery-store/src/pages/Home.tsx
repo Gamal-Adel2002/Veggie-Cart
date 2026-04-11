@@ -41,15 +41,12 @@ export default function Home() {
       <Navbar />
 
       <main className="flex-1">
-        {/* ── Hero Banner ── */}
         <section ref={heroRef} className="relative min-h-[520px] lg:min-h-[620px] flex items-center overflow-hidden">
-          {/* Animated gradient background — parallax layer */}
           <motion.div
             className="absolute inset-0 hero-animated-bg"
             style={{ y: bgY, opacity: bgOpacity, scale: 1.1 }}
           />
 
-          {/* Decorative floating shapes — parallax layer (moves less than scroll) */}
           <motion.div
             className="absolute inset-0 overflow-hidden pointer-events-none select-none"
             style={{ y: floatY }}
@@ -62,7 +59,6 @@ export default function Home() {
             <span className="float-slow absolute top-1/2 end-8 text-4xl opacity-10 select-none">🌿</span>
           </motion.div>
 
-          {/* Dark gradient on left so text is readable */}
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
 
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32 w-full">
@@ -110,7 +106,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── Trust Badges ── */}
         <section className="bg-primary py-5 border-b border-primary-border/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -126,7 +121,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── Categories ── */}
         <section className="py-20 bg-background">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-end justify-between mb-10">
@@ -169,7 +163,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── Featured Products ── */}
         <section className="py-20 bg-muted/30 border-t border-border/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-end justify-between mb-10">

@@ -14,6 +14,7 @@ export function ProductCard({ product }: { product: Product }) {
 
   const isOutOfStock = !product.inStock || (product.quantity !== null && product.quantity !== undefined && product.quantity <= 0);
   const name = lang === 'ar' ? product.nameAr : product.name;
+  const categoryName = product.category ? (lang === 'ar' ? product.category.nameAr : product.category.name) : null;
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -29,8 +30,6 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <Link href={`/product/${product.id}`}>
       <div className="group cursor-pointer h-full flex flex-col bg-card border border-border/50 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/10 hover:border-primary/30">
-        
-        {/* Image Area */}
         <div className="relative aspect-[4/3] bg-gradient-to-br from-muted/60 to-muted/20 overflow-hidden">
           {product.image ? (
             <img
@@ -47,10 +46,8 @@ export function ProductCard({ product }: { product: Product }) {
             </div>
           )}
 
-          {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-          {/* Status / Featured badge */}
           {isOutOfStock ? (
             <Badge className="absolute top-3 start-3 bg-destructive/90 text-destructive-foreground border-none backdrop-blur-sm text-[11px] px-2 py-0.5">
               {t('outOfStock')}
@@ -61,7 +58,14 @@ export function ProductCard({ product }: { product: Product }) {
             </Badge>
           ) : null}
 
-          {/* Price badge on image */}
+          {categoryName && (
+            <div className="absolute top-3 end-3 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+              <Badge className="bg-background/90 text-foreground backdrop-blur-sm border-none text-[10px] px-2 py-0.5 font-semibold uppercase tracking-wide">
+                {categoryName}
+              </Badge>
+            </div>
+          )}
+
           <div className="absolute bottom-3 end-3">
             <span className="inline-flex items-baseline gap-1 bg-background/90 dark:bg-card/90 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-sm border border-border/30 text-foreground font-bold text-sm">
               {product.price}
@@ -69,7 +73,6 @@ export function ProductCard({ product }: { product: Product }) {
             </span>
           </div>
 
-          {/* Quick-add overlay button (slides up on hover) */}
           {!isOutOfStock && (
             <div className="absolute inset-x-3 bottom-3 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 ease-out">
               <button
@@ -83,11 +86,7 @@ export function ProductCard({ product }: { product: Product }) {
           )}
         </div>
 
-        {/* Content Area */}
         <div className="p-4 flex-1 flex flex-col gap-1">
-          <div className="text-[11px] font-semibold text-primary uppercase tracking-wider">
-            {lang === 'ar' ? product.category?.nameAr : product.category?.name}
-          </div>
           <h3 className="font-display font-bold text-base text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors duration-200">
             {name}
           </h3>
