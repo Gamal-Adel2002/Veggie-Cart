@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEffect } from "react";
 import { useStore } from "@/store";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
+import { AdminLangProvider, DeliveryLangProvider } from "@/lib/portalI18n";
 
 // Pages
 import Home from "./pages/Home";
@@ -109,14 +110,18 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <AdminLangProvider>
+      <DeliveryLangProvider>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+              <Router />
+            </WouterRouter>
+            <Toaster />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </DeliveryLangProvider>
+    </AdminLangProvider>
   );
 }
 

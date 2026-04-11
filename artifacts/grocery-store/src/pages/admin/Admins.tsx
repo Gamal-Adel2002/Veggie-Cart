@@ -66,15 +66,15 @@ export default function Admins() {
     const EGYPTIAN_PHONE = /^0(10|11|12|15)\d{8}$/;
     if (mode === 'new') {
       if (!formData.name.trim() || !formData.phone.trim() || !formData.password.trim()) {
-        toast({ title: "Validation Error", description: "Name, phone, and password are all required.", variant: "destructive" });
+        toast({ title: t('adminValidationError'), description: t('adminValidationAllRequired'), variant: "destructive" });
         return;
       }
       if (!EGYPTIAN_PHONE.test(formData.phone.trim())) {
-        toast({ title: "Invalid Phone", description: "Phone must start with 010, 011, 012, or 015 and be exactly 11 digits.", variant: "destructive" });
+        toast({ title: t('adminInvalidPhone'), description: t('adminInvalidPhoneDesc'), variant: "destructive" });
         return;
       }
     } else if (mode === 'edit' && formData.phone.trim() && !EGYPTIAN_PHONE.test(formData.phone.trim())) {
-      toast({ title: "Invalid Phone", description: "Phone must start with 010, 011, 012, or 015 and be exactly 11 digits.", variant: "destructive" });
+      toast({ title: t('adminInvalidPhone'), description: t('adminInvalidPhoneDesc'), variant: "destructive" });
       return;
     }
 
@@ -82,19 +82,19 @@ export default function Admins() {
     try {
       if (mode === 'new') {
         await createAdmin({ data: { name: formData.name, phone: formData.phone, password: formData.password } });
-        toast({ title: "Admin Created", description: `${formData.name} can now log in as an admin.` });
+        toast({ title: t('adminAdminCreated'), description: t('adminAdminCreatedDesc')(formData.name) });
       } else if (mode === 'edit' && editTarget) {
         const payload: { name?: string; phone?: string; password?: string } = {};
         if (formData.name.trim()) payload.name = formData.name.trim();
         if (formData.phone.trim()) payload.phone = formData.phone.trim();
         if (formData.password.trim()) payload.password = formData.password.trim();
         await updateAdmin({ id: editTarget.id, data: payload });
-        toast({ title: "Admin Updated", description: "Changes saved successfully." });
+        toast({ title: t('adminAdminUpdated'), description: t('adminAdminUpdatedDesc') });
       }
       queryClient.invalidateQueries({ queryKey: ['/api/admin/admins'] });
       closeDialog();
     } catch (e: unknown) {
-      toast({ title: "Error", description: getErrorMessage(e), variant: "destructive" });
+      toast({ title: t('adminError'), description: getErrorMessage(e), variant: "destructive" });
     } finally {
       setSaving(false);
     }

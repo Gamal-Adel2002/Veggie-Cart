@@ -114,19 +114,19 @@ export default function Products() {
 
   const getStockBadge = (p: Product) => {
     if (!p.inStock || (p.quantity !== null && p.quantity !== undefined && p.quantity <= 0)) {
-      return <Badge variant="destructive" className="text-xs">Out of Stock</Badge>;
+      return <Badge variant="destructive" className="text-xs">{t('adminProductOutOfStock')}</Badge>;
     }
     if (p.quantity !== null && p.quantity !== undefined) {
       return <Badge variant="outline" className="text-xs text-green-600 border-green-300">{p.quantity} {p.unit}</Badge>;
     }
-    return <Badge variant="outline" className="text-xs text-green-600 border-green-300">In Stock</Badge>;
+    return <Badge variant="outline" className="text-xs text-green-600 border-green-300">{t('adminProductInStock')}</Badge>;
   };
 
   return (
     <AdminLayout>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Manage Products</h2>
-        <Button onClick={() => openEdit('new')}><Plus className="w-4 h-4 me-2" /> Add Product</Button>
+        <h2 className="text-xl font-bold">{t('adminManageProducts')}</h2>
+        <Button onClick={() => openEdit('new')}><Plus className="w-4 h-4 me-2" /> {t('adminAddProduct')}</Button>
       </div>
 
       <div className="relative mb-4">
@@ -143,11 +143,11 @@ export default function Products() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Image</TableHead>
-              <TableHead>Name (EN/AR)</TableHead>
-              <TableHead>Price/Unit</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>{t('adminProductImageCol')}</TableHead>
+              <TableHead>{t('adminProductNameCol')}</TableHead>
+              <TableHead>{t('adminProductPriceUnitCol')}</TableHead>
+              <TableHead>{t('adminProductStockCol')}</TableHead>
+              <TableHead>{t('adminActionsCol')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -184,21 +184,33 @@ export default function Products() {
 
       <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editing === 'new' ? 'New Product' : 'Edit Product'}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{editing === 'new' ? t('adminProductNewTitle') : t('adminProductEditTitle')}</DialogTitle>
+          </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <FormField control={form.control} name="name" render={({field}) => <FormItem><FormLabel>Name EN</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>} />
-                <FormField control={form.control} name="nameAr" render={({field}) => <FormItem><FormLabel>Name AR</FormLabel><FormControl><Input {...field} dir="rtl"/></FormControl></FormItem>} />
-                <FormField control={form.control} name="price" render={({field}) => <FormItem><FormLabel>Price (EGP)</FormLabel><FormControl><Input type="number" step="0.01" {...field}/></FormControl></FormItem>} />
+                <FormField control={form.control} name="name" render={({field}) => (
+                  <FormItem><FormLabel>{t('adminProductNameEnLabel')}</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>
+                )} />
+                <FormField control={form.control} name="nameAr" render={({field}) => (
+                  <FormItem><FormLabel>{t('adminProductNameArLabel')}</FormLabel><FormControl><Input {...field} dir="rtl"/></FormControl></FormItem>
+                )} />
+                <FormField control={form.control} name="price" render={({field}) => (
+                  <FormItem><FormLabel>{t('adminProductPriceLabel')}</FormLabel><FormControl><Input type="number" step="0.01" {...field}/></FormControl></FormItem>
+                )} />
                 <FormField control={form.control} name="unit" render={({field}) => (
-                  <FormItem><FormLabel>Unit</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormItem><FormLabel>{t('adminProductUnitLabel')}</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
-                    <SelectContent><SelectItem value="kg">KG</SelectItem><SelectItem value="piece">Piece</SelectItem><SelectItem value="bundle">Bundle</SelectItem></SelectContent>
+                    <SelectContent>
+                      <SelectItem value="kg">{t('adminProductUnitKg')}</SelectItem>
+                      <SelectItem value="piece">{t('adminProductUnitPiece')}</SelectItem>
+                      <SelectItem value="bundle">{t('adminProductUnitBundle')}</SelectItem>
+                    </SelectContent>
                   </Select></FormItem>
                 )} />
                 <FormField control={form.control} name="categoryId" render={({field}) => (
-                  <FormItem><FormLabel>Category</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value.toString()}>
+                  <FormItem><FormLabel>{t('adminProductCategoryLabel')}</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value.toString()}>
                     <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
                     <SelectContent>{categories?.map(c => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}</SelectContent>
                   </Select></FormItem>
@@ -208,34 +220,34 @@ export default function Products() {
               <div className="border border-border rounded-xl p-4 space-y-3 bg-muted/30">
                 <div className="flex items-center gap-2 text-sm font-semibold text-foreground mb-1">
                   <Package className="w-4 h-4 text-primary" />
-                  Stock Management
+                  {t('adminProductStockSection')}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <FormField control={form.control} name="quantity" render={({field}) => (
                     <FormItem>
-                      <FormLabel>Quantity ({form.watch('unit') || 'unit'})</FormLabel>
+                      <FormLabel>{t('adminProductQtyLabel')(form.watch('unit') || 'unit')}</FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.1" min="0" placeholder="Leave blank if unlimited" {...field} value={field.value ?? ''} />
+                        <Input type="number" step="0.1" min="0" placeholder={t('adminProductQtyPlaceholder')} {...field} value={field.value ?? ''} />
                       </FormControl>
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="quantityAlert" render={({field}) => (
                     <FormItem>
-                      <FormLabel>Low Stock Alert Threshold</FormLabel>
+                      <FormLabel>{t('adminProductAlertLabel')}</FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.1" min="0" placeholder="e.g. 50" {...field} value={field.value ?? ''} />
+                        <Input type="number" step="0.1" min="0" placeholder={t('adminProductAlertPlaceholder')} {...field} value={field.value ?? ''} />
                       </FormControl>
                     </FormItem>
                   )} />
                 </div>
-                <p className="text-xs text-muted-foreground">When quantity reaches the alert threshold, a warning will appear on the dashboard. Leave blank for unlimited stock.</p>
+                <p className="text-xs text-muted-foreground">{t('adminProductStockDesc')}</p>
               </div>
 
               <div>
-                <label className="text-sm font-medium leading-none">Image</label>
+                <label className="text-sm font-medium leading-none">{t('adminProductImageLabel')}</label>
                 <Input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} className="mt-1.5" />
               </div>
-              <Button type="submit" className="w-full">Save</Button>
+              <Button type="submit" className="w-full">{t('adminSave')}</Button>
             </form>
           </Form>
         </DialogContent>

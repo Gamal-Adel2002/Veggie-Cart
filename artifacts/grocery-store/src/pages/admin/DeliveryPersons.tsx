@@ -62,20 +62,20 @@ export default function DeliveryPersons() {
   const createMutation = useMutation({
     mutationFn: (data: FormData) => apiFetch('/api/admin/delivery-persons', adminToken, { method: 'POST', body: JSON.stringify(data) }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['/api/admin/delivery-persons'] }); setEditing(null); },
-    onError: (e: Error) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+    onError: (e: Error) => toast({ title: t('adminError'), description: e.message, variant: 'destructive' }),
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: FormData }) =>
       apiFetch(`/api/admin/delivery-persons/${id}`, adminToken, { method: 'PUT', body: JSON.stringify(data) }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['/api/admin/delivery-persons'] }); setEditing(null); },
-    onError: (e: Error) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+    onError: (e: Error) => toast({ title: t('adminError'), description: e.message, variant: 'destructive' }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => apiFetch(`/api/admin/delivery-persons/${id}`, adminToken, { method: 'DELETE' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/admin/delivery-persons'] }),
-    onError: (e: Error) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+    onError: (e: Error) => toast({ title: t('adminError'), description: e.message, variant: 'destructive' }),
   });
 
   const filtered = useMemo(() => {

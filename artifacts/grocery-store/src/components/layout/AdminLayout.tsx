@@ -4,7 +4,7 @@ import { Package, ShoppingBag, Truck, Grid, LayoutDashboard, LogOut, UserCog, Ma
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/store';
 import { useAppLogout } from '@/hooks/use-auth-api';
-import { AdminLangProvider, useAdminTranslation } from '@/lib/portalI18n';
+import { useAdminTranslation } from '@/lib/portalI18n';
 import { NotificationProvider, useNotifications } from '@/contexts/NotificationContext';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { NotificationToast } from '@/components/notifications/NotificationToast';
@@ -111,8 +111,6 @@ function AdminLayoutWithProviders({ children }: { children: React.ReactNode }) {
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <AdminLangProvider>
-      <AdminLayoutWithProviders>{children}</AdminLayoutWithProviders>
-    </AdminLangProvider>
+    <AdminLayoutWithProviders>{children}</AdminLayoutWithProviders>
   );
 }

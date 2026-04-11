@@ -49,8 +49,8 @@ export default function Categories() {
   return (
     <AdminLayout>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Categories</h2>
-        <Button onClick={() => openEdit('new')}><Plus className="w-4 h-4 me-2" /> Add Category</Button>
+        <h2 className="text-xl font-bold">{t('adminCategoriesTitle')}</h2>
+        <Button onClick={() => openEdit('new')}><Plus className="w-4 h-4 me-2" /> {t('adminAddCategory')}</Button>
       </div>
 
       <div className="relative mb-4">
@@ -67,11 +67,11 @@ export default function Categories() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Icon</TableHead>
-              <TableHead>Name EN</TableHead>
-              <TableHead>Name AR</TableHead>
-              <TableHead>Items</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>{t('adminCategoryIconCol')}</TableHead>
+              <TableHead>{t('adminCategoryNameEnCol')}</TableHead>
+              <TableHead>{t('adminCategoryNameArCol')}</TableHead>
+              <TableHead>{t('adminCategoryItemsCol')}</TableHead>
+              <TableHead>{t('adminActionsCol')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -108,12 +108,23 @@ export default function Categories() {
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{editing === 'new' ? 'New Category' : 'Edit Category'}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{editing === 'new' ? t('adminCategoryNewTitle') : t('adminCategoryEditTitle')}</DialogTitle>
+          </DialogHeader>
           <div className="space-y-4">
-            <div><label className="text-sm font-semibold">Icon Emoji</label><Input value={formData.icon} onChange={e => setFormData({...formData, icon: e.target.value})} /></div>
-            <div><label className="text-sm font-semibold">Name EN</label><Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} /></div>
-            <div><label className="text-sm font-semibold">Name AR</label><Input dir="rtl" value={formData.nameAr} onChange={e => setFormData({...formData, nameAr: e.target.value})} /></div>
-            <Button onClick={handleSave} className="w-full">Save</Button>
+            <div>
+              <label className="text-sm font-semibold">{t('adminCategoryIconLabel')}</label>
+              <Input value={formData.icon} onChange={e => setFormData({...formData, icon: e.target.value})} />
+            </div>
+            <div>
+              <label className="text-sm font-semibold">{t('adminCategoryNameEnLabel')}</label>
+              <Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+            </div>
+            <div>
+              <label className="text-sm font-semibold">{t('adminCategoryNameArLabel')}</label>
+              <Input dir="rtl" value={formData.nameAr} onChange={e => setFormData({...formData, nameAr: e.target.value})} />
+            </div>
+            <Button onClick={handleSave} className="w-full">{t('adminSave')}</Button>
           </div>
         </DialogContent>
       </Dialog>
