@@ -94,6 +94,7 @@ export function MapPicker({ location, onChange, onAddressChange, onZoneValidatio
   const [showDropdown, setShowDropdown] = useState(false);
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lng: number } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const justSelectedRef = useRef(false);
 
   const debouncedQuery = useDebounce(query.trim(), 400);
 
@@ -133,6 +134,12 @@ export function MapPicker({ location, onChange, onAddressChange, onZoneValidatio
     if (debouncedQuery.length < 2) {
       setShowDropdown(false);
       setLoading(false);
+      return;
+    }
+
+    // Skip re-querying when the query was set by a selection (not user typing)
+    if (justSelectedRef.current) {
+      justSelectedRef.current = false;
       return;
     }
 
@@ -182,6 +189,7 @@ export function MapPicker({ location, onChange, onAddressChange, onZoneValidatio
     onAddressChange?.(result.display_name);
     setFlyTarget({ lat, lng });
     setShowDropdown(false);
+    justSelectedRef.current = true;
     setQuery(result.display_name);
   };
 
