@@ -53,6 +53,5 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.shared]
-VAPID_PUBLIC_KEY = "BJ1k3in1xXTkYpMCtFot9fA42T0PYpodJNWnYf3MwWHwgWRUVPUKoQJgbbdXW3dWPKo5aOH4MmIKmTy2CUbKUc8"
+VAPID_PUBLIC_KEY = "BEXu8xmLBSspq40d0Dx_1zLjJwHraq1uHQfgVlvWpTPY-HM0XwOSnVJZg1ZVjPUj8_17ZDXZdeYcaalEYeQGuhU"
 VAPID_SUBJECT = "mailto:admin@freshveggies.app"
-VAPID_PRIVATE_KEY = "qH5P-AJHQDckOIUFQbb7h6sDns24brsHPaxbtXAwjug"
