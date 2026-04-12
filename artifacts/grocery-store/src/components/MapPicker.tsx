@@ -145,7 +145,10 @@ export function MapPicker({ location, onChange, onAddressChange, onZoneValidatio
       signal: controller.signal,
       headers: { 'Accept-Language': 'ar,en', 'User-Agent': 'FreshVeg/1.0' }
     })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`Nominatim ${res.status}`);
+        return res.json();
+      })
       .then((data: NominatimResult[]) => {
         setResults(data);
         setShowDropdown(true);
