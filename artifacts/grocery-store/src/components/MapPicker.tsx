@@ -150,7 +150,7 @@ export function MapPicker({ location, onChange, onAddressChange, onZoneValidatio
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(debouncedQuery)}&format=json&limit=5&addressdetails=0&countrycodes=eg`;
     fetch(url, {
       signal: controller.signal,
-      headers: { 'Accept-Language': 'ar,en', 'User-Agent': 'FreshVeg/1.0' }
+      headers: { 'Accept-Language': 'ar,en' }
     })
       .then(res => {
         if (!res.ok) throw new Error(`Nominatim ${res.status}`);
