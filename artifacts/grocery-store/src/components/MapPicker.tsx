@@ -177,7 +177,9 @@ export function MapPicker({ location, onChange, onAddressChange, onZoneValidatio
   }, [debouncedQuery]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Escape') {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+    } else if (e.key === 'Escape') {
       setShowDropdown(false);
     }
   };
