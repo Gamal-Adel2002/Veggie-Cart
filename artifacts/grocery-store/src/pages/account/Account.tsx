@@ -148,7 +148,7 @@ export default function Account() {
       }
 
       const updated = await updateMe({ data: payload });
-      setAuth(token, updated ?? null);
+      setAuth(token, updated);
 
       if (mapLoc && (mapLoc.latitude !== user?.latitude || mapLoc.longitude !== user?.longitude)) {
         const locUpdated = await updateLocation({
