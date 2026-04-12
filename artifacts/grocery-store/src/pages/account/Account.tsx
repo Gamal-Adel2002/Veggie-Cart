@@ -2,6 +2,7 @@ import React, { useState, useRef, useMemo } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { useStore } from '@/store';
 import { useAppOrders, useAppUpdateMe, useAppUpdateLocation, useAppUploadImage, useAppCancelOrder, useAppModifyOrder, useAppProducts } from '@/hooks/use-auth-api';
+import type { UpdateMeInput } from '@workspace/api-client-react';
 import { MapPin, User as UserIcon, Package, PencilSimple, Camera, X, CircleNotch, Warning, PencilLine, Prohibit, Plus, Minus, Trash } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -136,18 +137,18 @@ export default function Account() {
         imageUrl = res.url;
       }
 
-      const payload: Record<string, string | undefined> = {
-        name: form.name,
-        phone: form.phone,
+      const payload: UpdateMeInput = {
+        name: form.name || undefined,
+        phone: form.phone || undefined,
         profileImage: imageUrl || undefined,
       };
       if (form.newPassword) {
-        payload.currentPassword = form.currentPassword;
+        payload.currentPassword = form.currentPassword || undefined;
         payload.newPassword = form.newPassword;
       }
 
       const updated = await updateMe({ data: payload });
-      setAuth(token, updated);
+      setAuth(token, updated ?? null);
 
       if (mapLoc && (mapLoc.latitude !== user?.latitude || mapLoc.longitude !== user?.longitude)) {
         const locUpdated = await updateLocation({
