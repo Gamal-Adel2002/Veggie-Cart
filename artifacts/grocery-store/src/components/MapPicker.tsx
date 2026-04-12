@@ -129,32 +129,41 @@ export function MapPicker({ location, onChange, onAddressChange, onZoneValidatio
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  const searchNominatim = async (q: string) => {
-    if (!q || q.length < 2) return;
+  useEffect(() => {
+    if (debouncedQuery.length < 2) {
+      setShowDropdown(false);
+      setLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
     setLoading(true);
     setShowDropdown(false);
-    try {
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=0&countrycodes=eg`;
-      const res = await fetch(url, {
-        headers: { 'Accept-Language': 'ar,en', 'User-Agent': 'FreshVeg/1.0' }
-      });
-      const data: NominatimResult[] = await res.json();
-      setResults(data);
-      setShowDropdown(true);
-    } catch {
-      setResults([]);
-      setShowDropdown(true);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  useEffect(() => {
-    if (debouncedQuery.length >= 2) {
-      searchNominatim(debouncedQuery);
-    } else {
-      setShowDropdown(false);
-    }
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(debouncedQuery)}&format=json&limit=5&addressdetails=0&countrycodes=eg`;
+    fetch(url, {
+      signal: controller.signal,
+      headers: { 'Accept-Language': 'ar,en', 'User-Agent': 'FreshVeg/1.0' }
+    })
+      .then(res => res.json())
+      .then((data: NominatimResult[]) => {
+        setResults(data);
+        setShowDropdown(true);
+      })
+      .catch(err => {
+        if (err.name !== 'AbortError') {
+          setResults([]);
+          setShowDropdown(true);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+
+    return () => {
+      controller.abort();
+      setLoading(false);
+    };
   }, [debouncedQuery]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
