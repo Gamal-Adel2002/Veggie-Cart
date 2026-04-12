@@ -76,7 +76,7 @@ export function NavSearch() {
   const handleProductClick = (id: number) => {
     setOpen(false);
     setQuery('');
-    setLocation(`/products/${id}`);
+    setLocation(`/product/${id}`);
   };
 
   const showDropdown = open && query.trim().length >= 2;

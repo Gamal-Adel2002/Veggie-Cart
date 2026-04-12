@@ -4,7 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import L from 'leaflet';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { MapPin, NavigationArrow, MagnifyingGlass, CircleNotch } from '@phosphor-icons/react';
+import { MapPin, NavigationArrow, CircleNotch } from '@phosphor-icons/react';
+import { useDebounce } from '@/hooks/use-debounce';
 
 // Fix leaflet icon paths in react
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -94,6 +95,8 @@ export function MapPicker({ location, onChange, onAddressChange, onZoneValidatio
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lng: number } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const debouncedQuery = useDebounce(query.trim(), 400);
+
   const { data: zones = [] } = useQuery<DeliveryZone[]>({
     queryKey: ['delivery-zones'],
     queryFn: async () => {
@@ -126,16 +129,14 @@ export function MapPicker({ location, onChange, onAddressChange, onZoneValidatio
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  const handleSearch = async () => {
-    const q = query.trim();
-    if (!q) return;
+  const searchNominatim = async (q: string) => {
+    if (!q || q.length < 2) return;
     setLoading(true);
     setShowDropdown(false);
     try {
-      const lang = navigator.language || 'en';
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=0`;
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=0&countrycodes=eg`;
       const res = await fetch(url, {
-        headers: { 'Accept-Language': lang, 'User-Agent': 'FreshVeg/1.0' }
+        headers: { 'Accept-Language': 'ar,en', 'User-Agent': 'FreshVeg/1.0' }
       });
       const data: NominatimResult[] = await res.json();
       setResults(data);
@@ -148,11 +149,16 @@ export function MapPicker({ location, onChange, onAddressChange, onZoneValidatio
     }
   };
 
+  useEffect(() => {
+    if (debouncedQuery.length >= 2) {
+      searchNominatim(debouncedQuery);
+    } else {
+      setShowDropdown(false);
+    }
+  }, [debouncedQuery]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleSearch();
-    } else if (e.key === 'Escape') {
+    if (e.key === 'Escape') {
       setShowDropdown(false);
     }
   };
@@ -180,30 +186,17 @@ export function MapPicker({ location, onChange, onAddressChange, onZoneValidatio
     <div className={`relative flex flex-col gap-3 ${className}`}>
       {/* Search bar */}
       <div ref={dropdownRef} className="relative z-[500]">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Search address..."
-              className="pr-4"
-            />
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            onClick={handleSearch}
-            disabled={loading}
-            className="shrink-0"
-          >
-            {loading ? (
-              <CircleNotch className="w-4 h-4 animate-spin" />
-            ) : (
-              <MagnifyingGlass className="w-4 h-4" />
-            )}
-          </Button>
+        <div className="relative">
+          {loading && (
+            <CircleNotch className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground pointer-events-none" />
+          )}
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Search address in Egypt..."
+            className="pe-9"
+          />
         </div>
 
         {/* Dropdown results */}

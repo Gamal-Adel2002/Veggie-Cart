@@ -27,7 +27,7 @@ export function Navbar() {
   const user = useStore(s => s.user);
   const logoutAction = useStore(s => s.logout);
   const { mutate: logoutApi } = useAppLogout();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -35,7 +35,7 @@ export function Navbar() {
 
   const cartItemsCount = cart.reduce((acc, item) => acc + item.cartQuantity, 0);
   const toggleLang = () => setLang(lang === 'en' ? 'ar' : 'en');
-  const handleLogout = () => { logoutApi(); logoutAction(); };
+  const handleLogout = () => { logoutApi(); logoutAction(); setLocation('/'); };
   const langLabel = lang === 'en' ? 'ع' : 'EN';
   const isDark = theme === 'dark';
 

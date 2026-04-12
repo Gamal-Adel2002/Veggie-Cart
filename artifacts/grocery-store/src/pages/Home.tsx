@@ -5,7 +5,7 @@ import { ProductCard } from '@/components/ProductCard';
 import { useTranslation } from '@/lib/i18n';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Leaf, CircleNotch, ShoppingBag, Truck, Star } from '@phosphor-icons/react';
+import { ArrowRight, Leaf, CircleNotch, ShoppingBag, Star } from '@phosphor-icons/react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 
 const stagger = {
@@ -31,7 +31,6 @@ export default function Home() {
 
   const trustBadges = [
     { icon: Leaf,        label: t('farmFreshDaily') },
-    { icon: Truck,       label: t('freeDelivery')   },
     { icon: Star,        label: t('topRated')       },
     { icon: ShoppingBag, label: t('easyCheckout')   },
   ];
