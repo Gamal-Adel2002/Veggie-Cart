@@ -171,9 +171,9 @@ export default function Garden3D() {
               <div
                 className="relative w-full h-full rounded-full overflow-hidden"
                 style={{
-                  border: '3px solid rgba(255,255,255,0.30)',
-                  boxShadow: '0 0 0 8px rgba(255,255,255,0.07), 0 24px 60px rgba(0,0,0,0.45)',
-                  background: '#ffffff',
+                  border: '3px solid rgba(201,151,74,0.60)',
+                  boxShadow: '0 0 0 8px rgba(201,151,74,0.12), 0 24px 60px rgba(0,0,0,0.45)',
+                  background: '#c9974a',
                 }}
               >
                 <img
