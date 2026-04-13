@@ -130,18 +130,18 @@ export default function Messages() {
 
         {/* Header */}
         <div className="mb-5">
-          <p className="text-accent font-semibold text-xs uppercase tracking-[0.18em] mb-1.5">Support</p>
-          <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: 'var(--font-serif)' }}>Messages</h1>
+          <p className="text-accent font-semibold text-xs uppercase tracking-[0.18em] mb-1.5">{t('messagesSupport')}</p>
+          <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: 'var(--font-serif)' }}>{t('messagesTitle')}</h1>
         </div>
 
         {/* Chat header card */}
         <div className="bg-card border border-border/40 rounded-xl px-4 py-3 flex items-center gap-3 mb-4 shadow-sm">
           <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-            <ChatCircle className="w-4.5 h-4.5 text-primary" weight="fill" />
+            <ChatCircle className="w-[18px] h-[18px] text-primary" weight="fill" />
           </div>
           <div>
-            <p className="font-semibold text-sm">FreshVeg Support</p>
-            <p className="text-xs text-muted-foreground">We typically reply quickly</p>
+            <p className="font-semibold text-sm">{t('supportTeamName')}</p>
+            <p className="text-xs text-muted-foreground">{t('supportTeamSubtitle')}</p>
           </div>
         </div>
 
@@ -150,7 +150,7 @@ export default function Messages() {
           {msgList.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full py-12 text-muted-foreground">
               <ChatCircle className="w-10 h-10 mb-3 opacity-20" />
-              <p className="text-sm">No messages yet. Send us a message!</p>
+              <p className="text-sm">{t('noMessagesYet')}</p>
             </div>
           )}
           {msgList.map((msg: ChatMessage) => {
@@ -169,7 +169,7 @@ export default function Messages() {
                     : 'bg-card border border-border/60 text-foreground rounded-bl-sm'
                 }`}>
                   {!isMine && (
-                    <p className="text-[10px] font-semibold text-primary mb-1 uppercase tracking-wider">Support Team</p>
+                    <p className="text-[10px] font-semibold text-primary mb-1 uppercase tracking-wider">{t('supportSender')}</p>
                   )}
                   {msg.content && <p className="text-sm leading-relaxed">{msg.content}</p>}
                   {msg.mediaUrl && msg.mediaType === 'image' && (
@@ -224,7 +224,7 @@ export default function Messages() {
               value={text}
               onChange={e => { setText(e.target.value); handleTyping(); }}
               onKeyDown={handleKeyDown}
-              placeholder="Message support…"
+              placeholder={t('messageSupportPlaceholder')}
               className="flex-1 h-9 border-border/60 focus-visible:ring-primary/30 bg-background rounded-lg"
             />
             <motion.button

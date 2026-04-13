@@ -135,14 +135,14 @@ export default function Login() {
           alt=""
         />
         <div className="relative z-10 text-white">
-          <p className="text-accent text-xs font-semibold uppercase tracking-widest mb-2">Premium Grocery</p>
+          <p className="text-accent text-xs font-semibold uppercase tracking-widest mb-2">{t('authPanelLabel')}</p>
           <h2
             className="text-4xl font-bold leading-tight"
             style={{ fontFamily: 'var(--font-serif)' }}
           >
-            Fresh from<br />farm to door
+            {t('authPanelHeading')}
           </h2>
-          <p className="text-white/60 text-sm mt-3">Curated produce, delivered with care.</p>
+          <p className="text-white/60 text-sm mt-3">{t('authPanelSubtitle')}</p>
         </div>
       </div>
     </div>

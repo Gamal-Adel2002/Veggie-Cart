@@ -220,7 +220,7 @@ export default function Account() {
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-10 flex flex-col md:flex-row gap-8">
 
         {/* Profile sidebar */}
-        <aside className="w-full md:w-76 shrink-0 space-y-4">
+        <aside className="w-full md:w-[304px] shrink-0 space-y-4">
           {!editing ? (
             <motion.div
               initial={{ opacity: 0, y: 16 }}
@@ -278,7 +278,7 @@ export default function Account() {
 
               <div className="flex justify-center">
                 <div className="relative">
-                  <div className="w-18 h-18 rounded-full bg-muted border-2 border-dashed border-border overflow-hidden flex items-center justify-center w-16 h-16">
+                  <div className="w-16 h-16 rounded-full bg-muted border-2 border-dashed border-border overflow-hidden flex items-center justify-center">
                     {previewImage
                       ? <img src={previewImage} className="w-full h-full object-cover" alt="preview" />
                       : <UserIcon className="w-7 h-7 text-muted-foreground/50" />
@@ -311,21 +311,18 @@ export default function Account() {
 
               <div className="border-t border-border/40 pt-4 space-y-2.5">
                 <p className="text-xs text-muted-foreground">{t('leaveBlankNoChange')}</p>
-                {[
-                  { key: 'currentPassword', label: t('currentPassword') },
-                  { key: 'newPassword', label: t('newPassword') },
-                  { key: 'confirmNewPassword', label: t('confirmNewPassword') },
-                ].map(({ key, label }) => (
-                  <div key={key} className="space-y-1">
-                    <Label className="text-xs">{label}</Label>
-                    <Input
-                      type="password"
-                      value={(form as any)[key]}
-                      onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                      className={inputClass}
-                    />
-                  </div>
-                ))}
+                <div className="space-y-1">
+                  <Label className="text-xs">{t('currentPassword')}</Label>
+                  <Input type="password" value={form.currentPassword} onChange={e => setForm(f => ({ ...f, currentPassword: e.target.value }))} className={inputClass} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t('newPassword')}</Label>
+                  <Input type="password" value={form.newPassword} onChange={e => setForm(f => ({ ...f, newPassword: e.target.value }))} className={inputClass} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t('confirmNewPassword')}</Label>
+                  <Input type="password" value={form.confirmNewPassword} onChange={e => setForm(f => ({ ...f, confirmNewPassword: e.target.value }))} className={inputClass} />
+                </div>
               </div>
 
               <div className="border-t border-border/40 pt-4 space-y-2">

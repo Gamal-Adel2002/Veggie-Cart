@@ -113,14 +113,14 @@ export default function ProductDetail() {
             {isOutOfStock ? (
               <button
                 disabled
-                className="mt-auto h-13 w-full rounded-lg bg-muted text-muted-foreground text-base font-semibold cursor-not-allowed opacity-60"
+                className="mt-auto h-12 w-full rounded-lg bg-muted text-muted-foreground text-base font-semibold cursor-not-allowed opacity-60"
               >
                 {t('outOfStock')}
               </button>
             ) : (
               <div className="mt-auto flex flex-col sm:flex-row gap-4">
                 {/* Qty control */}
-                <div className="flex items-center border border-border/60 rounded-lg h-13 bg-background px-1.5 w-full sm:w-36">
+                <div className="flex items-center border border-border/60 rounded-lg h-12 bg-background px-1.5 w-full sm:w-36">
                   <button
                     className="w-10 h-10 flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground transition-colors"
                     onClick={() => setQty(Math.max(1, qty - 1))}
@@ -141,7 +141,7 @@ export default function ProductDetail() {
                   onClick={handleAdd}
                   whileHover={{ scale: 1.02, boxShadow: 'var(--shadow-gold)' }}
                   whileTap={{ scale: 0.97 }}
-                  className="relative overflow-hidden flex-1 h-13 rounded-lg font-semibold text-base text-white flex items-center justify-center gap-2.5 btn-gold-shimmer transition-all duration-200"
+                  className="relative overflow-hidden flex-1 h-12 rounded-lg font-semibold text-base text-white flex items-center justify-center gap-2.5 btn-gold-shimmer transition-all duration-200"
                   style={{ background: 'hsl(149 60% 26%)' }}
                 >
                   <ShoppingCart className="w-5 h-5" />

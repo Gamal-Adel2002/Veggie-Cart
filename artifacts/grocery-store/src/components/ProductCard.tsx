@@ -38,7 +38,7 @@ export function ProductCard({ product }: { product: Product }) {
               src={product.image}
               alt={name}
               className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out ${
-                isOutOfStock ? 'grayscale opacity-50' : 'group-hover:scale-107'
+                isOutOfStock ? 'grayscale opacity-50' : 'group-hover:scale-105'
               }`}
             />
           ) : (
@@ -64,7 +64,7 @@ export function ProductCard({ product }: { product: Product }) {
 
           {/* Category on hover */}
           {categoryName && (
-            <span className="absolute top-2.5 end-2.5 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-250 bg-background/90 text-foreground text-[10px] font-semibold px-2 py-0.5 rounded-md backdrop-blur-sm uppercase tracking-wide">
+            <span className="absolute top-2.5 end-2.5 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 bg-background/90 text-foreground text-[10px] font-semibold px-2 py-0.5 rounded-md backdrop-blur-sm uppercase tracking-wide">
               {categoryName}
             </span>
           )}
@@ -79,7 +79,7 @@ export function ProductCard({ product }: { product: Product }) {
 
           {/* Add to cart — slides up on hover */}
           {!isOutOfStock && (
-            <div className="absolute inset-x-2.5 bottom-2.5 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-250 ease-out">
+            <div className="absolute inset-x-2.5 bottom-2.5 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-200 ease-out">
               <motion.button
                 onClick={handleAdd}
                 whileTap={{ scale: 0.97 }}

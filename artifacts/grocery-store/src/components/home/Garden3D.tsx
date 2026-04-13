@@ -5,15 +5,13 @@ import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { ShoppingBag, ArrowRight } from '@phosphor-icons/react';
 import { useRef } from 'react';
 
-const PRODUCE = ['🥑', '🍅', '🥦', '🥕', '🌽', '🍋', '🍇', '🫐'];
-
 const floatItems = [
-  { emoji: '🥑', x: '72%', y: '15%', size: 'text-7xl', delay: 0, speed: 0.08 },
-  { emoji: '🍅', x: '82%', y: '50%', size: 'text-6xl', delay: 1.2, speed: 0.12 },
-  { emoji: '🥦', x: '60%', y: '70%', size: 'text-5xl', delay: 0.6, speed: 0.06 },
-  { emoji: '🥕', x: '88%', y: '28%', size: 'text-5xl', delay: 1.8, speed: 0.1 },
-  { emoji: '🌽', x: '66%', y: '38%', size: 'text-4xl', delay: 0.9, speed: 0.14 },
-  { emoji: '🍋', x: '76%', y: '80%', size: 'text-4xl', delay: 2.1, speed: 0.09 },
+  { emoji: '🥑', x: '72%', y: '15%', size: 'text-7xl', delay: 0 },
+  { emoji: '🍅', x: '82%', y: '50%', size: 'text-6xl', delay: 1.2 },
+  { emoji: '🥦', x: '60%', y: '70%', size: 'text-5xl', delay: 0.6 },
+  { emoji: '🥕', x: '88%', y: '28%', size: 'text-5xl', delay: 1.8 },
+  { emoji: '🌽', x: '66%', y: '38%', size: 'text-4xl', delay: 0.9 },
+  { emoji: '🍋', x: '76%', y: '80%', size: 'text-4xl', delay: 2.1 },
 ];
 
 export default function Garden3D() {

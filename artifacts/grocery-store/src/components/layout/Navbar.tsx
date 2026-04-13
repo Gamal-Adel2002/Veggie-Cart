@@ -134,8 +134,8 @@ export function Navbar() {
                 aria-label="Toggle theme"
               >
                 {isDark
-                  ? <Sun className="w-4.5 h-4.5" weight="bold" />
-                  : <Moon className="w-4.5 h-4.5" weight="bold" />
+                  ? <Sun className="w-[18px] h-[18px]" weight="bold" />
+                  : <Moon className="w-[18px] h-[18px]" weight="bold" />
                 }
               </button>
             )}
@@ -158,7 +158,7 @@ export function Navbar() {
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'}
                 `}
               >
-                <ShoppingCart className="w-4.5 h-4.5" weight={location === '/cart' ? 'fill' : 'regular'} />
+                <ShoppingCart className="w-[18px] h-[18px]" weight={location === '/cart' ? 'fill' : 'regular'} />
                 <span className="hidden sm:inline">{t('cart')}</span>
                 {cartItemsCount > 0 && (
                   <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-accent text-white text-[10px] font-bold flex items-center justify-center shadow-sm">

@@ -47,9 +47,9 @@ export default function PublicFeed() {
       <Navbar />
       <main className="flex-1 max-w-2xl mx-auto w-full px-4 sm:px-6 py-10">
         <div className="mb-7">
-          <p className="text-accent font-semibold text-xs uppercase tracking-[0.18em] mb-1.5">Announcements</p>
+          <p className="text-accent font-semibold text-xs uppercase tracking-[0.18em] mb-1.5">{t('feed')}</p>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-2.5" style={{ fontFamily: 'var(--font-serif)' }}>
-            <Megaphone className="w-7 h-7 text-primary" weight="fill" /> Public Feed
+            <Megaphone className="w-7 h-7 text-primary" weight="fill" /> {t('publicFeedTitle')}
           </h1>
         </div>
 
@@ -62,8 +62,8 @@ export default function PublicFeed() {
         {!isLoading && msgList.length === 0 && (
           <div className="bg-card border border-dashed border-border rounded-xl p-16 text-center">
             <Megaphone className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-20" />
-            <p className="font-semibold text-foreground">No broadcasts yet</p>
-            <p className="text-sm text-muted-foreground mt-1">Check back soon for updates.</p>
+            <p className="font-semibold text-foreground">{t('noBroadcastsYet')}</p>
+            <p className="text-sm text-muted-foreground mt-1">{t('noBroadcastsDesc')}</p>
           </div>
         )}
 

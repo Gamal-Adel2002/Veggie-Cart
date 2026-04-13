@@ -401,7 +401,7 @@ export default function Checkout() {
           initial={{ x: 16, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
-          className="w-full lg:w-88 shrink-0"
+          className="w-full lg:w-[352px] shrink-0"
         >
           <div className="bg-card border border-border/40 rounded-xl p-6 sticky top-24 shadow-sm">
             <h3 className="font-bold text-lg mb-5 pb-4 border-b border-border/40">{t('orderSummary')}</h3>

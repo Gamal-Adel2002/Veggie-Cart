@@ -101,7 +101,7 @@ export default function Cart() {
             </div>
 
             {/* Order summary */}
-            <div className="w-full lg:w-76 shrink-0">
+            <div className="w-full lg:w-[304px] shrink-0">
               <div className="bg-card border border-border/40 rounded-xl p-6 sticky top-24 shadow-sm">
                 <h3 className="font-bold text-lg mb-5 pb-5 border-b border-border/40">{t('orderSummary')}</h3>
 

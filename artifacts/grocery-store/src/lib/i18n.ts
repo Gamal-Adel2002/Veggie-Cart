@@ -486,6 +486,22 @@ export const dictionary = {
     adminSubtotalCol: "Subtotal",
     adminTotal: "Total",
 
+    // Customer — Auth decorative panel
+    authPanelLabel: "Premium Grocery",
+    authPanelHeading: "Fresh from farm to door",
+    authPanelSubtitle: "Curated produce, delivered with care.",
+    // Customer — Public Feed & Messages
+    feed: "Announcements",
+    publicFeedTitle: "Public Feed",
+    noBroadcastsYet: "No broadcasts yet",
+    noBroadcastsDesc: "Check back soon for updates.",
+    messagesTitle: "Messages",
+    messagesSupport: "Support",
+    supportTeamName: "FreshVeg Support",
+    supportTeamSubtitle: "We typically reply quickly",
+    supportSender: "Support Team",
+    messageSupportPlaceholder: "Message support…",
+    noMessagesYet: "No messages yet. Send us a message!",
     // Admin — Public Chat
     adminPublicChatTitle: "Public Broadcast",
     adminPublicChatSubtitle: "— visible to all customers",
@@ -1171,6 +1187,22 @@ export const dictionary = {
     adminSubtotalCol: "المجموع الفرعي",
     adminTotal: "الإجمالي",
 
+    // Customer — Auth decorative panel
+    authPanelLabel: "بقالة مميزة",
+    authPanelHeading: "طازج من المزرعة إلى بابك",
+    authPanelSubtitle: "منتجات مختارة، توصيل بعناية.",
+    // Customer — Public Feed & Messages
+    feed: "إعلانات",
+    publicFeedTitle: "البث العام",
+    noBroadcastsYet: "لا توجد بثوث بعد",
+    noBroadcastsDesc: "تحقق مرة أخرى قريبًا للاطلاع على التحديثات.",
+    messagesTitle: "الرسائل",
+    messagesSupport: "الدعم",
+    supportTeamName: "دعم FreshVeg",
+    supportTeamSubtitle: "نرد عادةً بسرعة",
+    supportSender: "فريق الدعم",
+    messageSupportPlaceholder: "راسل الدعم…",
+    noMessagesYet: "لا توجد رسائل بعد. أرسل لنا رسالة!",
     // Admin — Public Chat
     adminPublicChatTitle: "البث العام",
     adminPublicChatSubtitle: "— مرئي لجميع العملاء",

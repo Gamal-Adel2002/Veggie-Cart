@@ -95,8 +95,8 @@ export default function Home() {
                 {categories?.map((cat) => (
                   <motion.div key={cat.id} variants={fadeUp}>
                     <Link href={`/shop?category=${cat.id}`}>
-                      <div className="group cursor-pointer flex flex-col items-center gap-3 p-5 rounded-xl bg-card border border-border/40 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-250">
-                        <div className="w-14 h-14 rounded-xl bg-primary/6 flex items-center justify-center text-3xl group-hover:bg-primary/12 group-hover:scale-110 transition-all duration-250">
+                      <div className="group cursor-pointer flex flex-col items-center gap-3 p-5 rounded-xl bg-card border border-border/40 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                        <div className="w-14 h-14 rounded-xl bg-primary/6 flex items-center justify-center text-3xl group-hover:bg-primary/12 group-hover:scale-110 transition-all duration-200">
                           {cat.icon}
                         </div>
                         <div className="text-center">
