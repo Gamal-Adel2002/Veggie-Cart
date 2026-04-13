@@ -311,6 +311,10 @@ export function NotificationProvider({ children, role, token, onNotification }: 
         queryClient.invalidateQueries({ queryKey: ['/api/admin/orders'] });
         queryClient.invalidateQueries({ queryKey: ['/api/delivery/orders'] });
       });
+      // order_assigned triggers a delivery-list refresh too (new order visible on dashboard)
+      es.addEventListener('order_assigned', () => {
+        queryClient.invalidateQueries({ queryKey: ['/api/delivery/orders'] });
+      });
       es.addEventListener('product_updated', () => {
         queryClient.invalidateQueries({ queryKey: ['/api/products'] });
       });
