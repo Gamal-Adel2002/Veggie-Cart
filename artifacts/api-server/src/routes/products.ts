@@ -3,7 +3,7 @@ import { db } from "@workspace/db";
 import { productsTable, categoriesTable } from "@workspace/db/schema";
 import { eq, ilike, or, and, sql } from "drizzle-orm";
 import { authenticate, requireAdmin, type AuthRequest } from "../middlewares/authenticate";
-import { broadcastToAll } from "./notifications";
+import { broadcastToCustomers } from "./notifications";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -152,7 +152,7 @@ router.post("/", authenticate(), requireAdmin, async (req: AuthRequest, res) => 
     quantityAlert: qtyAlert,
   }).returning();
   const full = await getProductWithCategory(product.id);
-  setImmediate(() => { broadcastToAll("product_updated", {}); });
+  setImmediate(() => { broadcastToCustomers("product_updated", {}); });
   res.status(201).json(full);
 });
 
@@ -195,14 +195,14 @@ router.put("/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) =
     return;
   }
   const full = await getProductWithCategory(product.id);
-  setImmediate(() => { broadcastToAll("product_updated", {}); });
+  setImmediate(() => { broadcastToCustomers("product_updated", {}); });
   res.json(full);
 });
 
 router.delete("/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
   const id = parseInt(String(req.params.id));
   await db.delete(productsTable).where(eq(productsTable.id, id));
-  setImmediate(() => { broadcastToAll("product_updated", {}); });
+  setImmediate(() => { broadcastToCustomers("product_updated", {}); });
   res.json({ success: true, message: "Product deleted" });
 });
 
