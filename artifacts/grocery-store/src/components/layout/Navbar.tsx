@@ -73,8 +73,8 @@ export function Navbar() {
   const navLinks = [
     { href: '/', label: t('home') },
     { href: '/shop', label: t('shop') },
-    { href: '/feed', label: 'Feed', icon: Megaphone },
-    ...(user && user.role === 'customer' ? [{ href: '/messages', label: 'Messages', icon: ChatCircle }] : []),
+    { href: '/feed', label: t('feed'), icon: Megaphone },
+    ...(user && user.role === 'customer' ? [{ href: '/messages', label: t('messagesNav'), icon: ChatCircle }] : []),
   ];
 
   return (
