@@ -42,6 +42,7 @@ import DeliveryDashboard from "./pages/delivery/DeliveryDashboard";
 import { RequireDelivery } from "./components/delivery/RequireDelivery";
 import NotFound from "./pages/not-found";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import CustomerLayout from "./components/layout/CustomerLayout";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: false, retry: 1 } }
@@ -60,18 +61,18 @@ function Router() {
 
   return (
     <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/shop" component={Shop} />
-      <Route path="/product/:id" component={ProductDetail} />
-      <Route path="/cart" component={Cart} />
+      <Route path="/">{() => <CustomerLayout><Home /></CustomerLayout>}</Route>
+      <Route path="/shop">{() => <CustomerLayout><Shop /></CustomerLayout>}</Route>
+      <Route path="/product/:id">{() => <CustomerLayout><ProductDetail /></CustomerLayout>}</Route>
+      <Route path="/cart">{() => <CustomerLayout><Cart /></CustomerLayout>}</Route>
       <Route path="/checkout">
-        {() => <ErrorBoundary><Checkout /></ErrorBoundary>}
+        {() => <CustomerLayout><ErrorBoundary><Checkout /></ErrorBoundary></CustomerLayout>}
       </Route>
-      <Route path="/order-confirmed/:id" component={OrderConfirmation} />
+      <Route path="/order-confirmed/:id">{() => <CustomerLayout><OrderConfirmation /></CustomerLayout>}</Route>
       
-      <Route path="/auth/login" component={Login} />
-      <Route path="/auth/signup" component={Signup} />
-      <Route path="/account" component={Account} />
+      <Route path="/auth/login">{() => <CustomerLayout><Login /></CustomerLayout>}</Route>
+      <Route path="/auth/signup">{() => <CustomerLayout><Signup /></CustomerLayout>}</Route>
+      <Route path="/account">{() => <CustomerLayout><Account /></CustomerLayout>}</Route>
       
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={Dashboard} />
@@ -92,8 +93,8 @@ function Router() {
       <Route path="/admin/store-hours" component={StoreHours} />
       <Route path="/admin/delivery-fee" component={DeliveryFee} />
 
-      <Route path="/feed" component={PublicFeed} />
-      <Route path="/messages" component={Messages} />
+      <Route path="/feed">{() => <CustomerLayout><PublicFeed /></CustomerLayout>}</Route>
+      <Route path="/messages">{() => <CustomerLayout><Messages /></CustomerLayout>}</Route>
 
       <Route path="/delivery/login" component={DeliveryLogin} />
       <Route path="/delivery/dashboard">
@@ -103,7 +104,7 @@ function Router() {
         <RequireDelivery><DeliveryDashboard /></RequireDelivery>
       </Route>
 
-      <Route component={NotFound} />
+      <Route>{() => <CustomerLayout><NotFound /></CustomerLayout>}</Route>
     </Switch>
   );
 }
