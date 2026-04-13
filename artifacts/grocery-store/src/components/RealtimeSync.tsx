@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useStore } from '@/store';
 
 /**
  * CustomerRealtimeSync — mounts a silent SSE connection for the customer storefront.
@@ -13,6 +14,7 @@ import { useQueryClient } from '@tanstack/react-query';
  */
 export function CustomerRealtimeSync() {
   const queryClient = useQueryClient();
+  const token = useStore(s => s.token);
   const esRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
@@ -58,7 +60,9 @@ export function CustomerRealtimeSync() {
       esRef.current?.close();
       esRef.current = null;
     };
-  }, [queryClient]);
+  // Re-establish SSE when auth state changes (anonymous → logged-in or vice versa)
+  // so the server correctly identifies the client's role and userId for targeted events.
+  }, [queryClient, token]);
 
   return null;
 }

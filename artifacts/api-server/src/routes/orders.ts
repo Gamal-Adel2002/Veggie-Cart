@@ -13,7 +13,7 @@ import {
 import { eq, desc, sql, and, lte } from "drizzle-orm";
 import { authenticate, type AuthRequest } from "../middlewares/authenticate";
 import { isStoreOpenNow } from "../lib/storeHours";
-import { broadcastToAdmins, sendPushToAdmins } from "./notifications";
+import { broadcastToAdmins, broadcastToUser, broadcastToDeliveryPerson, sendPushToAdmins } from "./notifications";
 import pino from "pino";
 
 const logger = pino({ level: "info" });
@@ -417,6 +417,17 @@ router.put("/:id/cancel", authenticate(), async (req: AuthRequest, res) => {
   }
 
   const full = await getFullOrder(id);
+  // Notify admins (and delivery if assigned) that a customer cancelled their order
+  setImmediate(() => {
+    const payload = { orderId: id, status: "cancelled" };
+    broadcastToAdmins("order_status_changed", payload);
+    if (req.userId) {
+      broadcastToUser(req.userId, "order_status_changed", payload, "customer");
+    }
+    if (full && "deliveryPersonId" in full && full.deliveryPersonId) {
+      broadcastToDeliveryPerson(full.deliveryPersonId as number, "order_status_changed", payload);
+    }
+  });
   res.json(full);
 });
 
@@ -582,6 +593,10 @@ router.put("/:id", authenticate(), async (req: AuthRequest, res) => {
   }
 
   const full = await getFullOrder(id);
+  // Notify admins that the order items were modified (status stays "waiting")
+  setImmediate(() => {
+    broadcastToAdmins("order_status_changed", { orderId: id, status: "waiting" });
+  });
   res.json(full);
 });
 
