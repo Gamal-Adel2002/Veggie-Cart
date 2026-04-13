@@ -18,6 +18,7 @@ import { useAppLogout } from '@/hooks/use-auth-api';
 import { motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
 import { NavSearch } from '@/components/NavSearch';
+import { useStoreStatus } from '@/hooks/use-store-status';
 
 function BotanicalLogo() {
   return (
@@ -61,6 +62,7 @@ export function Navbar() {
   const [location, setLocation] = useLocation();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const { data: storeStatus } = useStoreStatus();
 
   useEffect(() => setMounted(true), []);
 
@@ -88,14 +90,34 @@ export function Navbar() {
         <div className="flex justify-between h-[68px] items-center gap-4">
 
           {/* Brand */}
-          <Link href="/" className="flex items-center gap-2.5 group shrink-0">
-            <motion.div whileHover={{ scale: 1.08 }} transition={{ type: 'spring', stiffness: 300, damping: 18 }}>
-              <BotanicalLogo />
-            </motion.div>
-            <span className="font-display font-bold text-[1.2rem] tracking-tight text-foreground hidden sm:block">
-              Fresh<span className="text-primary">Veg</span>
-            </span>
-          </Link>
+          <div className="flex items-center gap-3 shrink-0">
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <motion.div whileHover={{ scale: 1.08 }} transition={{ type: 'spring', stiffness: 300, damping: 18 }}>
+                <BotanicalLogo />
+              </motion.div>
+              <span className="font-display font-bold text-[1.2rem] tracking-tight text-foreground hidden sm:block">
+                Fresh<span className="text-primary">Veg</span>
+              </span>
+            </Link>
+
+            {/* Store open/closed status badge */}
+            {storeStatus !== undefined && (
+              <span
+                className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
+                  storeStatus.open
+                    ? 'bg-green-500/10 text-green-600 border-green-500/20'
+                    : 'bg-red-500/10 text-red-500 border-red-500/20'
+                }`}
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    storeStatus.open ? 'bg-green-500 animate-pulse' : 'bg-red-500'
+                  }`}
+                />
+                {storeStatus.open ? t('openStatus') : t('closedStatus')}
+              </span>
+            )}
+          </div>
 
           {/* Nav links */}
           <nav className="hidden md:flex items-center gap-0.5">
