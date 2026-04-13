@@ -8,7 +8,6 @@ import { useAdminTranslation } from '@/lib/portalI18n';
 import { NotificationProvider, useNotifications } from '@/contexts/NotificationContext';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { NotificationToast } from '@/components/notifications/NotificationToast';
-import { AdminRealtimeSync } from '@/components/RealtimeSync';
 
 const ROUTE_TITLE_KEYS: Record<string, string> = {
   '/admin': 'adminNavDashboard',
@@ -125,7 +124,6 @@ function AdminLayoutWithProviders({ children }: { children: React.ReactNode }) {
 
   return (
     <NotificationProvider role="admin" token={token}>
-      <AdminRealtimeSync />
       <AdminLayoutInner>{children}</AdminLayoutInner>
     </NotificationProvider>
   );

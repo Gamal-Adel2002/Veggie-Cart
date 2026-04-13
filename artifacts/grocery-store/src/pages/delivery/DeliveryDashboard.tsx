@@ -11,7 +11,6 @@ import { format } from 'date-fns';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { NotificationToast } from '@/components/notifications/NotificationToast';
 import { useNotifications } from '@/contexts/NotificationContext';
-import { DeliveryRealtimeSync } from '@/components/RealtimeSync';
 
 const STATUS_KEY: Record<string, string> = {
   waiting: 'orderStatusWaiting',
@@ -446,7 +445,6 @@ export default function DeliveryDashboard() {
   const deliveryToken = useStore(s => s.deliveryToken);
   return (
     <NotificationProvider role="delivery" token={deliveryToken}>
-      <DeliveryRealtimeSync />
       <DeliveryDashboardInner />
     </NotificationProvider>
   );

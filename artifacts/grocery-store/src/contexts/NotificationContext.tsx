@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useStore } from '@/store';
 import { Bell, SpeakerSimpleSlash, X } from '@phosphor-icons/react';
 
@@ -148,6 +149,7 @@ function getLocalizedText(
 
 export function NotificationProvider({ children, role, token, onNotification }: NotificationProviderProps) {
   const lang = useStore(s => s.lang);
+  const queryClient = useQueryClient();
   const [notifications, setNotifications] = useState<NotificationItem[]>(() => loadStored(role));
   const [swRegistration, setSwRegistration] = useState<ServiceWorkerRegistration | null>(null);
   const [permissionState, setPermissionState] = useState<NotificationPermission | 'unsupported'>('default');
@@ -303,6 +305,26 @@ export function NotificationProvider({ children, role, token, onNotification }: 
 
       es.addEventListener('new_order', handleEvent('new_order'));
       es.addEventListener('order_assigned', handleEvent('order_assigned'));
+
+      // Data-sync events — invalidate React Query caches on the shared SSE connection
+      es.addEventListener('order_status_changed', () => {
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/orders'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/delivery/orders'] });
+      });
+      es.addEventListener('product_updated', () => {
+        queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      });
+      es.addEventListener('promo_updated', () => {
+        queryClient.invalidateQueries({ queryKey: ['admin-promo-codes'] });
+      });
+      es.addEventListener('store_status_changed', (e: MessageEvent) => {
+        try {
+          const data = JSON.parse(e.data);
+          queryClient.setQueryData(['/api/store/status'], { open: data.open });
+        } catch {
+          queryClient.invalidateQueries({ queryKey: ['/api/store/status'] });
+        }
+      });
 
       es.onerror = () => {
         es.close();
