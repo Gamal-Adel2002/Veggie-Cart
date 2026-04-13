@@ -144,6 +144,16 @@ export function broadcastToAll(event: string, data: unknown) {
   }
 }
 
+/** Broadcast to customers and anonymous visitors (public data events) */
+export function broadcastToCustomers(event: string, data: unknown) {
+  const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+  for (const client of sseClients.values()) {
+    if (client.role === "customer" || client.role === "anonymous") {
+      try { client.res.write(payload); } catch {}
+    }
+  }
+}
+
 export function isUserConnected(userId: number): boolean {
   for (const client of sseClients.values()) {
     if (client.userId === userId) return true;
@@ -267,15 +277,15 @@ router.get("/vapid-public-key", (_req, res) => {
 // Authentication via httpOnly cookies (token or delivery_token) sent automatically
 // by EventSource with withCredentials: true. No bearer token in query string.
 // Optional ?watchThread=<customerId> signals active-thread presence for push suppression.
+// Anonymous connections (no cookie) receive public broadcasts only (product_updated, store_status_changed).
 // sseQueryToken is scoped here only — it promotes ?token= to Authorization header
 // for EventSource clients that cannot set headers. Not applied globally.
 router.get("/stream", sseQueryToken, authenticate(false), (req: AuthRequest, res) => {
-  if (!req.userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
+  // Allow anonymous connections — they only receive public broadcasts
+  const userId = req.userId ?? 0;
+  const role = req.userRole ?? "anonymous";
 
-  const clientId = `${req.userId}-${req.userRole}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const clientId = `${userId}-${role}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const watchThreadId = parseInt(String(req.query.watchThread || "")) || null;
 
   res.setHeader("Content-Type", "text/event-stream");
@@ -288,14 +298,14 @@ router.get("/stream", sseQueryToken, authenticate(false), (req: AuthRequest, res
 
   const client: SseClient = {
     id: clientId,
-    userId: req.userId,
-    role: req.userRole || "customer",
+    userId,
+    role,
     res,
   };
   sseClients.set(clientId, client);
 
-  // Register thread-active presence if client is watching a specific thread
-  if (watchThreadId) {
+  // Register thread-active presence if client is watching a specific thread (auth-only)
+  if (watchThreadId && req.userId) {
     setThreadActive(req.userId, watchThreadId, clientId);
   }
 
@@ -306,8 +316,8 @@ router.get("/stream", sseQueryToken, authenticate(false), (req: AuthRequest, res
   req.on("close", () => {
     clearInterval(heartbeat);
     sseClients.delete(clientId);
-    // Clean up thread-active presence
-    if (watchThreadId) {
+    // Clean up thread-active presence (auth-only)
+    if (watchThreadId && req.userId) {
       clearThreadActive(req.userId, watchThreadId, clientId);
     }
   });

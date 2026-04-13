@@ -18,7 +18,7 @@ import type { OrderStatus } from "@workspace/db/schema";
 import { buildWhatsAppMessage, sendWhatsAppMessage, sendSmsMessage } from "../lib/whatsapp";
 import { hashPassword } from "../lib/auth";
 import { isValidEgyptianPhone, INVALID_PHONE_MSG } from "../lib/validation";
-import { broadcastToDeliveryPerson, sendPushToDeliveryPerson } from "./notifications";
+import { broadcastToAdmins, broadcastToDeliveryPerson, broadcastToUser, sendPushToDeliveryPerson } from "./notifications";
 import pino from "pino";
 
 const logger = pino({ level: "info" });
@@ -132,6 +132,19 @@ router.put("/orders/:id/status", authenticate(), requireAdmin, async (req: AuthR
     .where(eq(ordersTable.id, id))
     .returning();
   const full = await getFullOrder(updated.id);
+
+  // Real-time notifications for status change
+  setImmediate(() => {
+    const payload = { orderId: id, status };
+    broadcastToAdmins("order_status_changed", payload);
+    if (order.userId) {
+      broadcastToUser(order.userId, "order_status_changed", payload, "customer");
+    }
+    if (order.deliveryPersonId) {
+      broadcastToDeliveryPerson(order.deliveryPersonId, "order_status_changed", payload);
+    }
+  });
+
   res.json(full);
 });
 

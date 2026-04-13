@@ -3,6 +3,7 @@ import { db } from "@workspace/db";
 import { vouchersTable, usersTable } from "@workspace/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { authenticate, requireAdmin, type AuthRequest } from "../middlewares/authenticate";
+import { broadcastToUser } from "./notifications";
 
 const router = Router();
 
@@ -69,6 +70,17 @@ router.post("/admin/vouchers", authenticate(), requireAdmin, async (req: AuthReq
       validUntil,
     })
     .returning();
+
+  // Notify the specific customer in real-time (if they're connected)
+  if (resolvedUserId) {
+    setImmediate(() => {
+      broadcastToUser(resolvedUserId!, "voucher_added", {
+        voucherId: voucher.id,
+        amount: amt,
+        validUntil: validUntil.toISOString(),
+      }, "customer");
+    });
+  }
 
   res.status(201).json(voucher);
 });
