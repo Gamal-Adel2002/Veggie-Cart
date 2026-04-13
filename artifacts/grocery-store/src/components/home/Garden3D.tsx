@@ -191,6 +191,7 @@ export default function Garden3D() {
                 style={{
                   border: '3px solid rgba(201,151,74,0.30)',
                   boxShadow: '0 0 0 8px rgba(201,151,74,0.07), 0 24px 60px rgba(0,0,0,0.45)',
+                  background: '#3a1505',
                 }}
               >
                 <img
