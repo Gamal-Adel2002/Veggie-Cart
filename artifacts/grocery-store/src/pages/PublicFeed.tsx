@@ -9,10 +9,12 @@ import { Megaphone, CircleNotch } from '@phosphor-icons/react';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 import type { ChatMessage } from '@workspace/api-client-react';
+import { useTranslation } from '@/lib/i18n';
 
 const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 
 export default function PublicFeed() {
+  const { t } = useTranslation();
   const { data: messages, isLoading, refetch } = useAppPublicChat();
   const { mutateAsync: react } = useAppReactToPublicMessage();
   const token = useStore(s => s.token);

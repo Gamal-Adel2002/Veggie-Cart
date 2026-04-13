@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
+import { useTranslation } from '@/lib/i18n';
 import {
   useAppPrivateThread, useAppSendPrivateMessage, useAppMarkThreadRead, useAppSendTyping, useAppUploadMedia,
 } from '@/hooks/use-auth-api';
@@ -15,6 +16,7 @@ import { motion } from 'framer-motion';
 import type { ChatMessage } from '@workspace/api-client-react';
 
 export default function Messages() {
+  const { t } = useTranslation();
   const user = useStore(s => s.user);
   const token = useStore(s => s.token);
   const customerId = user?.id ?? 0;
