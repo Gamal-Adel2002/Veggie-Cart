@@ -10,29 +10,21 @@ export default function Garden3D() {
 
   return (
     <div className="absolute inset-0 overflow-hidden">
-      {/* Dark warm background */}
+      {/* Vegetables photo background */}
       <div
         className="absolute inset-0"
         style={{
-          background: 'linear-gradient(135deg, #2d1206 0%, #4a1a07 30%, #3a1508 60%, #1e0d04 100%)',
+          backgroundImage: `url("${import.meta.env.BASE_URL}images/hero-bg-vegetables.png")`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
         }}
       />
 
-      {/* Subtle warm overlay texture */}
+      {/* Dark overlay for text readability */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        className="absolute inset-0"
         style={{
-          backgroundImage: `radial-gradient(ellipse at 70% 50%, rgba(201,151,74,0.10) 0%, transparent 60%),
-                            radial-gradient(ellipse at 20% 80%, rgba(80,20,5,0.40) 0%, transparent 55%)`,
-        }}
-      />
-
-      {/* Decorative botanical pattern */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.04]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23c9974a' fill-opacity='1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3Ccircle cx='10' cy='10' r='1.5'/%3E%3Ccircle cx='50' cy='50' r='1.5'/%3E%3Ccircle cx='10' cy='50' r='1'/%3E%3Ccircle cx='50' cy='10' r='1'/%3E%3C/g%3E%3C/svg%3E")`,
-          backgroundSize: '60px 60px',
+          background: 'linear-gradient(105deg, rgba(15,10,5,0.78) 0%, rgba(15,10,5,0.60) 50%, rgba(15,10,5,0.30) 100%)',
         }}
       />
 
@@ -175,23 +167,13 @@ export default function Garden3D() {
               className="hidden lg:flex shrink-0 items-end justify-center relative"
               style={{ width: '420px', height: '420px' }}
             >
-              {/* Glow behind circle */}
-              <div
-                className="absolute inset-0 rounded-full"
-                style={{
-                  background: 'radial-gradient(circle, rgba(201,151,74,0.22) 0%, rgba(201,151,74,0.06) 55%, transparent 75%)',
-                  filter: 'blur(24px)',
-                  transform: 'scale(1.15)',
-                }}
-              />
-
               {/* Circle crop */}
               <div
                 className="relative w-full h-full rounded-full overflow-hidden"
                 style={{
-                  border: '3px solid rgba(201,151,74,0.30)',
-                  boxShadow: '0 0 0 8px rgba(201,151,74,0.07), 0 24px 60px rgba(0,0,0,0.45)',
-                  background: '#3a1505',
+                  border: '3px solid rgba(255,255,255,0.30)',
+                  boxShadow: '0 0 0 8px rgba(255,255,255,0.07), 0 24px 60px rgba(0,0,0,0.45)',
+                  background: '#ffffff',
                 }}
               >
                 <img
@@ -200,57 +182,6 @@ export default function Garden3D() {
                   className="w-full h-full object-cover object-top"
                 />
               </div>
-
-              {/* Floating badge — "Free Delivery" */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.7, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute rounded-xl px-4 py-2.5 flex items-center gap-2.5 shadow-xl"
-                style={{
-                  bottom: '48px',
-                  [isRtl ? 'right' : 'left']: '-20px',
-                  background: 'rgba(255,255,255,0.95)',
-                  backdropFilter: 'blur(12px)',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-                }}
-              >
-                <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-lg shrink-0"
-                  style={{ background: 'hsl(149 60% 26% / 0.12)' }}
-                >
-                  🥦
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-gray-800 leading-tight">
-                    {isRtl ? 'توصيل مجاني' : 'Free Delivery'}
-                  </div>
-                  <div className="text-[11px] text-gray-500 leading-tight">
-                    {isRtl ? 'لأول طلب' : 'on your first order'}
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Floating badge — rating */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.7, y: -10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.95, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute rounded-xl px-3.5 py-2 flex items-center gap-2 shadow-xl"
-                style={{
-                  top: '40px',
-                  [isRtl ? 'left' : 'right']: '-16px',
-                  background: 'rgba(255,255,255,0.95)',
-                  backdropFilter: 'blur(12px)',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
-                }}
-              >
-                <span className="text-lg">⭐</span>
-                <div>
-                  <div className="text-xs font-bold text-gray-800">4.9 / 5</div>
-                  <div className="text-[11px] text-gray-500">{isRtl ? 'تقييم العملاء' : 'Customer rating'}</div>
-                </div>
-              </motion.div>
             </motion.div>
 
           </div>
