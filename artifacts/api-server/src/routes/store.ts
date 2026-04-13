@@ -4,7 +4,7 @@ import { storeSettingsTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import { authenticate, requireAdmin, type AuthRequest } from "../middlewares/authenticate";
 import { isStoreOpenNow } from "../lib/storeHours";
-import { broadcastToAll } from "./notifications";
+import { broadcastToCustomers, broadcastToAdmins } from "./notifications";
 
 const router = Router();
 
@@ -43,7 +43,7 @@ router.put("/settings", authenticate(), requireAdmin, async (req: AuthRequest, r
     const [row] = await db.insert(storeSettingsTable).values({ schedule }).returning();
     setImmediate(async () => {
       const open = await isStoreOpenNow();
-      broadcastToAll("store_status_changed", { open });
+      broadcastToCustomers("store_status_changed", { open }); broadcastToAdmins("store_status_changed", { open });
     });
     return res.status(201).json({ schedule: row.schedule });
   }
@@ -56,7 +56,7 @@ router.put("/settings", authenticate(), requireAdmin, async (req: AuthRequest, r
 
   setImmediate(async () => {
     const open = await isStoreOpenNow();
-    broadcastToAll("store_status_changed", { open });
+    broadcastToCustomers("store_status_changed", { open }); broadcastToAdmins("store_status_changed", { open });
   });
 
   return res.json({ schedule: row.schedule });
