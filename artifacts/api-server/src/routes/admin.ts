@@ -203,9 +203,10 @@ router.post("/orders/:id/assign", authenticate(), requireAdmin, async (req: Auth
 
   const full = await getFullOrder(id);
 
-  // Notify delivery person (SSE + push) — fire and forget
+  // Notify all relevant parties (admin order list refresh + delivery person)
   setImmediate(async () => {
     try {
+      broadcastToAdmins("order_status_changed", { orderId: id, status: order.status });
       broadcastToDeliveryPerson(Number(deliveryPersonId), "order_assigned", {
         orderId: id,
         customerName: order.customerName,
