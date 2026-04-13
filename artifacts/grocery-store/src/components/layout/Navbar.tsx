@@ -100,23 +100,36 @@ export function Navbar() {
               </span>
             </Link>
 
-            {/* Store open/closed status badge */}
-            {storeStatus !== undefined && (
-              <span
-                className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
-                  storeStatus.open
-                    ? 'bg-green-500/10 text-green-600 border-green-500/20'
-                    : 'bg-red-500/10 text-red-500 border-red-500/20'
-                }`}
-              >
+            {/* Store open/closed status badge — always visible */}
+            {(() => {
+              const isOpen = storeStatus?.open ?? null;
+              if (isOpen === null) {
+                return (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border bg-muted/50 text-muted-foreground border-border/40">
+                    <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
+                    <span className="hidden sm:inline">—</span>
+                  </span>
+                );
+              }
+              return (
                 <span
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    storeStatus.open ? 'bg-green-500 animate-pulse' : 'bg-red-500'
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
+                    isOpen
+                      ? 'bg-green-500/10 text-green-600 border-green-500/20'
+                      : 'bg-red-500/10 text-red-500 border-red-500/20'
                   }`}
-                />
-                {storeStatus.open ? t('openStatus') : t('closedStatus')}
-              </span>
-            )}
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                      isOpen ? 'bg-green-500 animate-pulse' : 'bg-red-500'
+                    }`}
+                  />
+                  <span className="hidden sm:inline">
+                    {isOpen ? t('openStatus') : t('closedStatus')}
+                  </span>
+                </span>
+              );
+            })()}
           </div>
 
           {/* Nav links */}
