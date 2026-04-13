@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import {
   useAppPrivateThread, useAppSendPrivateMessage, useAppMarkThreadRead, useAppSendTyping, useAppUploadMedia,
@@ -8,11 +8,10 @@ import { usePushSubscription } from '@/hooks/use-push-subscription';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ChatCircle, PaperPlaneRight, CircleNotch, ImageSquare, Check, Checks } from '@phosphor-icons/react';
 import { format } from 'date-fns';
-import { useState } from 'react';
+import { motion } from 'framer-motion';
 import type { ChatMessage } from '@workspace/api-client-react';
 
 export default function Messages() {
@@ -20,7 +19,6 @@ export default function Messages() {
   const token = useStore(s => s.token);
   const customerId = user?.id ?? 0;
 
-  // Register push subscription so customer receives notifications when off-thread
   usePushSubscription();
 
   const { data: messages, refetch } = useAppPrivateThread(customerId);
@@ -39,7 +37,6 @@ export default function Messages() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // SSE for real-time updates
   useEffect(() => {
     if (!token || !customerId) return;
     const es = new EventSource(`/api/notifications/stream?token=${encodeURIComponent(token)}&watchThread=${customerId}`);
@@ -47,12 +44,8 @@ export default function Messages() {
     es.addEventListener('private_chat_message', (e) => {
       const data = JSON.parse(e.data) as ChatMessage;
       const cId = data.senderRole === 'admin' ? data.recipientId : data.senderId;
-      if (cId === customerId) {
-        refetch();
-        markRead({ customerId }).catch(() => {});
-      }
+      if (cId === customerId) { refetch(); markRead({ customerId }).catch(() => {}); }
     });
-
     es.addEventListener('chat_typing', (e) => {
       const data = JSON.parse(e.data);
       if (data.typingRole === 'admin') {
@@ -61,21 +54,16 @@ export default function Messages() {
         typingTimer.current = setTimeout(() => setAdminTyping(false), 3000);
       }
     });
-
-    es.addEventListener('chat_read_receipt', () => {
-      refetch();
-    });
+    es.addEventListener('chat_read_receipt', () => { refetch(); });
 
     return () => { es.close(); if (typingTimer.current) clearTimeout(typingTimer.current); };
   }, [token, customerId, refetch, markRead]);
 
-  // Mark read on load
   useEffect(() => {
     if (!messages || messages.length === 0 || !customerId) return;
     markRead({ customerId }).catch(() => {});
   }, [customerId, messages?.length]);
 
-  // Scroll to bottom
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -123,81 +111,97 @@ export default function Messages() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen flex flex-col bg-background">
         <Navbar />
-        <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
-          <ChatCircle className="w-12 h-12 mb-3 opacity-20" />
-          <p>Please log in to view your messages.</p>
+        <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
+          <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+            <ChatCircle className="w-8 h-8 text-muted-foreground opacity-40" />
+          </div>
+          <p className="font-semibold">Please log in to view messages.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full px-4 py-6">
+      <main className="flex-1 flex flex-col max-w-2xl mx-auto w-full px-4 sm:px-6 py-8">
+
         {/* Header */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-            <ChatCircle className="w-5 h-5 text-primary" />
+        <div className="mb-5">
+          <p className="text-accent font-semibold text-xs uppercase tracking-[0.18em] mb-1.5">Support</p>
+          <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: 'var(--font-serif)' }}>Messages</h1>
+        </div>
+
+        {/* Chat header card */}
+        <div className="bg-card border border-border/40 rounded-xl px-4 py-3 flex items-center gap-3 mb-4 shadow-sm">
+          <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+            <ChatCircle className="w-4.5 h-4.5 text-primary" weight="fill" />
           </div>
           <div>
-            <p className="font-semibold">Support Chat</p>
-            <p className="text-xs text-muted-foreground">Our team typically replies quickly</p>
+            <p className="font-semibold text-sm">FreshVeg Support</p>
+            <p className="text-xs text-muted-foreground">We typically reply quickly</p>
           </div>
         </div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto bg-muted/20 rounded-2xl border border-border p-4 space-y-3 min-h-96">
+        {/* Messages area */}
+        <div className="flex-1 overflow-y-auto bg-muted/20 border border-border/40 rounded-xl p-4 space-y-3 min-h-80">
           {msgList.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full py-12 text-muted-foreground">
-              <ChatCircle className="w-12 h-12 mb-3 opacity-20" />
+              <ChatCircle className="w-10 h-10 mb-3 opacity-20" />
               <p className="text-sm">No messages yet. Send us a message!</p>
             </div>
           )}
           {msgList.map((msg: ChatMessage) => {
             const isMine = msg.senderRole === 'customer';
             return (
-              <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${isMine ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-card border border-border text-foreground rounded-bl-sm'}`}>
+              <motion.div
+                key={msg.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+                className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}
+              >
+                <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
+                  isMine
+                    ? 'bg-primary text-primary-foreground rounded-br-sm'
+                    : 'bg-card border border-border/60 text-foreground rounded-bl-sm'
+                }`}>
                   {!isMine && (
-                    <p className="text-[11px] font-semibold text-primary mb-1">Support Team</p>
+                    <p className="text-[10px] font-semibold text-primary mb-1 uppercase tracking-wider">Support Team</p>
                   )}
                   {msg.content && <p className="text-sm leading-relaxed">{msg.content}</p>}
                   {msg.mediaUrl && msg.mediaType === 'image' && (
-                    <img src={msg.mediaUrl} alt="attachment" className="mt-1 max-h-48 rounded-xl object-cover" />
+                    <img src={msg.mediaUrl} alt="attachment" className="mt-2 max-h-48 rounded-lg object-cover" />
                   )}
                   {msg.mediaUrl && msg.mediaType === 'video' && (
-                    <video src={msg.mediaUrl} controls className="mt-1 max-h-48 rounded-xl w-full" />
+                    <video src={msg.mediaUrl} controls className="mt-2 max-h-48 rounded-lg w-full" />
                   )}
                   {msg.mediaUrl && msg.mediaType === 'file' && (
-                    <a
-                      href={msg.mediaUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`mt-1 flex items-center gap-2 text-xs underline ${isMine ? 'text-primary-foreground/80' : 'text-primary'}`}
+                    <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer"
+                      className={`mt-1 flex items-center gap-1.5 text-xs underline ${isMine ? 'text-primary-foreground/80' : 'text-primary'}`}
                     >
                       📎 {msg.mediaUrl.split('/').pop() || 'Download file'}
                     </a>
                   )}
                   <div className={`flex items-center gap-1 mt-1 ${isMine ? 'justify-end' : ''}`}>
-                    <span className={`text-[10px] ${isMine ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+                    <span className={`text-[10px] ${isMine ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
                       {format(new Date(msg.createdAt), 'hh:mm a')}
                     </span>
                     {isMine && (
                       msg.readAt
-                        ? <Checks className="w-3 h-3 text-primary-foreground/70" />
-                        : <Check className="w-3 h-3 text-primary-foreground/50" />
+                        ? <Checks className="w-3 h-3 text-primary-foreground/60" />
+                        : <Check className="w-3 h-3 text-primary-foreground/40" />
                     )}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
           {adminTyping && (
             <div className="flex justify-start">
-              <div className="bg-card border border-border rounded-2xl rounded-bl-sm px-4 py-2 text-xs text-muted-foreground italic">
+              <div className="bg-card border border-border/60 rounded-2xl rounded-bl-sm px-4 py-2 text-xs text-muted-foreground italic">
                 Support is typing…
               </div>
             </div>
@@ -206,25 +210,35 @@ export default function Messages() {
         </div>
 
         {/* Input */}
-        <div className="mt-3 bg-card border border-border rounded-2xl p-3 shadow-sm">
+        <div className="mt-3 bg-card border border-border/40 rounded-xl p-3 shadow-sm">
           <div className="flex items-center gap-2">
             <input ref={fileInputRef} type="file" accept="image/*,video/mp4,video/webm,video/quicktime,.pdf,.doc,.docx" className="hidden" onChange={handleMediaUpload} />
-            <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={uploadingImg} className="text-muted-foreground hover:text-primary shrink-0">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingImg}
+              className="w-9 h-9 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition-colors shrink-0"
+            >
               {uploadingImg ? <CircleNotch className="w-4 h-4 animate-spin" /> : <ImageSquare className="w-4 h-4" />}
-            </Button>
+            </button>
             <Input
               value={text}
               onChange={e => { setText(e.target.value); handleTyping(); }}
               onKeyDown={handleKeyDown}
               placeholder="Message support…"
-              className="flex-1"
+              className="flex-1 h-9 border-border/60 focus-visible:ring-primary/30 bg-background rounded-lg"
             />
-            <Button size="icon" onClick={handleSend} disabled={sending || !text.trim()} className="shrink-0">
-              {sending ? <CircleNotch className="w-4 h-4 animate-spin" /> : <PaperPlaneRight className="w-4 h-4" />}
-            </Button>
+            <motion.button
+              onClick={handleSend}
+              disabled={sending || !text.trim()}
+              whileHover={!sending && text.trim() ? { scale: 1.05 } : {}}
+              whileTap={!sending && text.trim() ? { scale: 0.95 } : {}}
+              className="w-9 h-9 flex items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all shrink-0"
+            >
+              {sending ? <CircleNotch className="w-4 h-4 animate-spin" /> : <PaperPlaneRight className="w-4 h-4" weight="fill" />}
+            </motion.button>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

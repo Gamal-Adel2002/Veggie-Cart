@@ -5,15 +5,28 @@ import { z } from 'zod';
 import { useAppSignup, useAppUploadImage } from '@/hooks/use-auth-api';
 import { useStore } from '@/store';
 import { useLocation, Link } from 'wouter';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { MapPicker } from '@/components/MapPicker';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { Plant, CircleNotch, Camera } from '@phosphor-icons/react';
+import { CircleNotch, Camera } from '@phosphor-icons/react';
 import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
+import { motion } from 'framer-motion';
+
+function BotanicalMark() {
+  return (
+    <svg width="44" height="44" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="17" cy="17" r="17" fill="hsl(149 60% 26% / 0.12)" />
+      <path d="M17 28C17 28 8 22.5 8 15.5C8 11.5 11.5 8.5 15 9.5C15.9 9.77 16.7 10.2 17 10.5C17.3 10.2 18.1 9.77 19 9.5C22.5 8.5 26 11.5 26 15.5C26 22.5 17 28 17 28Z" fill="hsl(149 60% 26%)" opacity="0.9" />
+      <path d="M17 28V14" stroke="rgba(255,255,255,0.7)" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M17 20C17 20 13 17 12 14" stroke="rgba(255,255,255,0.5)" strokeWidth="1" strokeLinecap="round" />
+      <path d="M17 18C17 18 20.5 15.5 22 13" stroke="rgba(255,255,255,0.5)" strokeWidth="1" strokeLinecap="round" />
+      <circle cx="22" cy="10" r="2.2" fill="hsl(36 63% 55%)" opacity="0.9" />
+    </svg>
+  );
+}
 
 export default function Signup() {
   const { t } = useTranslation();
@@ -81,60 +94,124 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen bg-background py-12 px-4">
-      <div className="max-w-xl mx-auto space-y-8 bg-card border border-border/50 p-8 rounded-3xl shadow-xl shadow-black/5">
-        <div className="text-center">
-          <Link href="/" className="inline-flex items-center gap-2 mb-6 text-primary">
-            <Plant className="w-8 h-8" weight="fill" />
-            <span className="font-display font-bold text-2xl text-foreground">FreshVeg</span>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="max-w-xl mx-auto bg-card border border-border/40 p-8 rounded-xl shadow-md"
+      >
+        {/* Brand */}
+        <div className="text-center mb-7">
+          <Link href="/" className="inline-flex flex-col items-center gap-2 mb-4">
+            <BotanicalMark />
+            <span className="font-display font-bold text-xl text-foreground">
+              Fresh<span className="text-primary">Veg</span>
+            </span>
           </Link>
-          <h1 className="text-3xl font-display font-bold">{t('createAccount')}</h1>
+          <h1
+            className="text-3xl font-bold"
+            style={{ fontFamily: 'var(--font-serif)' }}
+          >
+            {t('createAccount')}
+          </h1>
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            {/* Avatar */}
             <div className="flex justify-center">
               <div className="relative">
-                <div className="w-24 h-24 rounded-full bg-muted border-2 border-dashed border-border overflow-hidden flex items-center justify-center">
-                  {preview ? <img src={preview} className="w-full h-full object-cover" /> : <Camera className="w-8 h-8 text-muted-foreground opacity-50" />}
+                <div className="w-20 h-20 rounded-full bg-muted border-2 border-dashed border-border overflow-hidden flex items-center justify-center">
+                  {preview
+                    ? <img src={preview} className="w-full h-full object-cover" alt="profile preview" />
+                    : <Camera className="w-7 h-7 text-muted-foreground/50" />
+                  }
                 </div>
                 <input type="file" id="profile" accept="image/*" className="hidden" onChange={handleFileChange} />
-                <label htmlFor="profile" className="absolute bottom-0 right-0 bg-primary text-primary-foreground p-2 rounded-full cursor-pointer hover:bg-primary/90 shadow-md">
-                  <Camera className="w-4 h-4" />
+                <label
+                  htmlFor="profile"
+                  className="absolute -bottom-0.5 -right-0.5 w-7 h-7 bg-primary text-primary-foreground rounded-full cursor-pointer flex items-center justify-center shadow-md hover:bg-primary/90 transition-colors"
+                >
+                  <Camera className="w-3.5 h-3.5" />
                 </label>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="name" render={({ field }) => (
-                <FormItem><FormLabel>{t('name')}</FormLabel><FormControl><Input {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">{t('name')}</FormLabel>
+                  <FormControl>
+                    <Input {...field} className="h-11 rounded-lg border-border/60 focus-visible:ring-primary/30 bg-background" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )} />
               <FormField control={form.control} name="phone" render={({ field }) => (
-                <FormItem><FormLabel>{t('phone')}</FormLabel><FormControl><Input {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">{t('phone')}</FormLabel>
+                  <FormControl>
+                    <Input {...field} className="h-11 rounded-lg border-border/60 focus-visible:ring-primary/30 bg-background" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )} />
             </div>
 
             <FormField control={form.control} name="password" render={({ field }) => (
-              <FormItem><FormLabel>{t('password')}</FormLabel><FormControl><Input type="password" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
+              <FormItem>
+                <FormLabel className="text-sm font-medium">{t('password')}</FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    {...field}
+                    className="h-11 rounded-lg border-border/60 focus-visible:ring-primary/30 bg-background"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )} />
 
-            <div className="space-y-3">
-              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{t('deliveryLocationLabel')}</label>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{t('deliveryLocationLabel')}</label>
               <MapPicker location={mapLoc} onChange={(lat, lng) => setMapLoc({latitude: lat, longitude: lng})} />
             </div>
 
             <FormField control={form.control} name="address" render={({ field }) => (
-              <FormItem><FormLabel>{t('apartmentDetails')}</FormLabel><FormControl><Textarea {...field} className="rounded-xl resize-none" /></FormControl><FormMessage /></FormItem>
+              <FormItem>
+                <FormLabel className="text-sm font-medium">{t('apartmentDetails')}</FormLabel>
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    className="rounded-lg resize-none border-border/60 focus-visible:ring-primary/30 bg-background"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )} />
 
-            <Button type="submit" disabled={isPending || uploading} className="w-full h-14 rounded-xl text-lg font-bold shadow-lg shadow-primary/20">
-              {isPending || uploading ? <CircleNotch className="w-5 h-5 animate-spin" /> : t('signUp')}
-            </Button>
+            <motion.button
+              type="submit"
+              disabled={isPending || uploading}
+              whileHover={!isPending && !uploading ? { scale: 1.02, boxShadow: 'var(--shadow-gold)' } : {}}
+              whileTap={!isPending && !uploading ? { scale: 0.97 } : {}}
+              className="relative overflow-hidden w-full h-11 rounded-lg bg-primary text-primary-foreground font-semibold text-sm shadow-sm btn-gold-shimmer disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 mt-1"
+            >
+              {isPending || uploading
+                ? <CircleNotch className="w-5 h-5 animate-spin mx-auto" />
+                : t('signUp')
+              }
+            </motion.button>
           </form>
         </Form>
-        <p className="text-center text-muted-foreground mt-4">
-          {t('alreadyHaveAccount')} <Link href="/auth/login" className="text-primary font-bold hover:underline">{t('login')}</Link>
+
+        <p className="text-center text-muted-foreground text-sm mt-5">
+          {t('alreadyHaveAccount')}{' '}
+          <Link href="/auth/login" className="text-primary font-semibold hover:text-primary/80 transition-colors">
+            {t('login')}
+          </Link>
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 }

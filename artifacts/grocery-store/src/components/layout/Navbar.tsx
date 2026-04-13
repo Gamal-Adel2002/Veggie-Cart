@@ -5,7 +5,6 @@ import {
   User,
   SignOut,
   Translate,
-  Plant,
   Megaphone,
   ChatCircle,
   Sun,
@@ -19,6 +18,38 @@ import { useAppLogout } from '@/hooks/use-auth-api';
 import { motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
 import { NavSearch } from '@/components/NavSearch';
+
+function BotanicalLogo() {
+  return (
+    <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="17" cy="17" r="17" fill="hsl(149 60% 26% / 0.10)" />
+      <path
+        d="M17 28C17 28 8 22.5 8 15.5C8 11.5 11.5 8.5 15 9.5C15.9 9.77 16.7 10.2 17 10.5C17.3 10.2 18.1 9.77 19 9.5C22.5 8.5 26 11.5 26 15.5C26 22.5 17 28 17 28Z"
+        fill="hsl(149 60% 26%)"
+        opacity="0.85"
+      />
+      <path
+        d="M17 28V14"
+        stroke="hsl(0 0% 100% / 0.7)"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M17 20C17 20 13 17 12 14"
+        stroke="hsl(0 0% 100% / 0.5)"
+        strokeWidth="1"
+        strokeLinecap="round"
+      />
+      <path
+        d="M17 18C17 18 20.5 15.5 22 13"
+        stroke="hsl(0 0% 100% / 0.5)"
+        strokeWidth="1"
+        strokeLinecap="round"
+      />
+      <circle cx="22" cy="10" r="2.2" fill="hsl(36 63% 55%)" opacity="0.9" />
+    </svg>
+  );
+}
 
 export function Navbar() {
   const { t, lang } = useTranslation();
@@ -39,130 +70,140 @@ export function Navbar() {
   const langLabel = lang === 'en' ? 'ع' : 'EN';
   const isDark = theme === 'dark';
 
+  const navLinks = [
+    { href: '/', label: t('home') },
+    { href: '/shop', label: t('shop') },
+    { href: '/feed', label: 'Feed', icon: Megaphone },
+    ...(user && user.role === 'customer' ? [{ href: '/messages', label: 'Messages', icon: ChatCircle }] : []),
+  ];
+
   return (
     <motion.header
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="sticky top-0 z-[100] w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 shadow-sm"
+      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      className="sticky top-0 z-[100] w-full border-b border-border/30 bg-background/90 backdrop-blur-xl supports-[backdrop-filter]:bg-background/75 shadow-sm"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="bg-primary/10 p-2 rounded-xl text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
-                <Plant className="w-6 h-6" weight="fill" />
-              </div>
-              <span className="font-display font-bold text-xl tracking-tight text-foreground hidden sm:block">
-                FreshVeg
-              </span>
-            </Link>
+        <div className="flex justify-between h-[68px] items-center gap-4">
 
-            <nav className="hidden md:flex items-center gap-1 ms-6">
-              <Link href="/">
-                <Button variant={location === '/' ? 'secondary' : 'ghost'} className="rounded-full px-5">
-                  {t('home')}
-                </Button>
-              </Link>
-              <Link href="/shop">
-                <Button variant={location === '/shop' ? 'secondary' : 'ghost'} className="rounded-full px-5">
-                  {t('shop')}
-                </Button>
-              </Link>
-              <Link href="/feed">
-                <Button variant={location === '/feed' ? 'secondary' : 'ghost'} className="rounded-full px-5 gap-1.5">
-                  <Megaphone className="w-4 h-4" weight="fill" />
-                  Feed
-                </Button>
-              </Link>
-              {user && user.role === 'customer' && (
-                <Link href="/messages">
-                  <Button variant={location === '/messages' ? 'secondary' : 'ghost'} className="rounded-full px-5 gap-1.5">
-                    <ChatCircle className="w-4 h-4" weight="fill" />
-                    Messages
-                  </Button>
+          {/* Brand */}
+          <Link href="/" className="flex items-center gap-2.5 group shrink-0">
+            <motion.div whileHover={{ scale: 1.08 }} transition={{ type: 'spring', stiffness: 300, damping: 18 }}>
+              <BotanicalLogo />
+            </motion.div>
+            <span className="font-display font-bold text-[1.2rem] tracking-tight text-foreground hidden sm:block">
+              Fresh<span className="text-primary">Veg</span>
+            </span>
+          </Link>
+
+          {/* Nav links */}
+          <nav className="hidden md:flex items-center gap-0.5">
+            {navLinks.map(({ href, label, icon: Icon }) => {
+              const active = location === href;
+              return (
+                <Link key={href} href={href}>
+                  <button
+                    className={`
+                      flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
+                      ${active
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'}
+                    `}
+                  >
+                    {Icon && <Icon className="w-4 h-4" weight={active ? 'fill' : 'regular'} />}
+                    {label}
+                    {active && <span className="w-1 h-1 rounded-full bg-primary ml-0.5" />}
+                  </button>
                 </Link>
-              )}
-            </nav>
-          </div>
+              );
+            })}
+          </nav>
 
-          <div className="hidden md:flex flex-1 max-w-sm mx-6">
+          {/* Search */}
+          <div className="hidden md:flex flex-1 max-w-xs mx-2">
             <NavSearch />
           </div>
 
-          <div className="flex items-center gap-1">
+          {/* Right actions */}
+          <div className="flex items-center gap-1 shrink-0">
             {mounted && (
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
                 onClick={() => setTheme(isDark ? 'light' : 'dark')}
-                className="rounded-full px-3 text-muted-foreground hover:text-primary"
+                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
                 aria-label="Toggle theme"
               >
                 {isDark
-                  ? <Sun className="w-4 h-4" weight="bold" />
-                  : <Moon className="w-4 h-4" weight="bold" />
+                  ? <Sun className="w-4.5 h-4.5" weight="bold" />
+                  : <Moon className="w-4.5 h-4.5" weight="bold" />
                 }
-              </Button>
+              </button>
             )}
 
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
               onClick={toggleLang}
-              className="rounded-full px-3 gap-1.5 text-muted-foreground hover:text-primary"
+              className="flex items-center gap-1 px-2.5 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors text-sm font-semibold"
             >
               <Translate className="w-4 h-4" weight="bold" />
-              <span className="font-semibold text-sm">{langLabel}</span>
-            </Button>
+              {langLabel}
+            </button>
 
+            {/* Cart */}
             <Link href="/cart">
-              <Button
-                variant={location === '/cart' ? 'secondary' : 'ghost'}
-                size="sm"
-                className="relative rounded-full px-3 gap-1.5 hover:text-primary"
+              <button
+                className={`
+                  relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
+                  ${location === '/cart'
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'}
+                `}
               >
-                <ShoppingCart className="w-4 h-4" weight={location === '/cart' ? 'fill' : 'regular'} />
+                <ShoppingCart className="w-4.5 h-4.5" weight={location === '/cart' ? 'fill' : 'regular'} />
                 <span className="hidden sm:inline">{t('cart')}</span>
                 {cartItemsCount > 0 && (
-                  <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 min-w-[1.25rem] h-5 flex items-center justify-center rounded-full text-[10px]">
+                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-accent text-white text-[10px] font-bold flex items-center justify-center shadow-sm">
                     {cartItemsCount}
-                  </Badge>
+                  </span>
                 )}
-              </Button>
+              </button>
             </Link>
 
             {user ? (
               <>
                 <Link href={user.role === 'admin' ? '/admin' : '/account'}>
-                  <Button
-                    variant={location === '/account' || location === '/admin' ? 'secondary' : 'ghost'}
-                    size="sm"
-                    className="rounded-full px-3 gap-1.5 hover:text-primary"
+                  <button
+                    className={`
+                      flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
+                      ${location === '/account' || location === '/admin'
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'}
+                    `}
                   >
                     {user.profileImage ? (
-                      <img src={user.profileImage} alt={user.name} className="w-5 h-5 rounded-full object-cover" />
+                      <img src={user.profileImage} alt={user.name} className="w-5 h-5 rounded-full object-cover ring-1 ring-primary/20" />
                     ) : (
                       <User className="w-4 h-4" weight="bold" />
                     )}
                     <span className="hidden sm:inline">{user.role === 'admin' ? t('admin') : t('account')}</span>
-                  </Button>
+                  </button>
                 </Link>
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <button
                   onClick={handleLogout}
-                  className="rounded-full px-3 gap-1.5 text-destructive hover:bg-destructive/10"
+                  className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/8 transition-colors"
                 >
                   <SignOut className="w-4 h-4" weight="bold" />
                   <span className="hidden sm:inline">{t('logout')}</span>
-                </Button>
+                </button>
               </>
             ) : (
               <Link href="/auth/login">
-                <Button className="rounded-full ms-1 font-semibold shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5 transition-all">
+                <motion.button
+                  whileHover={{ scale: 1.03, boxShadow: 'var(--shadow-gold)' }}
+                  whileTap={{ scale: 0.97 }}
+                  className="relative overflow-hidden ms-1 px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold shadow-sm transition-all duration-200 btn-gold-shimmer hover:bg-primary/90"
+                >
                   {t('login')}
-                </Button>
+                </motion.button>
               </Link>
             )}
           </div>

@@ -1,10 +1,10 @@
 import React from 'react';
 import { Link } from 'wouter';
 import { Plus, ShoppingBag } from '@phosphor-icons/react';
-import { Badge } from '@/components/ui/badge';
 import { useStore } from '@/store';
 import { useTranslation } from '@/lib/i18n';
 import { useToast } from '@/hooks/use-toast';
+import { motion } from 'framer-motion';
 import type { Product } from '@workspace/api-client-react';
 
 export function ProductCard({ product }: { product: Product }) {
@@ -29,65 +29,73 @@ export function ProductCard({ product }: { product: Product }) {
 
   return (
     <Link href={`/product/${product.id}`}>
-      <div className="group cursor-pointer h-full flex flex-col bg-card border border-border/50 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/10 hover:border-primary/30">
-        <div className="relative aspect-[4/3] bg-gradient-to-br from-muted/60 to-muted/20 overflow-hidden">
+      <div className="group cursor-pointer h-full flex flex-col bg-card border border-border/40 rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/8 hover:border-primary/20">
+
+        {/* Image area */}
+        <div className="relative aspect-[4/3] bg-muted/30 overflow-hidden">
           {product.image ? (
             <img
               src={product.image}
               alt={name}
               className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out ${
-                isOutOfStock ? 'grayscale opacity-50' : 'group-hover:scale-105'
+                isOutOfStock ? 'grayscale opacity-50' : 'group-hover:scale-107'
               }`}
             />
           ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
-              <ShoppingBag className="w-10 h-10 opacity-30 mb-1" weight="thin" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground/40">
+              <ShoppingBag className="w-10 h-10 mb-1" weight="thin" />
               <span className="text-xs">{t('noImage')}</span>
             </div>
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
+          {/* Status badge */}
           {isOutOfStock ? (
-            <Badge className="absolute top-3 start-3 bg-destructive/90 text-destructive-foreground border-none backdrop-blur-sm text-[11px] px-2 py-0.5">
+            <span className="absolute top-2.5 start-2.5 bg-destructive/90 text-destructive-foreground text-[10px] font-semibold px-2 py-0.5 rounded-md backdrop-blur-sm">
               {t('outOfStock')}
-            </Badge>
+            </span>
           ) : product.featured ? (
-            <Badge className="absolute top-3 start-3 bg-accent/90 text-accent-foreground border-none backdrop-blur-sm text-[11px] px-2 py-0.5">
+            <span className="absolute top-2.5 start-2.5 text-[10px] font-semibold px-2 py-0.5 rounded-md backdrop-blur-sm"
+              style={{ background: 'hsl(36 63% 55%)', color: '#fff' }}>
               {t('featured')}
-            </Badge>
+            </span>
           ) : null}
 
+          {/* Category on hover */}
           {categoryName && (
-            <div className="absolute top-3 end-3 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
-              <Badge className="bg-background/90 text-foreground backdrop-blur-sm border-none text-[10px] px-2 py-0.5 font-semibold uppercase tracking-wide">
-                {categoryName}
-              </Badge>
-            </div>
+            <span className="absolute top-2.5 end-2.5 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-250 bg-background/90 text-foreground text-[10px] font-semibold px-2 py-0.5 rounded-md backdrop-blur-sm uppercase tracking-wide">
+              {categoryName}
+            </span>
           )}
 
-          <div className="absolute bottom-3 end-3">
-            <span className="inline-flex items-baseline gap-1 bg-background/90 dark:bg-card/90 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-sm border border-border/30 text-foreground font-bold text-sm">
+          {/* Price tag — always visible, bottom right */}
+          <div className="absolute bottom-2.5 end-2.5">
+            <span className="inline-flex items-baseline gap-1 bg-background/95 dark:bg-card/95 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-sm border border-border/20 text-foreground font-bold text-sm">
               {product.price}
               <span className="text-[10px] text-muted-foreground font-normal">EGP</span>
             </span>
           </div>
 
+          {/* Add to cart — slides up on hover */}
           {!isOutOfStock && (
-            <div className="absolute inset-x-3 bottom-3 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 ease-out">
-              <button
+            <div className="absolute inset-x-2.5 bottom-2.5 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-250 ease-out">
+              <motion.button
                 onClick={handleAdd}
-                className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground font-semibold text-sm py-2.5 rounded-xl shadow-lg hover:bg-primary/90 active:scale-[0.98] transition-all duration-150"
+                whileTap={{ scale: 0.97 }}
+                className="w-full relative overflow-hidden flex items-center justify-center gap-2 font-semibold text-sm py-2.5 rounded-lg shadow-md text-white btn-gold-shimmer transition-all duration-150"
+                style={{ background: 'hsl(149 60% 26%)' }}
               >
                 <Plus className="w-4 h-4" weight="bold" />
                 {t('addToCart')}
-              </button>
+              </motion.button>
             </div>
           )}
         </div>
 
-        <div className="p-4 flex-1 flex flex-col gap-1">
-          <h3 className="font-display font-bold text-base text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors duration-200">
+        {/* Content */}
+        <div className="p-3.5 flex-1 flex flex-col gap-0.5">
+          <h3 className="font-semibold text-sm text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors duration-200">
             {name}
           </h3>
           <p className="text-xs text-muted-foreground mt-auto pt-1">
