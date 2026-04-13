@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'wouter';
 import { Plus, ShoppingBag } from '@phosphor-icons/react';
 import { useStore } from '@/store';
@@ -16,6 +16,31 @@ export function ProductCard({ product }: { product: Product }) {
   const name = lang === 'ar' ? product.nameAr : product.name;
   const categoryName = product.category ? (lang === 'ar' ? product.category.nameAr : product.category.name) : null;
 
+  const allImages: string[] = [];
+  if (product.image) allImages.push(product.image);
+  if (product.images) {
+    for (const img of product.images) {
+      if (img && !allImages.includes(img)) allImages.push(img);
+    }
+  }
+  const hasMultiple = allImages.length > 1;
+
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [hovered, setHovered] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (hovered && hasMultiple) {
+      intervalRef.current = setInterval(() => {
+        setActiveIdx(i => (i + 1) % allImages.length);
+      }, 900);
+    } else {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      setActiveIdx(0);
+    }
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [hovered, hasMultiple, allImages.length]);
+
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -27,17 +52,24 @@ export function ProductCard({ product }: { product: Product }) {
     });
   };
 
+  const currentImage = allImages[activeIdx] ?? null;
+
   return (
     <Link href={`/product/${product.id}`}>
-      <div className="group cursor-pointer h-full flex flex-col bg-card border border-border/40 rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/8 hover:border-primary/20">
+      <div
+        className="group cursor-pointer h-full flex flex-col bg-card border border-border/40 rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/8 hover:border-primary/20"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
 
         {/* Image area */}
         <div className="relative aspect-[4/3] bg-muted/30 overflow-hidden">
-          {product.image ? (
+          {currentImage ? (
             <img
-              src={product.image}
+              key={currentImage}
+              src={currentImage}
               alt={name}
-              className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out ${
+              className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-out ${
                 isOutOfStock ? 'grayscale opacity-50' : 'group-hover:scale-105'
               }`}
             />
@@ -62,6 +94,19 @@ export function ProductCard({ product }: { product: Product }) {
             </span>
           ) : null}
 
+          {/* Image dots indicator */}
+          {hasMultiple && (
+            <div className="absolute bottom-10 start-0 end-0 flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              {allImages.map((_, i) => (
+                <span
+                  key={i}
+                  className="w-1.5 h-1.5 rounded-full transition-all duration-200"
+                  style={{ background: i === activeIdx ? '#fff' : 'rgba(255,255,255,0.45)' }}
+                />
+              ))}
+            </div>
+          )}
+
           {/* Category on hover */}
           {categoryName && (
             <span className="absolute top-2.5 end-2.5 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 bg-background/90 text-foreground text-[10px] font-semibold px-2 py-0.5 rounded-md backdrop-blur-sm uppercase tracking-wide">
@@ -69,7 +114,7 @@ export function ProductCard({ product }: { product: Product }) {
             </span>
           )}
 
-          {/* Price tag — always visible, bottom right */}
+          {/* Price tag */}
           <div className="absolute bottom-2.5 end-2.5">
             <span className="inline-flex items-baseline gap-1 bg-background/95 dark:bg-card/95 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-sm border border-border/20 text-foreground font-bold text-sm">
               {product.price}
@@ -77,7 +122,7 @@ export function ProductCard({ product }: { product: Product }) {
             </span>
           </div>
 
-          {/* Add to cart — slides up on hover */}
+          {/* Add to cart */}
           {!isOutOfStock && (
             <div className="absolute inset-x-2.5 bottom-2.5 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-200 ease-out">
               <motion.button

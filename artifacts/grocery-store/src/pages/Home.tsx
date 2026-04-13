@@ -1,11 +1,11 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { useAppCategories, useAppProducts } from '@/hooks/use-auth-api';
 import { ProductCard } from '@/components/ProductCard';
 import { useTranslation } from '@/lib/i18n';
 import { Link } from 'wouter';
 import { CircleNotch, ArrowRight, ShieldCheck, Clock, Leaf } from '@phosphor-icons/react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 import Garden3D from '@/components/home/Garden3D';
 
 const stagger = {
@@ -21,7 +21,7 @@ const fadeUp = {
 export default function Home() {
   const { t, lang } = useTranslation();
   const { data: categories, isLoading: catLoading } = useAppCategories();
-  const { data: products, isLoading: prodLoading } = useAppProducts({ featured: true });
+  const { data: products, isLoading: prodLoading } = useAppProducts();
 
   const heroRef = useRef<HTMLElement>(null);
 
@@ -30,6 +30,21 @@ export default function Home() {
     { icon: ShieldCheck, label: t('topRated') },
     { icon: Clock, label: t('easyCheckout') },
   ];
+
+  const productsByCategory = useMemo(() => {
+    if (!products || !categories) return [];
+    return categories
+      .map(cat => ({
+        cat,
+        items: products.filter(p => p.categoryId === cat.id),
+      }))
+      .filter(group => group.items.length > 0);
+  }, [products, categories]);
+
+  const uncategorized = useMemo(() => {
+    if (!products) return [];
+    return products.filter(p => !p.categoryId);
+  }, [products]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -114,50 +129,87 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── Featured products ──────────────────────────────────────── */}
-        <section className="py-20 bg-muted/25 border-t border-border/40">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-end justify-between mb-12">
-              <div>
-                <p className="text-accent font-semibold text-xs uppercase tracking-[0.18em] mb-2">
-                  {t('handpicked')}
-                </p>
-                <h2
-                  className="text-4xl font-bold text-foreground leading-tight"
-                  style={{ fontFamily: 'var(--font-serif)' }}
-                >
-                  {t('featuredProducts')}
-                </h2>
-              </div>
-              <Link href="/shop">
-                <span className="flex items-center gap-1.5 text-sm text-primary font-semibold hover:text-primary/80 transition-colors group">
-                  {t('viewAll')}
-                  <ArrowRight className={`w-4 h-4 transition-transform group-hover:translate-x-0.5 ${lang === 'ar' ? 'rotate-180' : ''}`} weight="bold" />
-                </span>
-              </Link>
+        {/* ── Products by category ───────────────────────────────────── */}
+        {prodLoading ? (
+          <section className="py-20 bg-muted/25 border-t border-border/40">
+            <div className="flex justify-center py-16">
+              <CircleNotch className="w-8 h-8 animate-spin text-primary" />
             </div>
-
-            {prodLoading ? (
-              <div className="flex justify-center py-16">
-                <CircleNotch className="w-8 h-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              <motion.div
-                variants={stagger}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: '-60px' }}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+          </section>
+        ) : (
+          <>
+            {productsByCategory.map(({ cat, items }, sectionIdx) => (
+              <section
+                key={cat.id}
+                className={`py-16 border-t border-border/40 ${sectionIdx % 2 === 0 ? 'bg-muted/25' : 'bg-background'}`}
               >
-                {products?.map((product) => (
-                  <motion.div key={product.id} variants={fadeUp}>
-                    <ProductCard product={product} />
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="flex items-end justify-between mb-10">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl">{cat.icon}</span>
+                      <div>
+                        <p className="text-accent font-semibold text-xs uppercase tracking-[0.18em] mb-1">
+                          {items.length} {t('items')}
+                        </p>
+                        <h2
+                          className="text-2xl font-bold text-foreground"
+                          style={{ fontFamily: 'var(--font-serif)' }}
+                        >
+                          {lang === 'ar' ? cat.nameAr : cat.name}
+                        </h2>
+                      </div>
+                    </div>
+                    <Link href={`/shop?category=${cat.id}`}>
+                      <span className="flex items-center gap-1.5 text-sm text-primary font-semibold hover:text-primary/80 transition-colors group">
+                        {t('viewAll')}
+                        <ArrowRight className={`w-4 h-4 transition-transform group-hover:translate-x-0.5 ${lang === 'ar' ? 'rotate-180' : ''}`} weight="bold" />
+                      </span>
+                    </Link>
+                  </div>
+
+                  <motion.div
+                    variants={stagger}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: '-60px' }}
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+                  >
+                    {items.map((product) => (
+                      <motion.div key={product.id} variants={fadeUp}>
+                        <ProductCard product={product} />
+                      </motion.div>
+                    ))}
                   </motion.div>
-                ))}
-              </motion.div>
+                </div>
+              </section>
+            ))}
+
+            {uncategorized.length > 0 && (
+              <section className="py-16 border-t border-border/40 bg-muted/25">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="mb-10">
+                    <h2 className="text-2xl font-bold text-foreground" style={{ fontFamily: 'var(--font-serif)' }}>
+                      {t('featuredProducts')}
+                    </h2>
+                  </div>
+                  <motion.div
+                    variants={stagger}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: '-60px' }}
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+                  >
+                    {uncategorized.map((product) => (
+                      <motion.div key={product.id} variants={fadeUp}>
+                        <ProductCard product={product} />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </div>
+              </section>
             )}
-          </div>
-        </section>
+          </>
+        )}
       </main>
     </div>
   );

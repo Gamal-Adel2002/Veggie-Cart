@@ -48,6 +48,7 @@ async function getProductWithCategory(id: number) {
     price: productsTable.price,
     unit: productsTable.unit,
     image: productsTable.image,
+    images: productsTable.images,
     categoryId: productsTable.categoryId,
     featured: productsTable.featured,
     inStock: productsTable.inStock,
@@ -92,6 +93,7 @@ router.get("/", async (req, res) => {
     price: productsTable.price,
     unit: productsTable.unit,
     image: productsTable.image,
+    images: productsTable.images,
     categoryId: productsTable.categoryId,
     featured: productsTable.featured,
     inStock: productsTable.inStock,
@@ -123,7 +125,7 @@ router.get("/:id", async (req, res) => {
 });
 
 router.post("/", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
-  const { name, nameAr, description, descriptionAr, price, unit, image, categoryId, featured, inStock, quantity, quantityAlert } = req.body;
+  const { name, nameAr, description, descriptionAr, price, unit, image, images, categoryId, featured, inStock, quantity, quantityAlert } = req.body;
   if (!name || !nameAr || !price || !unit) {
     res.status(400).json({ error: "name, nameAr, price, and unit are required" });
     return;
@@ -131,6 +133,7 @@ router.post("/", authenticate(), requireAdmin, async (req: AuthRequest, res) => 
 
   const qty = quantity !== undefined && quantity !== null && quantity !== "" ? Number(quantity) : null;
   const qtyAlert = quantityAlert !== undefined && quantityAlert !== null && quantityAlert !== "" ? Number(quantityAlert) : null;
+  const imagesArr: string[] | null = Array.isArray(images) ? images.filter(Boolean) : null;
 
   const [product] = await db.insert(productsTable).values({
     name,
@@ -140,6 +143,7 @@ router.post("/", authenticate(), requireAdmin, async (req: AuthRequest, res) => 
     price: Number(price),
     unit: unit || "kg",
     image: image || null,
+    images: imagesArr,
     categoryId: categoryId ? Number(categoryId) : null,
     featured: featured ?? false,
     inStock: qty !== null ? qty > 0 : (inStock ?? true),
@@ -152,7 +156,7 @@ router.post("/", authenticate(), requireAdmin, async (req: AuthRequest, res) => 
 
 router.put("/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) => {
   const id = parseInt(String(req.params.id));
-  const { name, nameAr, description, descriptionAr, price, unit, image, categoryId, featured, inStock, quantity, quantityAlert } = req.body;
+  const { name, nameAr, description, descriptionAr, price, unit, image, images, categoryId, featured, inStock, quantity, quantityAlert } = req.body;
 
   const qty = quantity !== undefined && quantity !== null && quantity !== "" ? Number(quantity) : quantity === null ? null : undefined;
   const qtyAlert = quantityAlert !== undefined && quantityAlert !== null && quantityAlert !== "" ? Number(quantityAlert) : quantityAlert === null ? null : undefined;
@@ -165,6 +169,10 @@ router.put("/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) =
     resolvedInStock = inStock ?? undefined;
   }
 
+  const imagesArr: string[] | null | undefined = images !== undefined
+    ? (Array.isArray(images) ? images.filter(Boolean) : null)
+    : undefined;
+
   const [product] = await db.update(productsTable).set({
     name,
     nameAr,
@@ -173,6 +181,7 @@ router.put("/:id", authenticate(), requireAdmin, async (req: AuthRequest, res) =
     price: price !== undefined ? Number(price) : undefined,
     unit: unit || undefined,
     image: image !== undefined ? image || null : undefined,
+    images: imagesArr,
     categoryId: categoryId !== undefined ? (categoryId ? Number(categoryId) : null) : undefined,
     featured: featured ?? undefined,
     inStock: resolvedInStock,

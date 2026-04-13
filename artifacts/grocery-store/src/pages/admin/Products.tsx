@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useAdminTranslation as useTranslation } from '@/lib/portalI18n';
-import { Search } from 'lucide-react';
+import { Search, X, ImagePlus } from 'lucide-react';
 import { useAppProducts, useAppCategories, useAppCreateProduct, useAppUpdateProduct, useAppDeleteProduct, useAppUploadImage } from '@/hooks/use-auth-api';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -51,7 +51,9 @@ export default function Products() {
     resolver: zodResolver(schema),
     defaultValues: { name:'', nameAr:'', price:1, unit:'kg', categoryId:1, featured:false, inStock:true, quantity:'', quantityAlert:'' }
   });
-  const [file, setFile] = useState<File | null>(null);
+
+  const [newFiles, setNewFiles] = useState<File[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
 
   const { mutateAsync: createP } = useAppCreateProduct();
   const { mutateAsync: updateP } = useAppUpdateProduct();
@@ -61,9 +63,19 @@ export default function Products() {
 
   const openEdit = (p: Product | 'new') => {
     setEditing(p);
+    setNewFiles([]);
     if (p === 'new') {
+      setExistingImages([]);
       form.reset({ name:'', nameAr:'', price:1, unit:'kg', categoryId:categories?.[0]?.id||1, featured:false, inStock:true, quantity:'', quantityAlert:'' });
     } else {
+      const imgs: string[] = [];
+      if (p.image) imgs.push(p.image);
+      if (p.images) {
+        for (const img of p.images) {
+          if (img && !imgs.includes(img)) imgs.push(img);
+        }
+      }
+      setExistingImages(imgs);
       const unit = (["kg", "piece", "bundle"] as const).includes(p.unit as "kg" | "piece" | "bundle")
         ? (p.unit as "kg" | "piece" | "bundle")
         : "kg";
@@ -82,11 +94,14 @@ export default function Products() {
   };
 
   const onSubmit = async (data: FormValues) => {
-    let imageUrl = typeof editing === 'object' && editing?.image ? editing.image : undefined;
-    if (file) {
-      const res = await uploadImg({ data: { file } });
-      imageUrl = res.url;
+    const uploadedUrls: string[] = [];
+    for (const f of newFiles) {
+      const res = await uploadImg({ data: { file: f } });
+      uploadedUrls.push(res.url);
     }
+
+    const allImages = [...existingImages, ...uploadedUrls];
+    const primaryImage = allImages[0] ?? undefined;
 
     const qty = data.quantity !== '' && data.quantity !== undefined ? Number(data.quantity) : null;
     const qtyAlert = data.quantityAlert !== '' && data.quantityAlert !== undefined ? Number(data.quantityAlert) : null;
@@ -99,7 +114,8 @@ export default function Products() {
       categoryId: data.categoryId,
       featured: data.featured,
       inStock: qty !== null ? qty > 0 : data.inStock,
-      image: imageUrl,
+      image: primaryImage,
+      images: allImages.length > 0 ? allImages : undefined,
       quantity: qty as number | undefined,
       quantityAlert: qtyAlert as number | undefined,
     };
@@ -109,7 +125,8 @@ export default function Products() {
     
     queryClient.invalidateQueries({ queryKey: ['/api/products'] });
     setEditing(null);
-    setFile(null);
+    setNewFiles([]);
+    setExistingImages([]);
   };
 
   const getStockBadge = (p: Product) => {
@@ -120,6 +137,20 @@ export default function Products() {
       return <Badge variant="outline" className="text-xs text-green-600 border-green-300">{p.quantity} {p.unit}</Badge>;
     }
     return <Badge variant="outline" className="text-xs text-green-600 border-green-300">{t('adminProductInStock')}</Badge>;
+  };
+
+  const removeExistingImage = (url: string) => {
+    setExistingImages(prev => prev.filter(i => i !== url));
+  };
+
+  const removeNewFile = (idx: number) => {
+    setNewFiles(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleFileAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = Array.from(e.target.files || []);
+    setNewFiles(prev => [...prev, ...picked]);
+    e.target.value = '';
   };
 
   return (
@@ -163,21 +194,33 @@ export default function Products() {
                 </TableCell>
               </TableRow>
             )}
-            {!productsLoading && filtered.map(p => (
-              <TableRow key={p.id}>
-                <TableCell><img src={p.image || ''} className="w-10 h-10 object-contain rounded bg-muted" alt="" /></TableCell>
-                <TableCell>{p.name} <br/><span className="text-muted-foreground text-xs">{p.nameAr}</span></TableCell>
-                <TableCell>{p.price} / {p.unit}</TableCell>
-                <TableCell>{getStockBadge(p)}</TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Edit className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="icon" className="text-destructive" onClick={async () => {
-                    await deleteP({ id: p.id });
-                    queryClient.invalidateQueries({ queryKey: ['/api/products'] });
-                  }}><Trash2 className="w-4 h-4" /></Button>
-                </TableCell>
-              </TableRow>
-            ))}
+            {!productsLoading && filtered.map(p => {
+              const imgCount = (p.images?.length ?? 0) + (p.image && !p.images?.includes(p.image) ? 1 : 0);
+              return (
+                <TableRow key={p.id}>
+                  <TableCell>
+                    <div className="relative inline-block">
+                      <img src={p.image || ''} className="w-10 h-10 object-contain rounded bg-muted" alt="" />
+                      {imgCount > 1 && (
+                        <span className="absolute -top-1 -end-1 bg-primary text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                          {imgCount}
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>{p.name} <br/><span className="text-muted-foreground text-xs">{p.nameAr}</span></TableCell>
+                  <TableCell>{p.price} / {p.unit}</TableCell>
+                  <TableCell>{getStockBadge(p)}</TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Edit className="w-4 h-4" /></Button>
+                    <Button variant="ghost" size="icon" className="text-destructive" onClick={async () => {
+                      await deleteP({ id: p.id });
+                      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+                    }}><Trash2 className="w-4 h-4" /></Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
@@ -243,10 +286,67 @@ export default function Products() {
                 <p className="text-xs text-muted-foreground">{t('adminProductStockDesc')}</p>
               </div>
 
-              <div>
-                <label className="text-sm font-medium leading-none">{t('adminProductImageLabel')}</label>
-                <Input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} className="mt-1.5" />
+              {/* Multi-image section */}
+              <div className="border border-border rounded-xl p-4 space-y-3 bg-muted/30">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <ImagePlus className="w-4 h-4 text-primary" />
+                  Product Images
+                  <span className="text-xs text-muted-foreground font-normal ml-1">
+                    ({existingImages.length + newFiles.length} total — first image is primary)
+                  </span>
+                </div>
+
+                {/* Existing images */}
+                {(existingImages.length > 0 || newFiles.length > 0) && (
+                  <div className="flex flex-wrap gap-2">
+                    {existingImages.map((url, i) => (
+                      <div key={url} className="relative group">
+                        <img src={url} className="w-16 h-16 object-cover rounded-lg border border-border" alt="" />
+                        {i === 0 && (
+                          <span className="absolute top-0.5 start-0.5 bg-primary text-white text-[9px] font-bold px-1 rounded">
+                            1st
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeExistingImage(url)}
+                          className="absolute -top-1.5 -end-1.5 w-5 h-5 bg-destructive text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                    {newFiles.map((f, i) => (
+                      <div key={i} className="relative group">
+                        <img src={URL.createObjectURL(f)} className="w-16 h-16 object-cover rounded-lg border-2 border-dashed border-primary/50" alt="" />
+                        <span className="absolute top-0.5 start-0.5 bg-blue-500 text-white text-[9px] font-bold px-1 rounded">
+                          new
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeNewFile(i)}
+                          className="absolute -top-1.5 -end-1.5 w-5 h-5 bg-destructive text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <label className="flex items-center gap-2 px-4 py-2 rounded-lg border border-dashed border-border cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all text-sm text-muted-foreground">
+                  <ImagePlus className="w-4 h-4" />
+                  Add images
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFileAdd}
+                    className="hidden"
+                  />
+                </label>
               </div>
+
               <Button type="submit" className="w-full">{t('adminSave')}</Button>
             </form>
           </Form>
