@@ -3,6 +3,7 @@ import { db } from "@workspace/db";
 import { promoCodesTable } from "@workspace/db/schema";
 import { eq, and, lte, isNull, isNotNull, desc } from "drizzle-orm";
 import { authenticate, requireAdmin, type AuthRequest } from "../middlewares/authenticate";
+import { broadcastToAdmins } from "./notifications";
 import { isValidEgyptianPhone, INVALID_PHONE_MSG } from "../lib/validation";
 import pino from "pino";
 
@@ -65,6 +66,7 @@ router.post("/admin/promo-codes", authenticate(), requireAdmin, async (req: Auth
     })
     .returning();
 
+  setImmediate(() => { broadcastToAdmins("promo_updated", {}); });
   res.status(201).json(promo);
 });
 
@@ -105,6 +107,7 @@ router.put("/admin/promo-codes/:id", authenticate(), requireAdmin, async (req: A
   }
 
   const [updated] = await db.update(promoCodesTable).set(updates).where(eq(promoCodesTable.id, id)).returning();
+  setImmediate(() => { broadcastToAdmins("promo_updated", {}); });
   res.json(updated);
 });
 
@@ -112,6 +115,7 @@ router.delete("/admin/promo-codes/:id", authenticate(), requireAdmin, async (req
   const id = parseInt(String(req.params.id));
   if (isNaN(id)) { res.status(400).json({ error: "Invalid promo ID" }); return; }
   await db.delete(promoCodesTable).where(eq(promoCodesTable.id, id));
+  setImmediate(() => { broadcastToAdmins("promo_updated", {}); });
   res.status(204).end();
 });
 

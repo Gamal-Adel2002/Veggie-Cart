@@ -88,6 +88,10 @@ export function AdminRealtimeSync() {
         queryClient.invalidateQueries({ queryKey: ['/api/admin/orders'] });
       });
 
+      es.addEventListener('promo_updated', () => {
+        queryClient.invalidateQueries({ queryKey: ['admin-promo-codes'] });
+      });
+
       es.addEventListener('store_status_changed', (e: MessageEvent) => {
         try {
           const data = JSON.parse(e.data);

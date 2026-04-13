@@ -17,8 +17,8 @@ export function useStoreStatus() {
   return useQuery<{ open: boolean }>({
     queryKey: ["/api/store/status"],
     queryFn: () => storeFetch("/status"),
-    staleTime: 60_000,
-    refetchInterval: 60_000,
+    staleTime: 5 * 60_000,
+    refetchInterval: 5 * 60_000,
   });
 }
 

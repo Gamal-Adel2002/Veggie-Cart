@@ -4,6 +4,7 @@ import { deliveryPersonsTable, ordersTable, orderItemsTable, deliveryZonesTable 
 import { eq, inArray, and, or } from "drizzle-orm";
 import { authenticate, requireDelivery, type AuthRequest } from "../middlewares/authenticate";
 import { comparePassword, generateToken } from "../lib/auth";
+import { broadcastToAdmins, broadcastToUser, broadcastToDeliveryPerson } from "./notifications";
 
 const router = Router();
 
@@ -182,6 +183,18 @@ router.put("/orders/:id/complete", authenticate(), requireDelivery, async (req: 
     .set({ status: "completed" })
     .where(eq(ordersTable.id, orderId))
     .returning();
+
+  // Notify all relevant parties that order status changed
+  setImmediate(() => {
+    const payload = { orderId, status: "completed" };
+    broadcastToAdmins("order_status_changed", payload);
+    if (order.userId) {
+      broadcastToUser(order.userId, "order_status_changed", payload, "customer");
+    }
+    if (order.deliveryPersonId) {
+      broadcastToDeliveryPerson(order.deliveryPersonId, "order_status_changed", payload);
+    }
+  });
 
   const { guestToken: _gt, ...safe } = updated;
   res.json(safe);
