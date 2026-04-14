@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -8,7 +8,7 @@ const router = Router();
 const uploadDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
-const ALLOWED_IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const ALLOWED_IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 
 // Media upload: images + videos + common document/file types for chat
 const ALLOWED_MEDIA_MIMES = new Set([
@@ -74,6 +74,19 @@ router.post("/media", mediaUpload.single("file"), (req, res) => {
   else if (mime.startsWith("video/")) mediaType = "video";
   const url = `/api/uploads/${req.file.filename}`;
   res.json({ url, mediaType });
+});
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+router.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  if (err && (err.name === "MulterError" || err.message)) {
+    const message =
+      err.code === "LIMIT_FILE_SIZE"
+        ? "File is too large"
+        : err.message || "Unsupported file type. Please use JPG, PNG, WebP, or GIF.";
+    res.status(400).json({ error: message });
+    return;
+  }
+  res.status(500).json({ error: "Internal server error" });
 });
 
 export default router;

@@ -16,6 +16,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl } from '@/components/
 import { useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2, Edit, Package } from 'lucide-react';
 import type { Product } from '@workspace/api-client-react';
+import { useToast } from '@/hooks/use-toast';
 
 const schema = z.object({
   name: z.string().min(1),
@@ -36,6 +37,7 @@ export default function Products() {
   const { data: categories } = useAppCategories();
   const [search, setSearch] = useState('');
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [editing, setEditing] = useState<Product | null | 'new'>(null);
 
   const filtered = useMemo(() => {
@@ -147,8 +149,16 @@ export default function Products() {
     setNewFiles(prev => prev.filter((_, i) => i !== idx));
   };
 
+  const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+
   const handleFileAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     const picked = Array.from(e.target.files || []);
+    const invalid = picked.filter(f => !ALLOWED_IMAGE_TYPES.has(f.type));
+    if (invalid.length > 0) {
+      toast({ title: t('unsupportedImageType'), variant: 'destructive' });
+      e.target.value = '';
+      return;
+    }
     setNewFiles(prev => [...prev, ...picked]);
     e.target.value = '';
   };
@@ -339,7 +349,7 @@ export default function Products() {
                   Add images
                   <input
                     type="file"
-                    accept="image/*"
+                    accept=".jpg,.jpeg,.png,.webp,.gif"
                     multiple
                     onChange={handleFileAdd}
                     className="hidden"

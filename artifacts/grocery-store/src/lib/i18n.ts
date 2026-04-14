@@ -714,6 +714,9 @@ export const dictionary = {
     adminAdminUpdatedDesc: "Changes saved successfully.",
     adminError: "Error",
 
+    // Image upload validation
+    unsupportedImageType: "Unsupported image type. Please use JPG, PNG, WebP, or GIF.",
+
     // Not found
     pageNotFound: "404 Page Not Found",
     pageNotFoundDesc: "The page you are looking for does not exist.",
@@ -1416,6 +1419,9 @@ export const dictionary = {
     adminAdminUpdated: "تم تحديث المشرف",
     adminAdminUpdatedDesc: "تم حفظ التغييرات بنجاح.",
     adminError: "خطأ",
+
+    // Image upload validation
+    unsupportedImageType: "نوع الصورة غير مدعوم. يُرجى استخدام JPG أو PNG أو WebP أو GIF.",
 
     // Not found
     pageNotFound: "404 الصفحة غير موجودة",

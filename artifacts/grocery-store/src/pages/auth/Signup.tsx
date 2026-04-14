@@ -50,11 +50,18 @@ export default function Signup() {
   const [preview, setPreview] = useState<string>('');
   const [uploading, setUploading] = useState(false);
 
+  const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-      setPreview(URL.createObjectURL(e.target.files[0]));
+    const picked = e.target.files?.[0];
+    if (!picked) return;
+    if (!ALLOWED_IMAGE_TYPES.has(picked.type)) {
+      toast({ title: t('unsupportedImageType'), variant: 'destructive' });
+      e.target.value = '';
+      return;
     }
+    setFile(picked);
+    setPreview(URL.createObjectURL(picked));
   };
 
   const onSubmit = async (data: z.infer<typeof schema>) => {
@@ -127,7 +134,7 @@ export default function Signup() {
                     : <Camera className="w-7 h-7 text-muted-foreground/50" />
                   }
                 </div>
-                <input type="file" id="profile" accept="image/*" className="hidden" onChange={handleFileChange} />
+                <input type="file" id="profile" accept=".jpg,.jpeg,.png,.webp,.gif" className="hidden" onChange={handleFileChange} />
                 <label
                   htmlFor="profile"
                   className="absolute -bottom-0.5 -right-0.5 w-7 h-7 bg-primary text-primary-foreground rounded-full cursor-pointer flex items-center justify-center shadow-md hover:bg-primary/90 transition-colors"

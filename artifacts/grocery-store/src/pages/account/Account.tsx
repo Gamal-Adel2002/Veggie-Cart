@@ -83,11 +83,18 @@ export default function Account() {
     setEditing(true);
   };
 
+  const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setImageFile(e.target.files[0]);
-      setPreviewImage(URL.createObjectURL(e.target.files[0]));
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+      toast({ title: t('unsupportedImageType'), variant: 'destructive' });
+      e.target.value = '';
+      return;
     }
+    setImageFile(file);
+    setPreviewImage(URL.createObjectURL(file));
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -284,7 +291,7 @@ export default function Account() {
                       : <UserIcon className="w-7 h-7 text-muted-foreground/50" />
                     }
                   </div>
-                  <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                  <input ref={fileRef} type="file" accept=".jpg,.jpeg,.png,.webp,.gif" className="hidden" onChange={handleFileChange} />
                   <button
                     type="button"
                     onClick={() => fileRef.current?.click()}
