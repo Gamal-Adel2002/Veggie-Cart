@@ -114,17 +114,17 @@ export function ProductCard({ product }: { product: Product }) {
             </span>
           )}
 
-          {/* Price tag */}
-          <div className="absolute bottom-2.5 end-2.5">
+          {/* Price tag — on mobile moves up to avoid overlapping the always-visible button */}
+          <div className="absolute end-2.5 bottom-12 md:bottom-2.5">
             <span className="inline-flex items-baseline gap-1 bg-background/95 dark:bg-card/95 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-sm border border-border/20 text-foreground font-bold text-sm">
               {product.price}
               <span className="text-[10px] text-muted-foreground font-normal">EGP</span>
             </span>
           </div>
 
-          {/* Add to cart */}
+          {/* Add to cart — always visible on mobile, hover-reveal on desktop */}
           {!isOutOfStock && (
-            <div className="absolute inset-x-2.5 bottom-2.5 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-200 ease-out">
+            <div className="absolute inset-x-2.5 bottom-2.5 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-200 ease-out">
               <motion.button
                 onClick={handleAdd}
                 whileTap={{ scale: 0.97 }}

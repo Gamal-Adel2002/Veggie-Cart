@@ -73,15 +73,15 @@ export default function Home() {
         </section>
 
         {/* ── Categories ────────────────────────────────────────────── */}
-        <section className="py-20 bg-background">
+        <section className="py-10 sm:py-20 bg-background">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-end justify-between mb-12">
+            <div className="flex items-end justify-between mb-6 sm:mb-12">
               <div>
                 <p className="text-accent font-semibold text-xs uppercase tracking-[0.18em] mb-2">
                   {t('explore')}
                 </p>
                 <h2
-                  className="text-4xl font-bold text-foreground leading-tight"
+                  className="text-2xl sm:text-4xl font-bold text-foreground leading-tight"
                   style={{ fontFamily: 'var(--font-serif)' }}
                 >
                   {t('categories')}
@@ -131,7 +131,7 @@ export default function Home() {
 
         {/* ── Products by category ───────────────────────────────────── */}
         {prodLoading ? (
-          <section className="py-20 bg-muted/25 border-t border-border/40">
+          <section className="py-10 sm:py-20 bg-muted/25 border-t border-border/40">
             <div className="flex justify-center py-16">
               <CircleNotch className="w-8 h-8 animate-spin text-primary" />
             </div>
@@ -141,10 +141,10 @@ export default function Home() {
             {productsByCategory.map(({ cat, items }, sectionIdx) => (
               <section
                 key={cat.id}
-                className={`py-16 border-t border-border/40 ${sectionIdx % 2 === 0 ? 'bg-muted/25' : 'bg-background'}`}
+                className={`py-10 sm:py-16 border-t border-border/40 ${sectionIdx % 2 === 0 ? 'bg-muted/25' : 'bg-background'}`}
               >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="flex items-end justify-between mb-10">
+                  <div className="flex items-end justify-between mb-6 sm:mb-10">
                     <div className="flex items-center gap-3">
                       <span className="text-3xl">{cat.icon}</span>
                       <div>
@@ -152,7 +152,7 @@ export default function Home() {
                           {items.length} {t('items')}
                         </p>
                         <h2
-                          className="text-2xl font-bold text-foreground"
+                          className="text-xl sm:text-2xl font-bold text-foreground"
                           style={{ fontFamily: 'var(--font-serif)' }}
                         >
                           {lang === 'ar' ? cat.nameAr : cat.name}
@@ -172,7 +172,7 @@ export default function Home() {
                     initial="hidden"
                     whileInView="visible"
                     viewport={{ once: true, margin: '-60px' }}
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+                    className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6"
                   >
                     {items.map((product) => (
                       <motion.div key={product.id} variants={fadeUp}>
@@ -185,10 +185,10 @@ export default function Home() {
             ))}
 
             {uncategorized.length > 0 && (
-              <section className="py-16 border-t border-border/40 bg-muted/25">
+              <section className="py-10 sm:py-16 border-t border-border/40 bg-muted/25">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="mb-10">
-                    <h2 className="text-2xl font-bold text-foreground" style={{ fontFamily: 'var(--font-serif)' }}>
+                  <div className="mb-6 sm:mb-10">
+                    <h2 className="text-xl sm:text-2xl font-bold text-foreground" style={{ fontFamily: 'var(--font-serif)' }}>
                       {t('featuredProducts')}
                     </h2>
                   </div>
@@ -197,7 +197,7 @@ export default function Home() {
                     initial="hidden"
                     whileInView="visible"
                     viewport={{ once: true, margin: '-60px' }}
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+                    className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6"
                   >
                     {uncategorized.map((product) => (
                       <motion.div key={product.id} variants={fadeUp}>
