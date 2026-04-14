@@ -85,7 +85,7 @@ export default function StoreHours() {
     <AdminLayout>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="bg-green-100 p-2.5 rounded-xl text-green-600">
+          <div className="bg-green-100 dark:bg-green-900/30 p-2.5 rounded-xl text-green-600 dark:text-green-400">
             <Clock className="w-5 h-5" />
           </div>
           <div>
@@ -146,7 +146,7 @@ export default function StoreHours() {
               value={edited[day].startTime}
               onChange={(e) => update(day, "startTime", e.target.value)}
               disabled={!edited[day].enabled}
-              className="w-36 rounded-xl border-green-100 focus:border-green-500 focus:ring-green-200"
+              className="w-36 rounded-xl border-border focus:border-primary focus:ring-primary/20"
             />
 
             <Input
@@ -154,7 +154,7 @@ export default function StoreHours() {
               value={edited[day].endTime}
               onChange={(e) => update(day, "endTime", e.target.value)}
               disabled={!edited[day].enabled}
-              className="w-36 rounded-xl border-green-100 focus:border-green-500 focus:ring-green-200"
+              className="w-36 rounded-xl border-border focus:border-primary focus:ring-primary/20"
             />
           </div>
         ))}
