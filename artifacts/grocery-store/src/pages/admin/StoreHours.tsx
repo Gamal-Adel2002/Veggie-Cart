@@ -109,8 +109,8 @@ export default function StoreHours() {
         </Button>
       </div>
 
-      <div className="bg-white border border-green-100/60 rounded-2xl overflow-hidden shadow-sm">
-        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-4 items-center px-6 py-3 border-b border-green-100/60 bg-muted/20">
+      <div className="bg-card border border-border/60 rounded-2xl overflow-hidden shadow-sm">
+        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-4 items-center px-6 py-3 border-b border-border/60 bg-muted/20">
           <p className="font-semibold text-sm text-muted-foreground">
             {t("adminStoreHoursDay")}
           </p>
@@ -128,7 +128,7 @@ export default function StoreHours() {
         {DAYS.map((day) => (
           <div
             key={day}
-            className={`grid grid-cols-[1fr_auto_auto_auto] gap-4 items-center px-6 py-4 border-b border-green-100/40 last:border-b-0 ${
+            className={`grid grid-cols-[1fr_auto_auto_auto] gap-4 items-center px-6 py-4 border-b border-border/40 last:border-b-0 ${
               !edited[day].enabled ? "opacity-50" : ""
             }`}
           >

@@ -7,12 +7,89 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminTranslation as useTranslation } from '@/lib/portalI18n';
-import { Tag, Search, Edit, Trash2, Sparkles } from 'lucide-react';
-import { format } from 'date-fns';
+import { Tag, Search, Edit, Trash2, Sparkles, CalendarIcon, Clock } from 'lucide-react';
+import { format, isValid } from 'date-fns';
 import { getErrorMessage } from '@/lib/utils';
+
+interface DateTimePickerProps {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+}
+
+function DateTimePicker({ label, value, onChange }: DateTimePickerProps) {
+  const [open, setOpen] = useState(false);
+
+  const selectedDate = value ? new Date(value) : undefined;
+  const timeStr = value ? format(new Date(value), 'HH:mm') : '00:00';
+
+  const handleDaySelect = (day: Date | undefined) => {
+    if (!day) return;
+    const [h, m] = timeStr.split(':');
+    day.setHours(Number(h), Number(m), 0, 0);
+    onChange(format(day, "yyyy-MM-dd'T'HH:mm"));
+  };
+
+  const handleTimeChange = (t: string) => {
+    if (!selectedDate) return;
+    const [h, m] = t.split(':');
+    const d = new Date(selectedDate);
+    d.setHours(Number(h), Number(m), 0, 0);
+    onChange(format(d, "yyyy-MM-dd'T'HH:mm"));
+  };
+
+  return (
+    <div>
+      <label className="text-sm font-semibold block mb-1">{label}</label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className="w-full justify-start text-start font-normal gap-2"
+          >
+            <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+            {selectedDate && isValid(selectedDate)
+              ? <span>{format(selectedDate, 'MMM dd, yyyy HH:mm')}</span>
+              : <span className="text-muted-foreground">Pick a date…</span>
+            }
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={handleDaySelect}
+            captionLayout="dropdown"
+          />
+          <div className="border-t border-border px-3 py-2 flex items-center gap-2">
+            <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
+            <Input
+              type="time"
+              value={timeStr}
+              onChange={e => handleTimeChange(e.target.value)}
+              className="h-8 text-sm"
+            />
+            <Button size="sm" className="h-8 shrink-0" onClick={() => setOpen(false)}>Done</Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+      {value && (
+        <button
+          type="button"
+          className="text-xs text-muted-foreground mt-1 hover:text-destructive transition-colors"
+          onClick={() => onChange('')}
+        >
+          Clear
+        </button>
+      )}
+    </div>
+  );
+}
 
 const PROMO_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 function generatePromoCode(length = 8): string {
@@ -288,14 +365,16 @@ export default function PromoCodes() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-semibold block mb-1">{t('adminPromoValidFrom')}</label>
-                <Input type="datetime-local" value={formData.validFrom} onChange={e => setFormData({...formData, validFrom: e.target.value})} />
-              </div>
-              <div>
-                <label className="text-sm font-semibold block mb-1">{t('adminPromoValidUntil')}</label>
-                <Input type="datetime-local" value={formData.validUntil} onChange={e => setFormData({...formData, validUntil: e.target.value})} />
-              </div>
+              <DateTimePicker
+                label={t('adminPromoValidFrom')}
+                value={formData.validFrom}
+                onChange={val => setFormData({...formData, validFrom: val})}
+              />
+              <DateTimePicker
+                label={t('adminPromoValidUntil')}
+                value={formData.validUntil}
+                onChange={val => setFormData({...formData, validUntil: val})}
+              />
             </div>
 
             <div className="flex items-center gap-2">
