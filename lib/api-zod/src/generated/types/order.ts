@@ -19,6 +19,9 @@ export interface Order {
   notes?: string | null;
   status: OrderStatus;
   totalPrice: number;
+  discountAmount?: number | null;
+  deliveryFee?: number | null;
+  finalPrice?: number | null;
   items: OrderItem[];
   deliveryPersonId?: number | null;
   deliveryPerson?: DeliveryPerson | null;

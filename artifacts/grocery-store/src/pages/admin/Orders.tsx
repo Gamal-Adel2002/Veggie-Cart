@@ -124,7 +124,7 @@ export default function Orders() {
                 <TableCell className="font-medium">#{order.id}</TableCell>
                 <TableCell>{order.customerName}</TableCell>
                 <TableCell>{format(new Date(order.createdAt), 'MMM dd, HH:mm')}</TableCell>
-                <TableCell>{order.totalPrice} {t('adminCurrencyLabel')}</TableCell>
+                <TableCell>{(order.finalPrice ?? order.totalPrice).toFixed(2)} {t('adminCurrencyLabel')}</TableCell>
                 <TableCell><Badge variant="outline">{t(STATUS_KEY[order.status] || order.status)}</Badge></TableCell>
                 <TableCell>
                   <Button variant="secondary" size="sm" onClick={() => {
@@ -175,6 +175,30 @@ export default function Orders() {
             <div className="bg-muted p-4 rounded-xl text-sm space-y-1">
               <p><strong>{t('adminOrderCustomerLabel')}:</strong> {selectedOrder?.customerName} ({selectedOrder?.customerPhone})</p>
               <p><strong>{t('adminOrderItemsLabel')}:</strong> {selectedOrder?.items.map(i => `${i.quantity}x ${i.productName}`).join(', ')}</p>
+              {selectedOrder && (
+                <div className="mt-3 pt-3 border-t border-border/40 space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">{t('adminSubtotalCol')}</span>
+                    <span>{Number(selectedOrder.totalPrice).toFixed(2)} {t('adminCurrencyLabel')}</span>
+                  </div>
+                  {(selectedOrder.discountAmount ?? 0) > 0 && (
+                    <div className="flex justify-between text-primary">
+                      <span>{t('adminOrderDiscountCol')}</span>
+                      <span>-{Number(selectedOrder.discountAmount).toFixed(2)} {t('adminCurrencyLabel')}</span>
+                    </div>
+                  )}
+                  {(selectedOrder.deliveryFee ?? 0) > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">{t('adminDeliveryFee')}</span>
+                      <span>{Number(selectedOrder.deliveryFee).toFixed(2)} {t('adminCurrencyLabel')}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-bold pt-1 border-t border-border/40">
+                    <span>{t('adminOrderTotalCol')}</span>
+                    <span>{Number(selectedOrder.finalPrice ?? selectedOrder.totalPrice).toFixed(2)} {t('adminCurrencyLabel')}</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </DialogContent>

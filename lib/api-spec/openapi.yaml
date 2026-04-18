@@ -1502,6 +1502,18 @@ components:
         totalPrice:
           type: number
           format: double
+        discountAmount:
+          type: number
+          format: double
+          nullable: true
+        deliveryFee:
+          type: number
+          format: double
+          nullable: true
+        finalPrice:
+          type: number
+          format: double
+          nullable: true
         items:
           type: array
           items:

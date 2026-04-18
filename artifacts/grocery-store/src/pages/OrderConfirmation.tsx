@@ -64,7 +64,7 @@ export default function OrderConfirmation() {
               </div>
               <div className="pt-4 border-t border-border/40 flex justify-between items-center">
                 <span className="font-semibold text-sm">{t('totalPaidCash')}</span>
-                <span className="text-lg font-bold text-primary">{order.totalPrice} EGP</span>
+                <span className="text-lg font-bold text-primary">{(order.finalPrice ?? order.totalPrice).toFixed(2)} EGP</span>
               </div>
             </div>
 

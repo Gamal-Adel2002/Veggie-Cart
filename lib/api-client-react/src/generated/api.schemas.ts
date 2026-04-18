@@ -121,7 +121,6 @@ export interface Product {
   price: number;
   unit: ProductUnit;
   image?: string | null;
-  images?: string[] | null;
   categoryId?: number | null;
   category?: Category | null;
   featured: boolean;
@@ -148,7 +147,6 @@ export interface ProductInput {
   price: number;
   unit: ProductInputUnit;
   image?: string;
-  images?: string[];
   categoryId?: number;
   featured?: boolean;
   inStock?: boolean;
@@ -216,6 +214,9 @@ export interface Order {
   notes?: string | null;
   status: OrderStatus;
   totalPrice: number;
+  discountAmount?: number | null;
+  deliveryFee?: number | null;
+  finalPrice?: number | null;
   items: OrderItem[];
   deliveryPersonId?: number | null;
   deliveryPerson?: DeliveryPerson | null;

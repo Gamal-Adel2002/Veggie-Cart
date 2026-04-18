@@ -362,6 +362,9 @@ export const GetOrdersResponseItem = zod.object({
     "cancelled",
   ]),
   totalPrice: zod.number(),
+  discountAmount: zod.number().nullish(),
+  deliveryFee: zod.number().nullish(),
+  finalPrice: zod.number().nullish(),
   items: zod.array(
     zod.object({
       id: zod.number(),
@@ -433,6 +436,9 @@ export const GetOrderResponse = zod.object({
     "cancelled",
   ]),
   totalPrice: zod.number(),
+  discountAmount: zod.number().nullish(),
+  deliveryFee: zod.number().nullish(),
+  finalPrice: zod.number().nullish(),
   items: zod.array(
     zod.object({
       id: zod.number(),
@@ -494,6 +500,9 @@ export const ModifyOrderResponse = zod.object({
     "cancelled",
   ]),
   totalPrice: zod.number(),
+  discountAmount: zod.number().nullish(),
+  deliveryFee: zod.number().nullish(),
+  finalPrice: zod.number().nullish(),
   items: zod.array(
     zod.object({
       id: zod.number(),
@@ -546,6 +555,9 @@ export const CancelOrderResponse = zod.object({
     "cancelled",
   ]),
   totalPrice: zod.number(),
+  discountAmount: zod.number().nullish(),
+  deliveryFee: zod.number().nullish(),
+  finalPrice: zod.number().nullish(),
   items: zod.array(
     zod.object({
       id: zod.number(),
@@ -598,6 +610,9 @@ export const AdminGetOrdersResponseItem = zod.object({
     "cancelled",
   ]),
   totalPrice: zod.number(),
+  discountAmount: zod.number().nullish(),
+  deliveryFee: zod.number().nullish(),
+  finalPrice: zod.number().nullish(),
   items: zod.array(
     zod.object({
       id: zod.number(),
@@ -661,6 +676,9 @@ export const UpdateOrderStatusResponse = zod.object({
     "cancelled",
   ]),
   totalPrice: zod.number(),
+  discountAmount: zod.number().nullish(),
+  deliveryFee: zod.number().nullish(),
+  finalPrice: zod.number().nullish(),
   items: zod.array(
     zod.object({
       id: zod.number(),
@@ -718,6 +736,9 @@ export const AssignDeliveryResponse = zod.object({
       "cancelled",
     ]),
     totalPrice: zod.number(),
+    discountAmount: zod.number().nullish(),
+    deliveryFee: zod.number().nullish(),
+    finalPrice: zod.number().nullish(),
     items: zod.array(
       zod.object({
         id: zod.number(),

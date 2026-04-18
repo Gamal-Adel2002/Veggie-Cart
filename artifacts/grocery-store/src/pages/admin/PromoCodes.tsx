@@ -32,7 +32,7 @@ function DateTimePicker({ label, value, onChange }: DateTimePickerProps) {
     if (!day) return;
     const [h, m] = timeStr.split(':');
     day.setHours(Number(h), Number(m), 0, 0);
-    onChange(format(day, "yyyy-MM-dd'T'HH:mm"));
+    onChange(day.toISOString());
   };
 
   const handleTimeChange = (t: string) => {
@@ -40,7 +40,7 @@ function DateTimePicker({ label, value, onChange }: DateTimePickerProps) {
     const [h, m] = t.split(':');
     const d = new Date(selectedDate);
     d.setHours(Number(h), Number(m), 0, 0);
-    onChange(format(d, "yyyy-MM-dd'T'HH:mm"));
+    onChange(d.toISOString());
   };
 
   return (
@@ -177,8 +177,8 @@ export default function PromoCodes() {
       discountValue: String(promo.discountValue),
       maxUses: promo.maxUses != null ? String(promo.maxUses) : '',
       active: promo.active,
-      validFrom: promo.validFrom ? promo.validFrom.slice(0, 16) : '',
-      validUntil: promo.validUntil ? promo.validUntil.slice(0, 16) : '',
+      validFrom: promo.validFrom ?? '',
+      validUntil: promo.validUntil ?? '',
     });
     setUnlimited(promo.maxUses === null);
     setDialogOpen(true);

@@ -5,6 +5,13 @@ import { useTranslation } from '@/lib/i18n';
 import { Link } from 'wouter';
 import { Minus, Plus, Trash, ArrowRight, ShoppingBag } from '@phosphor-icons/react';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+
+interface DeliveryFeeSettings {
+  feeType: "fixed" | "percentage";
+  feeValue: number;
+  minimumFee: number;
+}
 
 export default function Cart() {
   const { t, lang } = useTranslation();
@@ -12,6 +19,26 @@ export default function Cart() {
   const updateQty = useStore(s => s.updateQuantity);
   const remove = useStore(s => s.removeFromCart);
   const total = useStore(s => s.getCartTotal());
+
+  const { data: deliverySettings } = useQuery<DeliveryFeeSettings>({
+    queryKey: ['delivery-settings'],
+    queryFn: async () => {
+      const res = await fetch('/api/delivery-fee');
+      if (!res.ok) throw new Error('Failed to fetch delivery fee');
+      return res.json();
+    },
+    staleTime: 2 * 60 * 1000,
+  });
+
+  let deliveryFee = 0;
+  if (deliverySettings) {
+    deliveryFee = deliverySettings.feeType === 'percentage'
+      ? total * (deliverySettings.feeValue / 100)
+      : deliverySettings.feeValue;
+    if (deliverySettings.minimumFee > 0) deliveryFee = Math.max(deliveryFee, deliverySettings.minimumFee);
+    deliveryFee = Math.round(deliveryFee * 100) / 100;
+  }
+  const grandTotal = total + deliveryFee;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -112,13 +139,19 @@ export default function Cart() {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">{t('delivery')}</span>
-                    <span className="text-primary font-medium">{t('free')}</span>
+                    {!deliverySettings ? (
+                      <span className="text-muted-foreground font-medium text-xs">{t('estimatedDelivery').split(':')[0]}…</span>
+                    ) : deliveryFee > 0 ? (
+                      <span className="font-medium">{deliveryFee.toFixed(2)} EGP</span>
+                    ) : (
+                      <span className="text-primary font-medium">{t('free')}</span>
+                    )}
                   </div>
                 </div>
 
                 <div className="flex justify-between font-bold text-xl pt-4 border-t border-border/40 mb-6">
                   <span>{t('total')}</span>
-                  <span>{total.toFixed(2)} EGP</span>
+                  <span>{grandTotal.toFixed(2)} EGP</span>
                 </div>
 
                 <Link href="/checkout">
