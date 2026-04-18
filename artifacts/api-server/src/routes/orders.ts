@@ -314,17 +314,19 @@ router.post("/", authenticate(false), async (req: AuthRequest, res) => {
   // Notify admin(s) about new order (SSE + push) — fire and forget
   setImmediate(async () => {
     try {
+      const displayPrice = full?.finalPrice ?? full?.totalPrice ?? 0;
       broadcastToAdmins("new_order", {
         orderId: orderId!,
         customerName: full?.customerName || customerName,
         totalPrice: full?.totalPrice || 0,
+        finalPrice: displayPrice,
         url: `/admin/orders?orderId=${orderId}`,
       });
       await sendPushToAdmins({
         title: "FreshVeg — New Order",
         titleAr: "فريش فيج — طلب جديد",
-        body: `${full?.customerName || customerName} · EGP ${(full?.totalPrice || 0).toFixed(2)}`,
-        bodyAr: `${full?.customerName || customerName} · ${(full?.totalPrice || 0).toFixed(2)} ج.م`,
+        body: `${full?.customerName || customerName} · EGP ${Number(displayPrice).toFixed(2)}`,
+        bodyAr: `${full?.customerName || customerName} · ${Number(displayPrice).toFixed(2)} ج.م`,
         url: `/admin/orders?orderId=${orderId}`,
       });
     } catch (err) {

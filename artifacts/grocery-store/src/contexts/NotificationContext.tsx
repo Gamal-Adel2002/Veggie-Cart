@@ -120,7 +120,7 @@ function getLocalizedText(
   if (eventType === 'new_order') {
     const orderId = data.orderId as number;
     const customerName = data.customerName as string;
-    const price = Number(data.totalPrice).toFixed(2);
+    const price = Number(data.finalPrice ?? data.totalPrice).toFixed(2);
     if (lang === 'ar') {
       return {
         title: 'طلب جديد',

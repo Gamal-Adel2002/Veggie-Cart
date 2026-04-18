@@ -423,7 +423,7 @@ export default function Account() {
                       <p className="text-xs text-muted-foreground mt-0.5">{format(new Date(order.createdAt), 'MMM dd, yyyy — hh:mm a')}</p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <p className="font-bold text-lg text-primary">{order.totalPrice.toFixed(2)} EGP</p>
+                      <p className="font-bold text-lg text-primary">{(order.finalPrice ?? order.totalPrice).toFixed(2)} EGP</p>
                       <Badge variant="outline" className={`px-3 py-0.5 text-xs border ${statusColors[order.status] || ''}`}>
                         {t(`status.${order.status}`)}
                       </Badge>

@@ -41,6 +41,9 @@ interface DeliveryOrder {
   longitude: number | null;
   notes: string | null;
   totalPrice: number;
+  finalPrice?: number | null;
+  deliveryFee?: number | null;
+  discountAmount?: number | null;
   status: string;
   createdAt: string;
   items: OrderItem[];
@@ -236,7 +239,7 @@ function OrderCard({ order, lang, t, onComplete, isCompleting }: {
         </ul>
         <div className="flex justify-between font-bold text-sm mt-2 pt-2 border-t border-zinc-800">
           <span>{t('deliveryTotal')}</span>
-          <span className="text-primary">{order.totalPrice} {currency}</span>
+          <span className="text-primary">{Number(order.finalPrice ?? order.totalPrice).toFixed(2)} {currency}</span>
         </div>
       </div>
 
