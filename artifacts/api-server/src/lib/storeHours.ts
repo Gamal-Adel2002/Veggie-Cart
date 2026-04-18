@@ -3,9 +3,10 @@ import { storeSettingsTable, type DayKey } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 
 const CAIRO_TZ = "Africa/Cairo";
-const DAY_MAP = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
-function getCairoTimeParts(now: Date): { dayName: DayKey; currentMinutes: number } {
+const DEFAULT_ENTRY = { enabled: true, startTime: "08:00", endTime: "22:00" };
+
+function getCairoTimeParts(now: Date): { dayName: string; currentMinutes: number } {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: CAIRO_TZ,
     weekday: "long",
@@ -19,28 +20,14 @@ function getCairoTimeParts(now: Date): { dayName: DayKey; currentMinutes: number
   const minute = parseInt(parts.find((p) => p.type === "minute")?.value ?? "0", 10);
   const hour = hourRaw === 24 ? 0 : hourRaw;
 
-  return {
-    dayName: weekday as DayKey,
-    currentMinutes: hour * 60 + minute,
-  };
+  return { dayName: weekday, currentMinutes: hour * 60 + minute };
 }
 
-export async function isStoreOpenNow(): Promise<boolean> {
-  const rows = await db
-    .select()
-    .from(storeSettingsTable)
-    .where(eq(storeSettingsTable.id, 1))
-    .limit(1);
-
-  if (rows.length === 0) return true;
-
-  const { schedule } = rows[0];
-  if (!schedule) return true;
-
-  const { dayName, currentMinutes } = getCairoTimeParts(new Date());
-  const daySchedule = schedule[dayName as string];
-
-  if (!daySchedule || !daySchedule.enabled) return false;
+function isOpenBySchedule(
+  daySchedule: { enabled: boolean; startTime: string; endTime: string },
+  currentMinutes: number
+): boolean {
+  if (!daySchedule.enabled) return false;
 
   const [startH, startM] = daySchedule.startTime.split(":").map(Number);
   const [endH, endM] = daySchedule.endTime.split(":").map(Number);
@@ -52,6 +39,28 @@ export async function isStoreOpenNow(): Promise<boolean> {
     return currentMinutes >= startMinutes && currentMinutes < endMinutes;
   }
 
-  // Overnight schedule (e.g. 22:00 - 06:00)
+  // Overnight schedule (e.g. 22:00 – 06:00)
   return currentMinutes >= startMinutes || currentMinutes < endMinutes;
+}
+
+export async function isStoreOpenNow(): Promise<boolean> {
+  const rows = await db
+    .select()
+    .from(storeSettingsTable)
+    .where(eq(storeSettingsTable.id, 1))
+    .limit(1);
+
+  const { dayName, currentMinutes } = getCairoTimeParts(new Date());
+
+  if (rows.length === 0 || !rows[0].schedule) {
+    // No saved schedule — apply the default (08:00–22:00 daily, matching UI defaults)
+    return isOpenBySchedule(DEFAULT_ENTRY, currentMinutes);
+  }
+
+  const schedule = rows[0].schedule as Record<string, { enabled: boolean; startTime: string; endTime: string }>;
+
+  // Use saved entry for the day, fall back to default if that day hasn't been configured yet
+  const daySchedule = schedule[dayName] ?? DEFAULT_ENTRY;
+
+  return isOpenBySchedule(daySchedule, currentMinutes);
 }
