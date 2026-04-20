@@ -236,15 +236,13 @@ The Flutter app already uses `FLUTTER_API_BASE_URL` as a build-time variable. Th
 
 ---
 
-## App Credentials Summary
+## App Review Credentials (for App Store submission)
 
-| Role | Username / Phone | Password |
-|------|------------------|----------|
-| Admin | 01000000000 | admin123 |
-| Customer | (register via app) | — |
-| Delivery (ahmed) | ahmed | delivery123 |
-| Delivery (mohamed) | mohamed | delivery123 |
-| Delivery (khaled) | khaled | delivery123 |
+Apple requires working login credentials when submitting for review. Use your admin account credentials (or a dedicated test account) when filling in the **App Review Information** section in App Store Connect. Do not include real production credentials in any public document — store them securely and share only with the App Store review team via the App Store Connect form.
+
+To create a test account:
+1. Register a new customer account in the app, or
+2. Use the admin account you set up during database seeding (see your `scripts/src/seed.ts` for the credentials you chose)
 
 ---
 
