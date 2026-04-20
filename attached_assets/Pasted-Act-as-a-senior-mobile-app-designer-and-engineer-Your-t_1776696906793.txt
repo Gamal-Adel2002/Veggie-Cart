@@ -1,0 +1,49 @@
+Act as a senior mobile app designer and engineer.
+
+Your task is to analyze the current approved web app inside this Replit project, understand its functionality, pages, user flows, and business logic directly from the existing project, and then create a mobile application version based on it.
+
+Instructions:
+
+1) First, inspect the existing web app in this project:
+- analyze the current pages
+- analyze the main user flows
+- identify the key features
+- understand the business logic
+- review the existing design style and branding
+- detect forms, navigation patterns, product flows, cart/checkout flows, dashboards, authentication flows, and other important functionality
+
+2) Then create a mobile app version that:
+- keeps the same core functionality as the web app
+- preserves the same product goals and business logic
+- adapts the experience properly for mobile devices
+- uses mobile-first navigation and UI patterns
+- keeps visual consistency with the current website, while making it feel natural as a mobile app
+
+3) While converting from web to mobile:
+- keep all essential features
+- adapt layouts, navigation, and interactions for smaller screens
+- simplify or reorganize flows where needed for better mobile UX
+- replace web-only patterns with better mobile alternatives when necessary
+
+4) Build a complete mobile app structure including:
+- all main screens
+- navigation flow
+- reusable components
+- loading, empty, success, and error states
+- authentication flow if it exists in the website
+- product/order/account/checkout flows if they exist in the website
+- dashboard/admin flows only if they make sense on mobile
+
+5) Before implementation, give me a short summary of:
+- the web app features you found
+- how you plan to map them into mobile
+- any important UX adjustments you recommend
+
+6) Then proceed to build the mobile app.
+
+Important:
+- Do not ask me to manually describe the website functionality unless something is truly missing
+- Read the functionality directly from the existing project
+- Do not create a generic app unrelated to the current website
+- Base the mobile app on the actual implemented website in this Replit project
+- Keep the result polished, modern, and production-like
