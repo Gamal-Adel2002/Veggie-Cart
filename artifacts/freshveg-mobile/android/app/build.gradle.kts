@@ -74,7 +74,10 @@ android {
             create("release") {
                 keyAlias = keyProperties["keyAlias"] as String
                 keyPassword = keyProperties["keyPassword"] as String
-                storeFile = file(keyProperties["storeFile"] as String)
+                // rootProject.file resolves from android/ (the Android root), so
+                // "../freshveg-release.jks" correctly points to mobile root.
+                // Using plain file() would resolve from android/app/ (one level too deep).
+                storeFile = rootProject.file(keyProperties["storeFile"] as String)
                 storePassword = keyProperties["storePassword"] as String
             }
         }
