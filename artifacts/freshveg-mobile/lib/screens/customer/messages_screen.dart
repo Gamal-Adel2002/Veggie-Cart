@@ -106,22 +106,23 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Support Chat', style: TextStyle(fontSize: 16)),
+            Text(l10n.supportChat, style: const TextStyle(fontSize: 16)),
             Row(
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 4,
                   backgroundColor: Colors.green,
                 ),
-                SizedBox(width: 4),
-                Text('Live',
-                    style: TextStyle(
+                const SizedBox(width: 4),
+                Text(l10n.liveIndicator,
+                    style: const TextStyle(
                         fontSize: 11, fontWeight: FontWeight.normal)),
               ],
             ),

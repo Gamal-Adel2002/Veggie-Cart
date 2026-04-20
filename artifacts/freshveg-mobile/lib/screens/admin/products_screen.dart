@@ -200,7 +200,7 @@ class _ProductFormState extends State<_ProductForm> {
   bool _featured = false;
   bool _inStock = true;
   bool _loading = false;
-  File? _imageFile;
+  List<File> _imageFiles = [];
   late List<String> _existingImages;
 
   @override
@@ -220,16 +220,24 @@ class _ProductFormState extends State<_ProductForm> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImages() async {
     final picker = ImagePicker();
-    final img = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
-    if (img != null) setState(() => _imageFile = File(img.path));
+    final picked = await picker.pickMultiImage(imageQuality: 85);
+    if (picked.isNotEmpty) {
+      setState(() {
+        _imageFiles.addAll(picked.map((x) => File(x.path)));
+      });
+    }
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
     try {
+      final newImages = <MultipartFile>[];
+      for (final f in _imageFiles) {
+        newImages.add(await MultipartFile.fromFile(f.path));
+      }
       final data = FormData.fromMap({
         'name': _name.text.trim(),
         'nameAr': _nameAr.text.trim(),
@@ -242,8 +250,7 @@ class _ProductFormState extends State<_ProductForm> {
         if (_qty.text.isNotEmpty) 'quantity': int.tryParse(_qty.text),
         if (_alertCtrl.text.isNotEmpty)
           'quantityAlert': int.tryParse(_alertCtrl.text),
-        if (_imageFile != null)
-          'images': await MultipartFile.fromFile(_imageFile!.path),
+        if (newImages.isNotEmpty) 'images': newImages,
         'existingImages': _existingImages.join(','),
       });
       if (widget.product != null) {
@@ -288,35 +295,86 @@ class _ProductFormState extends State<_ProductForm> {
                 ],
               ),
               const SizedBox(height: 16),
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  height: 100,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: _imageFile != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(11),
-                          child: Image.file(_imageFile!, fit: BoxFit.cover),
-                        )
-                      : const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.add_photo_alternate_outlined,
-                                  size: 32, color: Colors.grey),
-                              SizedBox(height: 4),
-                              Text('Add Photo',
-                                  style: TextStyle(color: Colors.grey)),
-                            ],
+              if (_imageFiles.isNotEmpty) ...[
+                SizedBox(
+                  height: 80,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _imageFiles.length + 1,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (_, i) {
+                      if (i == _imageFiles.length) {
+                        return GestureDetector(
+                          onTap: _pickImages,
+                          child: Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: const Icon(Icons.add_photo_alternate_outlined,
+                                color: Colors.grey),
                           ),
-                        ),
+                        );
+                      }
+                      return Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.file(
+                              _imageFiles[i],
+                              width: 80,
+                              height: 80,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          Positioned(
+                            top: 2,
+                            right: 2,
+                            child: GestureDetector(
+                              onTap: () => setState(() => _imageFiles.removeAt(i)),
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  color: Colors.black54,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.close,
+                                    size: 16, color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 ),
-              ),
+              ] else
+                GestureDetector(
+                  onTap: _pickImages,
+                  child: Container(
+                    height: 80,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.add_photo_alternate_outlined,
+                              size: 32, color: Colors.grey),
+                          SizedBox(height: 4),
+                          Text('Add Photos',
+                              style: TextStyle(color: Colors.grey)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               const SizedBox(height: 14),
               TextFormField(
                 controller: _name,

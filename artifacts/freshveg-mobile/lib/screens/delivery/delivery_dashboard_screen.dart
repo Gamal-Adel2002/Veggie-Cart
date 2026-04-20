@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +10,19 @@ import '../../providers/auth_provider.dart';
 import '../../services/api_client.dart';
 import '../../widgets/order_status_badge.dart';
 import '../../widgets/empty_state.dart';
+
+/// Haversine distance in metres between two lat/lng points.
+double _haversineM(double lat1, double lng1, double lat2, double lng2) {
+  const r = 6371000.0;
+  final dLat = (lat2 - lat1) * math.pi / 180;
+  final dLng = (lng2 - lng1) * math.pi / 180;
+  final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+      math.cos(lat1 * math.pi / 180) *
+          math.cos(lat2 * math.pi / 180) *
+          math.sin(dLng / 2) *
+          math.sin(dLng / 2);
+  return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+}
 
 final _myDeliveriesProvider = FutureProvider<List<Order>>((ref) async {
   final res = await apiClient.get('/delivery-portal/my-orders');
@@ -122,6 +136,41 @@ class _ActiveDeliveriesTab extends ConsumerWidget {
             if (b == 'Other / No Zone') return -1;
             return a.compareTo(b);
           });
+
+        // Within each zone, sort orders by proximity (greedy nearest-neighbor).
+        // Orders with GPS coordinates are sorted first in a route order,
+        // orders without coordinates are appended at the end.
+        for (final zone in sortedZones) {
+          final orders = grouped[zone]!;
+          final withCoords = orders
+              .where((o) => o.latitude != null && o.longitude != null)
+              .toList();
+          final noCoords = orders
+              .where((o) => o.latitude == null || o.longitude == null)
+              .toList();
+
+          if (withCoords.length > 1) {
+            // Compute zone centroid as starting reference
+            final cLat = withCoords.map((o) => o.latitude!).reduce((a, b) => a + b) /
+                withCoords.length;
+            final cLng = withCoords.map((o) => o.longitude!).reduce((a, b) => a + b) /
+                withCoords.length;
+
+            // Greedy nearest-neighbor route starting from centroid
+            final sorted = <Order>[];
+            final remaining = List<Order>.from(withCoords);
+            double curLat = cLat, curLng = cLng;
+            while (remaining.isNotEmpty) {
+              remaining.sort((a, b) => _haversineM(curLat, curLng, a.latitude!, a.longitude!)
+                  .compareTo(_haversineM(curLat, curLng, b.latitude!, b.longitude!)));
+              final nearest = remaining.removeAt(0);
+              sorted.add(nearest);
+              curLat = nearest.latitude!;
+              curLng = nearest.longitude!;
+            }
+            grouped[zone] = [...sorted, ...noCoords];
+          }
+        }
 
         return RefreshIndicator(
           onRefresh: () async => ref.invalidate(_myDeliveriesProvider),

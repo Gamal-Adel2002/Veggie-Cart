@@ -295,19 +295,19 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               ),
             ],
             const SizedBox(height: 16),
-            const Text('Order Notes',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(l10n.orderNotes,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             TextField(
               controller: _notesCtrl,
-              decoration: const InputDecoration(
-                hintText: 'Any special instructions? (optional)',
+              decoration: InputDecoration(
+                hintText: l10n.orderNotes,
               ),
               maxLines: 2,
             ),
             const SizedBox(height: 16),
-            const Text('Promo Code',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(l10n.promoCode,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -332,7 +332,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       ? const SizedBox(
                           width: 18, height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Text('Apply'),
+                      : Text(l10n.apply),
                 ),
               ],
             ),
@@ -356,21 +356,21 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            const Card(
+            Card(
               child: Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    Icon(Icons.payments_outlined, color: kPrimaryGreen),
-                    SizedBox(width: 12),
+                    const Icon(Icons.payments_outlined, color: kPrimaryGreen),
+                    const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Payment Method',
-                            style: TextStyle(
+                        Text(l10n.paymentMethod,
+                            style: const TextStyle(
                                 fontWeight: FontWeight.w600, fontSize: 13)),
-                        Text('Cash on Delivery',
-                            style: TextStyle(color: Colors.grey)),
+                        Text(l10n.cashOnDelivery,
+                            style: const TextStyle(color: Colors.grey)),
                       ],
                     ),
                   ],
@@ -387,7 +387,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ? const SizedBox(
                         width: 22, height: 22,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Place Order', style: TextStyle(fontSize: 16)),
+                    : Text(l10n.placeOrder, style: const TextStyle(fontSize: 16)),
               ),
             ),
           ],
