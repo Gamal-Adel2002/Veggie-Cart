@@ -106,25 +106,20 @@ In your Replit project, open the **Secrets** tab (lock icon in the sidebar) and 
 | `ANDROID_KEY_PASSWORD` | The key password you chose (usually the same) |
 | `ANDROID_KEY_ALIAS` | `freshveg` |
 
-### Step 3: Generate key.properties and Build the Release Bundle
+### Step 3: Build the Release Bundle (one command)
 
-Before every release build, run the key.properties generator (reads the secrets from the environment):
+Once the four Replit Secrets are in place, the Gradle build script automatically decodes the keystore and creates `android/key.properties` — no extra steps needed.
 
 ```bash
 cd artifacts/freshveg-mobile
-bash scripts/generate-key-properties.sh
 flutter build appbundle --dart-define=FLUTTER_API_BASE_URL=https://your-app.replit.app
 ```
 
 The signed AAB will be at: `build/app/outputs/bundle/release/app-release.aab`
 
-> `android/key.properties` and `*.jks` are in `.gitignore` — they are never committed to source control.
+> If the Replit Secrets are not set, the build will still succeed but the AAB will be signed with debug keys and **cannot be uploaded to Google Play**. The Gradle output will show a `⚠️ WARNING` message in that case.
 
-**One-liner (after secrets are in Replit):**
-```bash
-bash scripts/generate-key-properties.sh && flutter build appbundle \
-  --dart-define=FLUTTER_API_BASE_URL=https://your-app.replit.app
-```
+> `android/key.properties` and `*.jks` are in `.gitignore` — they are never committed to source control.
 
 ### Step 4: Submit to Google Play Console
 
