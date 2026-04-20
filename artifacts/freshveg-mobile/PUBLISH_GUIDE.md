@@ -179,7 +179,7 @@ The AAB file will be at: `build/app/outputs/bundle/release/app-release.aab`
 3. Fill in:
    - **App Information**: Privacy Policy URL (required — host a simple one at `/privacy`)
    - **Pricing**: Free
-   - **App Review Information**: login credentials (use the test admin: 01000000000 / admin123)
+   - **App Review Information**: provide a working test account (phone number + password) so Apple reviewers can log in; use a dedicated test customer account or your admin account credentials stored securely
    - **Screenshots**: upload for iPhone 6.5" and 5.5" sizes (use the Xcode Simulator to capture them)
 4. Click **Submit for Review** → Apple reviews within 24-48 hours
 
