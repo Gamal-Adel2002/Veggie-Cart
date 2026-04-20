@@ -541,4 +541,67 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get earnings => 'الأرباح';
+
+  @override
+  String get myAccount => 'حسابي';
+
+  @override
+  String get settings => 'الإعدادات';
+
+  @override
+  String get editProfile => 'تعديل الملف الشخصي';
+
+  @override
+  String get cancelOrder => 'إلغاء الطلب';
+
+  @override
+  String get profileUpdated => 'تم تحديث الملف الشخصي!';
+
+  @override
+  String get signInToViewAccount => 'سجّل دخولك لعرض حسابك';
+
+  @override
+  String get alertThreshold => 'تنبيه المخزون المنخفض (كمية)';
+
+  @override
+  String get addPhoto => 'إضافة صورة';
+
+  @override
+  String get addMoreImages => 'إضافة صور أخرى';
+
+  @override
+  String get shopNow => 'تسوق الآن';
+
+  @override
+  String get viewOffers => 'العروض';
+
+  @override
+  String get resetPassword => 'إعادة تعيين كلمة المرور';
+
+  @override
+  String get suspend => 'تعليق';
+
+  @override
+  String get reactivate => 'إعادة تفعيل';
+
+  @override
+  String get addStaff => 'إضافة موظف';
+
+  @override
+  String get deliveryDrivers => 'مناديب التوصيل';
+
+  @override
+  String get admins => 'المديرون';
+
+  @override
+  String get removeStaff => 'إزالة';
+
+  @override
+  String get outsideDeliveryZone => 'خارج نطاق التوصيل';
+
+  @override
+  String get selectDeliveryLocation => 'حدد موقع التوصيل';
+
+  @override
+  String get liveIndicator => 'مباشر';
 }

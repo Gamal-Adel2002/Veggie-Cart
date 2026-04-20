@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../config/theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/order.dart';
 import '../../models/user.dart';
 import '../../providers/auth_provider.dart';
@@ -47,6 +48,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
     final auth = ref.watch(authProvider);
     final locale = ref.watch(localeProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     if (!auth.isLoggedIn) {
       return Scaffold(
@@ -56,12 +58,12 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
             children: [
               const Icon(Icons.person_outline, size: 72, color: Colors.grey),
               const SizedBox(height: 16),
-              const Text('Sign in to view your account',
-                  style: TextStyle(fontSize: 16, color: Colors.grey)),
+              Text(l10n.signInToViewAccount,
+                  style: const TextStyle(fontSize: 16, color: Colors.grey)),
               const SizedBox(height: 24),
               ElevatedButton(
                   onPressed: () => context.go('/login'),
-                  child: const Text('Sign In')),
+                  child: Text(l10n.signIn)),
             ],
           ),
         ),
@@ -70,12 +72,12 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Account'),
+        title: Text(l10n.myAccount),
         bottom: TabBar(
           controller: _tab,
-          tabs: const [
-            Tab(text: 'Profile'),
-            Tab(text: 'My Orders'),
+          tabs: [
+            Tab(text: l10n.profileSettings),
+            Tab(text: l10n.myOrders),
           ],
         ),
       ),
@@ -132,6 +134,7 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
   }
 
   Future<void> _saveProfile() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _saving = true);
     try {
       String? imageUrl;
@@ -154,13 +157,15 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
       if (mounted) {
         setState(() => _editing = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated!')),
+          SnackBar(content: Text(l10n.profileUpdated)),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('${l10n.error}: $e'),
+              backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -171,6 +176,7 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authProvider).user!;
+    final l10n = AppLocalizations.of(context)!;
 
     Widget avatar = _pickedImage != null
         ? CircleAvatar(
@@ -242,7 +248,7 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
           Center(
             child: OutlinedButton.icon(
               icon: const Icon(Icons.edit_outlined, size: 16),
-              label: const Text('Edit Profile'),
+              label: Text(l10n.editProfile),
               onPressed: () => setState(() => _editing = true),
             ),
           ),
@@ -250,18 +256,18 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
           const SizedBox(height: 8),
           TextField(
             controller: _nameCtrl,
-            decoration: const InputDecoration(
-              labelText: 'Full Name',
-              prefixIcon: Icon(Icons.person_outline),
+            decoration: InputDecoration(
+              labelText: l10n.name,
+              prefixIcon: const Icon(Icons.person_outline),
             ),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _phoneCtrl,
             keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(
-              labelText: 'Phone',
-              prefixIcon: Icon(Icons.phone_outlined),
+            decoration: InputDecoration(
+              labelText: l10n.phone,
+              prefixIcon: const Icon(Icons.phone_outlined),
             ),
           ),
           const SizedBox(height: 16),
@@ -275,7 +281,7 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
                     _nameCtrl.text = user.name;
                     _phoneCtrl.text = user.phone ?? '';
                   }),
-                  child: const Text('Cancel'),
+                  child: Text(l10n.cancel),
                 ),
               ),
               const SizedBox(width: 12),
@@ -288,15 +294,15 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
                           width: 18,
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: Colors.white))
-                      : const Text('Save'),
+                      : Text(l10n.save),
                 ),
               ),
             ],
           ),
         ],
         const SizedBox(height: 32),
-        const Text('Settings',
-            style: TextStyle(
+        Text(l10n.settings,
+            style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Colors.grey)),
@@ -305,7 +311,7 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
           child: Column(
             children: [
               SwitchListTile(
-                title: const Text('Dark Mode'),
+                title: Text(l10n.darkMode),
                 secondary: const Icon(Icons.dark_mode_outlined),
                 value: widget.themeMode == ThemeMode.dark,
                 onChanged: (_) =>
@@ -314,7 +320,7 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
               const Divider(height: 0),
               ListTile(
                 leading: const Icon(Icons.language),
-                title: const Text('Language'),
+                title: Text(l10n.language),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -337,15 +343,15 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
               const Divider(height: 0),
               ListTile(
                 leading: const Icon(Icons.chat_outlined),
-                title: const Text('Messages'),
+                title: Text(l10n.messages),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.go('/messages'),
               ),
               const Divider(height: 0),
               ListTile(
                 leading: const Icon(Icons.logout, color: Colors.red),
-                title: const Text('Logout',
-                    style: TextStyle(color: Colors.red)),
+                title: Text(l10n.logout,
+                    style: const TextStyle(color: Colors.red)),
                 onTap: () async {
                   await ref.read(authProvider.notifier).logout();
                   if (context.mounted) context.go('/role-select');
@@ -395,11 +401,12 @@ class _OrdersTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ordersAsync = ref.watch(_myOrdersProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return ordersAsync.when(
       data: (orders) => orders.isEmpty
-          ? const EmptyState(
-              message: 'No orders yet.\nStart shopping!',
+          ? EmptyState(
+              message: l10n.noOrdersYet,
               icon: Icons.receipt_long_outlined,
             )
           : ListView.builder(
@@ -417,7 +424,7 @@ class _OrdersTab extends ConsumerWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Order #${order.id}',
+                            Text('${l10n.orderId}${order.id}',
                                 style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16)),
@@ -435,15 +442,17 @@ class _OrdersTab extends ConsumerWidget {
                           style: const TextStyle(
                               color: Colors.grey, fontSize: 12),
                         ),
-                        if (order.status == 'waiting' || order.status == 'accepted')
+                        if (order.status == 'waiting' ||
+                            order.status == 'accepted')
                           Padding(
                             padding: const EdgeInsets.only(top: 8),
                             child: OutlinedButton.icon(
                               icon: const Icon(Icons.cancel_outlined,
                                   size: 16, color: Colors.red),
-                              label: const Text('Cancel Order',
-                                  style: TextStyle(color: Colors.red)),
-                              onPressed: () => _cancelOrder(context, ref, order.id),
+                              label: Text(l10n.cancelOrder,
+                                  style: const TextStyle(color: Colors.red)),
+                              onPressed: () =>
+                                  _cancelOrder(context, ref, order.id, l10n),
                             ),
                           ),
                       ],
@@ -453,26 +462,27 @@ class _OrdersTab extends ConsumerWidget {
               },
             ),
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => Center(child: Text('${AppLocalizations.of(context)!.error}: $e')),
     );
   }
 
   Future<void> _cancelOrder(
-      BuildContext context, WidgetRef ref, int orderId) async {
+      BuildContext context, WidgetRef ref, int orderId, AppLocalizations l10n) async {
     final ok = await showDialog<bool>(
           context: context,
           builder: (_) => AlertDialog(
-            title: const Text('Cancel Order'),
-            content: Text('Cancel order #$orderId?'),
+            title: Text(l10n.cancelOrder),
+            content: Text('${l10n.cancelOrder} #$orderId?'),
             actions: [
               TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('No')),
+                  child: Text(l10n.cancel)),
               ElevatedButton(
                   onPressed: () => Navigator.of(context).pop(true),
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red, foregroundColor: Colors.white),
-                  child: const Text('Cancel Order')),
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white),
+                  child: Text(l10n.cancelOrder)),
             ],
           ),
         ) ??
@@ -485,7 +495,9 @@ class _OrdersTab extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('${AppLocalizations.of(context)!.error}: $e'),
+              backgroundColor: Colors.red),
         );
       }
     }

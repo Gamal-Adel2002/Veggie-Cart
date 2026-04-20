@@ -118,6 +118,48 @@ class PromoCodesScreen extends ConsumerWidget {
   }
 }
 
+class _DatePickerTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final VoidCallback onTap;
+
+  const _DatePickerTile(
+      {required this.label, required this.value, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label,
+                style: const TextStyle(fontSize: 11, color: Colors.grey)),
+            const SizedBox(height: 2),
+            Row(
+              children: [
+                const Icon(Icons.calendar_today_outlined,
+                    size: 14, color: Colors.grey),
+                const SizedBox(width: 6),
+                Text(value,
+                    style: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w500)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _PromoForm extends StatefulWidget {
   final VoidCallback onSaved;
 
@@ -133,12 +175,45 @@ class _PromoFormState extends State<_PromoForm> {
   final _valueCtrl = TextEditingController();
   final _maxUsesCtrl = TextEditingController();
   String _discountType = 'percentage';
+  DateTime? _validFrom;
+  DateTime? _validUntil;
   bool _loading = false;
 
   @override
   void dispose() {
     _codeCtrl.dispose(); _valueCtrl.dispose(); _maxUsesCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickDate({required bool isFrom}) async {
+    final now = DateTime.now();
+    final initial = isFrom
+        ? (_validFrom ?? now)
+        : (_validUntil ?? (_validFrom ?? now).add(const Duration(days: 30)));
+    final first = isFrom ? now : (_validFrom ?? now);
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: first,
+      lastDate: DateTime(2030),
+    );
+    if (picked == null) return;
+    setState(() {
+      if (isFrom) {
+        _validFrom = picked;
+        if (_validUntil != null && _validUntil!.isBefore(picked)) {
+          _validUntil = null;
+        }
+      } else {
+        _validUntil = picked;
+      }
+    });
+  }
+
+  String _fmt(DateTime? d) {
+    if (d == null) return 'Not set';
+    return '${d.day}/${d.month}/${d.year}';
   }
 
   Future<void> _save() async {
@@ -153,6 +228,8 @@ class _PromoFormState extends State<_PromoForm> {
             ? int.tryParse(_maxUsesCtrl.text.trim())
             : null,
         'active': true,
+        if (_validFrom != null) 'validFrom': _validFrom!.toIso8601String(),
+        if (_validUntil != null) 'validUntil': _validUntil!.toIso8601String(),
       });
       widget.onSaved();
     } catch (e) {
@@ -211,6 +288,27 @@ class _PromoFormState extends State<_PromoForm> {
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(labelText: 'Max Uses (optional)'),
               ),
+              const SizedBox(height: 12),
+              // Date range pickers
+              Row(
+                children: [
+                  Expanded(
+                    child: _DatePickerTile(
+                      label: 'Valid From',
+                      value: _fmt(_validFrom),
+                      onTap: () => _pickDate(isFrom: true),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _DatePickerTile(
+                      label: 'Valid Until',
+                      value: _fmt(_validUntil),
+                      onTap: () => _pickDate(isFrom: false),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
@@ -230,3 +328,4 @@ class _PromoFormState extends State<_PromoForm> {
     );
   }
 }
+

@@ -6,6 +6,7 @@ import 'router/app_router.dart';
 import 'providers/locale_provider.dart';
 import 'config/theme.dart';
 import 'l10n/app_localizations.dart';
+import 'services/fcm_service.dart';
 
 final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>(
   (ref) => ThemeModeNotifier(),
@@ -37,6 +38,9 @@ class FreshVegApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
     final locale = ref.watch(localeProvider);
     final themeMode = ref.watch(themeModeProvider);
+
+    // Register router with FCM service so notification taps can deep-link
+    FcmService.setRouter(router);
 
     return MaterialApp.router(
       title: 'FreshVeg',

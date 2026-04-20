@@ -1165,6 +1165,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Earnings'**
   String get earnings;
+
+  /// No description provided for @myAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'My Account'**
+  String get myAccount;
+
+  /// No description provided for @settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings;
+
+  /// No description provided for @editProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Profile'**
+  String get editProfile;
+
+  /// No description provided for @cancelOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Order'**
+  String get cancelOrder;
+
+  /// No description provided for @profileUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile updated!'**
+  String get profileUpdated;
+
+  /// No description provided for @signInToViewAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to view your account'**
+  String get signInToViewAccount;
+
+  /// No description provided for @alertThreshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Low Stock Alert (qty)'**
+  String get alertThreshold;
+
+  /// No description provided for @addPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Photo'**
+  String get addPhoto;
+
+  /// No description provided for @addMoreImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Add More Images'**
+  String get addMoreImages;
+
+  /// No description provided for @shopNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop Now'**
+  String get shopNow;
+
+  /// No description provided for @viewOffers.
+  ///
+  /// In en, this message translates to:
+  /// **'Offers'**
+  String get viewOffers;
+
+  /// No description provided for @resetPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Password'**
+  String get resetPassword;
+
+  /// No description provided for @suspend.
+  ///
+  /// In en, this message translates to:
+  /// **'Suspend'**
+  String get suspend;
+
+  /// No description provided for @reactivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Reactivate'**
+  String get reactivate;
+
+  /// No description provided for @addStaff.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Staff Member'**
+  String get addStaff;
+
+  /// No description provided for @deliveryDrivers.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery Drivers'**
+  String get deliveryDrivers;
+
+  /// No description provided for @admins.
+  ///
+  /// In en, this message translates to:
+  /// **'Admins'**
+  String get admins;
+
+  /// No description provided for @removeStaff.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get removeStaff;
+
+  /// No description provided for @outsideDeliveryZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Outside Delivery Zone'**
+  String get outsideDeliveryZone;
+
+  /// No description provided for @selectDeliveryLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Delivery Location'**
+  String get selectDeliveryLocation;
+
+  /// No description provided for @liveIndicator.
+  ///
+  /// In en, this message translates to:
+  /// **'Live'**
+  String get liveIndicator;
 }
 
 class _AppLocalizationsDelegate

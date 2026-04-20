@@ -1,5 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:go_router/go_router.dart';
 import 'api_client.dart';
 
 @pragma('vm:entry-point')
@@ -11,6 +12,7 @@ class FcmService {
   static final _localNotifications = FlutterLocalNotificationsPlugin();
   static const _channelId = 'freshveg_channel';
   static const _channelName = 'FreshVeg Notifications';
+  static GoRouter? _router;
 
   static const _androidChannel = AndroidNotificationChannel(
     _channelId,
@@ -18,6 +20,11 @@ class FcmService {
     description: 'FreshVeg order and delivery updates',
     importance: Importance.high,
   );
+
+  /// Call once after the router is created so deep-link taps can navigate.
+  static void setRouter(GoRouter router) {
+    _router = router;
+  }
 
   static Future<void> initialize() async {
     try {
@@ -62,11 +69,41 @@ class FcmService {
 
       FirebaseMessaging.onMessage.listen(_showLocalNotification);
 
-      FirebaseMessaging.onMessageOpenedApp.listen((message) {
-        // Navigate to relevant screen based on message.data if needed
-      });
+      // Handle notification tap when app is in foreground/background (not terminated)
+      FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
+
+      // Handle notification tap when app was terminated
+      final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+      if (initialMessage != null) {
+        // Delay to allow router to initialize before navigating
+        Future.delayed(const Duration(milliseconds: 500), () {
+          _handleNotificationTap(initialMessage);
+        });
+      }
     } catch (_) {
       // Firebase not configured — silently skip
+    }
+  }
+
+  static void _handleNotificationTap(RemoteMessage message) {
+    if (_router == null) return;
+    final data = message.data;
+    final screen = data['screen'] as String?;
+
+    if (screen != null && screen.isNotEmpty) {
+      // Backend sends explicit route (e.g. '/orders/42', '/messages')
+      _router!.go(screen);
+    } else {
+      // Default: send customer to their orders list
+      final role = data['role'] as String? ?? 'customer';
+      switch (role) {
+        case 'admin':
+          _router!.go('/admin/orders');
+        case 'delivery':
+          _router!.go('/delivery/orders');
+        default:
+          _router!.go('/account/orders');
+      }
     }
   }
 

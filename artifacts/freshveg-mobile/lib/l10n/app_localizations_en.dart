@@ -542,4 +542,67 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get earnings => 'Earnings';
+
+  @override
+  String get myAccount => 'My Account';
+
+  @override
+  String get settings => 'Settings';
+
+  @override
+  String get editProfile => 'Edit Profile';
+
+  @override
+  String get cancelOrder => 'Cancel Order';
+
+  @override
+  String get profileUpdated => 'Profile updated!';
+
+  @override
+  String get signInToViewAccount => 'Sign in to view your account';
+
+  @override
+  String get alertThreshold => 'Low Stock Alert (qty)';
+
+  @override
+  String get addPhoto => 'Add Photo';
+
+  @override
+  String get addMoreImages => 'Add More Images';
+
+  @override
+  String get shopNow => 'Shop Now';
+
+  @override
+  String get viewOffers => 'Offers';
+
+  @override
+  String get resetPassword => 'Reset Password';
+
+  @override
+  String get suspend => 'Suspend';
+
+  @override
+  String get reactivate => 'Reactivate';
+
+  @override
+  String get addStaff => 'Add Staff Member';
+
+  @override
+  String get deliveryDrivers => 'Delivery Drivers';
+
+  @override
+  String get admins => 'Admins';
+
+  @override
+  String get removeStaff => 'Remove';
+
+  @override
+  String get outsideDeliveryZone => 'Outside Delivery Zone';
+
+  @override
+  String get selectDeliveryLocation => 'Select Delivery Location';
+
+  @override
+  String get liveIndicator => 'Live';
 }

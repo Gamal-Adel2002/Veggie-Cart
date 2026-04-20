@@ -193,12 +193,15 @@ class _ProductFormState extends State<_ProductForm> {
   late final TextEditingController _price = TextEditingController(text: widget.product?.price.toString() ?? '');
   late final TextEditingController _desc = TextEditingController(text: widget.product?.description ?? '');
   late final TextEditingController _qty = TextEditingController(text: widget.product?.quantity?.toString() ?? '');
+  late final TextEditingController _alertCtrl = TextEditingController(
+      text: widget.product?.quantityAlert?.toString() ?? '');
   String _unit = 'piece';
   int? _categoryId;
   bool _featured = false;
   bool _inStock = true;
   bool _loading = false;
   File? _imageFile;
+  late List<String> _existingImages;
 
   @override
   void initState() {
@@ -207,12 +210,13 @@ class _ProductFormState extends State<_ProductForm> {
     _categoryId = widget.product?.categoryId;
     _featured = widget.product?.featured ?? false;
     _inStock = widget.product?.inStock ?? true;
+    _existingImages = List<String>.from(widget.product?.images ?? []);
   }
 
   @override
   void dispose() {
     _name.dispose(); _nameAr.dispose(); _price.dispose();
-    _desc.dispose(); _qty.dispose();
+    _desc.dispose(); _qty.dispose(); _alertCtrl.dispose();
     super.dispose();
   }
 
@@ -236,8 +240,11 @@ class _ProductFormState extends State<_ProductForm> {
         'description': _desc.text.trim(),
         if (_categoryId != null) 'categoryId': _categoryId,
         if (_qty.text.isNotEmpty) 'quantity': int.tryParse(_qty.text),
+        if (_alertCtrl.text.isNotEmpty)
+          'quantityAlert': int.tryParse(_alertCtrl.text),
         if (_imageFile != null)
           'images': await MultipartFile.fromFile(_imageFile!.path),
+        'existingImages': _existingImages.join(','),
       });
       if (widget.product != null) {
         await apiClient.postFormData('/products/${widget.product!.id}', data);
@@ -358,10 +365,27 @@ class _ProductFormState extends State<_ProductForm> {
                 onChanged: (v) => setState(() => _categoryId = v),
               ),
               const SizedBox(height: 10),
-              TextFormField(
-                controller: _qty,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Stock Quantity'),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _qty,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Stock Quantity'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _alertCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Low Stock Alert (qty)',
+                        hintText: 'e.g. 5',
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 10),
               TextFormField(
@@ -369,6 +393,58 @@ class _ProductFormState extends State<_ProductForm> {
                 decoration: const InputDecoration(labelText: 'Description'),
                 maxLines: 2,
               ),
+              // Existing images row (edit mode)
+              if (_existingImages.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                const Text('Existing Images',
+                    style: TextStyle(fontSize: 12, color: Colors.grey)),
+                const SizedBox(height: 6),
+                SizedBox(
+                  height: 64,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _existingImages.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 6),
+                    itemBuilder: (_, idx) => Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            _existingImages[idx],
+                            width: 64,
+                            height: 64,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              width: 64,
+                              height: 64,
+                              color: Colors.grey.shade200,
+                              child: const Icon(Icons.broken_image_outlined,
+                                  color: Colors.grey),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 2,
+                          right: 2,
+                          child: GestureDetector(
+                            onTap: () => setState(
+                                () => _existingImages.removeAt(idx)),
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.close,
+                                  size: 12, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 10),
               Row(
                 children: [
