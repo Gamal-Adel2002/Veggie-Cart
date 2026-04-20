@@ -4,11 +4,6 @@ import '../../config/theme.dart';
 import '../../services/api_client.dart';
 import 'admin_shell.dart';
 
-final _storeHoursProvider = FutureProvider<List<dynamic>>((ref) async {
-  final res = await apiClient.get('/store/hours');
-  return res.data as List<dynamic>;
-});
-
 class StoreHoursScreen extends ConsumerStatefulWidget {
   const StoreHoursScreen({super.key});
 

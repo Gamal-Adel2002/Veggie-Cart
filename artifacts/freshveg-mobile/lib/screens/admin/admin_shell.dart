@@ -4,6 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
 
+/// GlobalKey for the AdminShell's outer Scaffold, so AdminAppBar can open the
+/// drawer even when each admin screen renders its own inner Scaffold.
+final adminScaffoldKey = GlobalKey<ScaffoldState>();
+
 class AdminShell extends ConsumerWidget {
   final Widget child;
 
@@ -12,6 +16,7 @@ class AdminShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
+      key: adminScaffoldKey,
       drawer: _AdminDrawer(),
       body: child,
     );
@@ -134,7 +139,7 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
       title: Text(title),
       leading: IconButton(
         icon: const Icon(Icons.menu),
-        onPressed: () => Scaffold.of(context).openDrawer(),
+        onPressed: () => adminScaffoldKey.currentState?.openDrawer(),
       ),
       actions: actions,
       bottom: bottom,

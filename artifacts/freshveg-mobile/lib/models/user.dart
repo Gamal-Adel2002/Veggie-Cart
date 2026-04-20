@@ -5,6 +5,7 @@ class AppUser {
   final String? phone;
   final String role;
   final String? profileImage;
+  final bool? active;
 
   const AppUser({
     required this.id,
@@ -13,6 +14,7 @@ class AppUser {
     this.phone,
     required this.role,
     this.profileImage,
+    this.active,
   });
 
   factory AppUser.fromJson(Map<String, dynamic> json) => AppUser(
@@ -22,6 +24,7 @@ class AppUser {
         phone: json['phone'] as String?,
         role: json['role'] as String? ?? 'customer',
         profileImage: json['profileImage'] as String?,
+        active: json['active'] as bool?,
       );
 
   bool get isAdmin => role == 'admin';

@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,8 +6,22 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../config/theme.dart';
 import '../../models/delivery_zone.dart';
 import '../../providers/cart_provider.dart';
-import '../../providers/auth_provider.dart';
 import '../../services/api_client.dart';
+
+/// Returns distance in kilometres between two lat/lng points (haversine formula).
+double _haversineKm(double lat1, double lng1, double lat2, double lng2) {
+  const r = 6371.0;
+  final dLat = _toRad(lat2 - lat1);
+  final dLng = _toRad(lng2 - lng1);
+  final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+      math.cos(_toRad(lat1)) *
+          math.cos(_toRad(lat2)) *
+          math.sin(dLng / 2) *
+          math.sin(dLng / 2);
+  return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+}
+
+double _toRad(double deg) => deg * math.pi / 180;
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
@@ -25,9 +40,38 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   List<DeliveryZone> _zones = [];
   int? _selectedZoneId;
   LatLng? _selectedLocation;
+  String? _zoneValidationError;
   bool _showMap = false;
   bool _loading = false;
   bool _promoLoading = false;
+
+  /// Returns the matching active zone for [pos], or null if outside all zones.
+  DeliveryZone? _zoneForPoint(LatLng pos) {
+    for (final zone in _zones.where((z) => z.active)) {
+      final dist = _haversineKm(
+          pos.latitude, pos.longitude, zone.centerLat, zone.centerLng);
+      if (dist <= zone.radiusKm) return zone;
+    }
+    return null;
+  }
+
+  void _handleMapTap(LatLng pos) {
+    final zone = _zoneForPoint(pos);
+    setState(() {
+      _selectedLocation = pos;
+      _showMap = false;
+      if (zone != null) {
+        _selectedZoneId = zone.id;
+        _deliveryFee = zone.fee > 0 ? zone.fee : _deliveryFee;
+        _zoneValidationError = null;
+      } else if (_zones.isNotEmpty) {
+        _selectedZoneId = null;
+        _deliveryFee = null;
+        _zoneValidationError =
+            'This location is outside our delivery zones. Please choose a location within a service area.';
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -67,11 +111,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         _discountAmount = (res.data['discountAmount'] as num?)?.toDouble();
       });
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Invalid promo code'), backgroundColor: Colors.red),
       );
     } finally {
-      setState(() => _promoLoading = false);
+      if (mounted) setState(() => _promoLoading = false);
     }
   }
 
@@ -79,6 +124,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     if (_addressCtrl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter delivery address')),
+      );
+      return;
+    }
+    // Zone validation: if location pinned but outside all zones, block order
+    if (_selectedLocation != null && _zones.isNotEmpty &&
+        _zoneForPoint(_selectedLocation!) == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Selected location is outside our delivery zones.'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -179,12 +235,39 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               icon: const Icon(Icons.map_outlined),
               label: Text(_selectedLocation == null
                   ? 'Pin Location on Map'
-                  : 'Location Selected ✓'),
+                  : _zoneValidationError != null
+                      ? 'Outside Delivery Zone ⚠'
+                      : 'Location Selected ✓'),
               onPressed: () => setState(() => _showMap = !_showMap),
               style: OutlinedButton.styleFrom(
-                foregroundColor: _selectedLocation != null ? kPrimaryGreen : null,
+                foregroundColor: _zoneValidationError != null
+                    ? Colors.red
+                    : _selectedLocation != null
+                        ? kPrimaryGreen
+                        : null,
+                side: _zoneValidationError != null
+                    ? const BorderSide(color: Colors.red)
+                    : null,
               ),
             ),
+            if (_zoneValidationError != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded,
+                        size: 14, color: Colors.red),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        _zoneValidationError!,
+                        style: const TextStyle(
+                            color: Colors.red, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             if (_showMap) ...[
               const SizedBox(height: 12),
               SizedBox(
@@ -196,12 +279,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       target: LatLng(30.0444, 31.2357),
                       zoom: 12,
                     ),
-                    onTap: (pos) {
-                      setState(() {
-                        _selectedLocation = pos;
-                        _showMap = false;
-                      });
-                    },
+                    onTap: _handleMapTap,
                     markers: _selectedLocation != null
                         ? {
                             Marker(

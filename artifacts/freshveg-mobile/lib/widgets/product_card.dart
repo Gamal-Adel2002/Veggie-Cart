@@ -17,10 +17,6 @@ class ProductCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isAr = ref.watch(localeProvider).languageCode == 'ar';
     final cartItems = ref.watch(cartProvider);
-    final inCart = cartItems.firstWhere(
-      (i) => i.productId == product.id,
-      orElse: () => throw Exception(),
-    );
     final qty = cartItems
         .where((i) => i.productId == product.id)
         .map((i) => i.quantity)

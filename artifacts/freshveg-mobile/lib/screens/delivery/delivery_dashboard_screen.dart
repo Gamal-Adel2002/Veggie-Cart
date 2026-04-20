@@ -95,20 +95,85 @@ class _ActiveDeliveriesTab extends ConsumerWidget {
 
     return deliveriesAsync.when(
       data: (orders) {
-        final active = orders.where((o) => o.status != 'delivered' && o.status != 'cancelled').toList();
-        return active.isEmpty
-            ? const EmptyState(
-                message: 'No active deliveries.\nCheck back soon!',
-                icon: Icons.delivery_dining_outlined,
-              )
-            : RefreshIndicator(
-                onRefresh: () async => ref.invalidate(_myDeliveriesProvider),
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: active.length,
-                  itemBuilder: (_, i) => _DeliveryCard(order: active[i], ref: ref),
-                ),
+        final active = orders
+            .where((o) => o.status != 'delivered' && o.status != 'cancelled')
+            .toList();
+
+        if (active.isEmpty) {
+          return const EmptyState(
+            message: 'No active deliveries.\nCheck back soon!',
+            icon: Icons.delivery_dining_outlined,
+          );
+        }
+
+        // Group orders by zone name (or "No Zone" when null)
+        final Map<String, List<Order>> grouped = {};
+        for (final o in active) {
+          final key = (o.zoneName?.isNotEmpty == true)
+              ? o.zoneName!
+              : 'Other / No Zone';
+          grouped.putIfAbsent(key, () => []).add(o);
+        }
+
+        // Sort zone groups: named zones first, then "Other"
+        final sortedZones = grouped.keys.toList()
+          ..sort((a, b) {
+            if (a == 'Other / No Zone') return 1;
+            if (b == 'Other / No Zone') return -1;
+            return a.compareTo(b);
+          });
+
+        return RefreshIndicator(
+          onRefresh: () async => ref.invalidate(_myDeliveriesProvider),
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            itemCount: sortedZones.length,
+            itemBuilder: (_, gi) {
+              final zoneName = sortedZones[gi];
+              final zoneOrders = grouped[zoneName]!;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Zone section header
+                  Container(
+                    margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: kPrimaryGreen.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border:
+                          Border.all(color: kPrimaryGreen.withValues(alpha: 0.2)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.map_outlined,
+                            size: 16, color: kPrimaryGreen),
+                        const SizedBox(width: 6),
+                        Text(
+                          zoneName,
+                          style: const TextStyle(
+                              color: kPrimaryGreen,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '${zoneOrders.length} order${zoneOrders.length > 1 ? 's' : ''}',
+                          style: TextStyle(
+                              color: kPrimaryGreen.withValues(alpha: 0.7),
+                              fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                  ...zoneOrders.map((o) =>
+                      _DeliveryCard(order: o, ref: ref)),
+                ],
               );
+            },
+          ),
+        );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('Error: $e')),
