@@ -39,7 +39,8 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 artifacts-monorepo/
 ├── artifacts/              # Deployable applications
 │   ├── api-server/         # Express API server
-│   └── grocery-store/      # React+Vite storefront (FreshVeg)
+│   ├── grocery-store/      # React+Vite storefront (FreshVeg)
+│   └── freshveg-mobile/    # Flutter mobile app (iOS + Android)
 ├── lib/                    # Shared libraries
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks

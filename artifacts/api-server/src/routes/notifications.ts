@@ -268,6 +268,36 @@ export async function sendPushToCustomer(userId: number, payload: {
   await sendPushToSubs(subs, payload);
 }
 
+// In-memory FCM token store (keyed by userId/deliveryId). Replace with DB column in production.
+const fcmTokens = new Map<string, string>();
+
+// POST /notifications/fcm-token — register a mobile FCM device token
+router.post("/fcm-token", authenticate(false), (req: AuthRequest, res) => {
+  if (!req.userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  const { token } = req.body as { token?: string };
+  if (!token) {
+    res.status(400).json({ error: "token is required" });
+    return;
+  }
+  const key = `${req.userRole}:${req.userId}`;
+  fcmTokens.set(key, token);
+  logger.info({ userId: req.userId, role: req.userRole }, "FCM token registered");
+  res.json({ success: true });
+});
+
+// DELETE /notifications/fcm-token — remove FCM device token on logout
+router.delete("/fcm-token", authenticate(false), (req: AuthRequest, res) => {
+  if (!req.userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  fcmTokens.delete(`${req.userRole}:${req.userId}`);
+  res.json({ success: true });
+});
+
 // GET /notifications/vapid-public-key
 router.get("/vapid-public-key", (_req, res) => {
   res.json({ publicKey: VAPID_PUBLIC_KEY });
