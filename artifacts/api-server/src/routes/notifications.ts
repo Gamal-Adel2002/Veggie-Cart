@@ -6,9 +6,55 @@ import { authenticate, sseQueryToken, type AuthRequest } from "../middlewares/au
 import webpush from "web-push";
 import type { Response } from "express";
 import pino from "pino";
+import admin from "firebase-admin";
 
 const logger = pino({ level: "info" });
 const router = Router();
+
+// ─── Firebase Admin (FCM) ────────────────────────────────────────────────────
+let fcmApp: admin.app.App | null = null;
+
+function initFirebaseAdmin() {
+  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  if (!serviceAccountJson) {
+    logger.warn("FIREBASE_SERVICE_ACCOUNT_KEY not set — FCM disabled (mobile push will not work).");
+    return;
+  }
+  try {
+    const serviceAccount = JSON.parse(serviceAccountJson) as admin.ServiceAccount;
+    fcmApp = admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+    logger.info("Firebase Admin initialized — FCM enabled.");
+  } catch (err) {
+    logger.error({ err }, "Failed to initialize Firebase Admin — check FIREBASE_SERVICE_ACCOUNT_KEY format.");
+  }
+}
+
+initFirebaseAdmin();
+
+/** Send an FCM notification to a single device token */
+async function sendFcm(token: string, payload: { title: string; body: string }) {
+  if (!fcmApp) return;
+  try {
+    await admin.messaging(fcmApp).send({
+      token,
+      notification: { title: payload.title, body: payload.body },
+      android: { priority: "high" },
+      apns: { payload: { aps: { sound: "default" } } },
+    });
+  } catch (err) {
+    logger.warn({ err, token: token.slice(0, 20) }, "FCM send failed");
+  }
+}
+
+/** Send FCM to multiple tokens (fire-and-forget) */
+async function sendFcmMulti(tokens: string[], payload: { title: string; body: string }) {
+  if (!fcmApp || tokens.length === 0) return;
+  await Promise.allSettled(tokens.map((t) => sendFcm(t, payload)));
+}
+
+// In-memory FCM token store: key = `role:userId` → device token
+// For production, move this to a `fcm_tokens` DB table
+const fcmTokenStore = new Map<string, string>();
 
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:admin@freshveggies.app";
 
@@ -202,7 +248,7 @@ export async function sendPushToAdmins(payload: {
   body: string; bodyAr: string;
   url?: string;
 }) {
-  // Join push_subscriptions with users to enforce admin role — prevents data leakage to customers
+  // Web push via VAPID
   const adminSubs = await db
     .select({
       id: pushSubscriptionsTable.id,
@@ -218,8 +264,14 @@ export async function sendPushToAdmins(payload: {
         eq(usersTable.role, "admin")
       )
     );
-
   await sendPushToSubs(adminSubs, payload);
+
+  // Mobile push via FCM
+  const adminFcmTokens: string[] = [];
+  for (const [key, token] of fcmTokenStore) {
+    if (key.startsWith("admin:")) adminFcmTokens.push(token);
+  }
+  await sendFcmMulti(adminFcmTokens, { title: payload.title, body: payload.body });
 }
 
 export async function sendPushToDeliveryPerson(deliveryPersonId: number, payload: {
@@ -227,6 +279,7 @@ export async function sendPushToDeliveryPerson(deliveryPersonId: number, payload
   body: string; bodyAr: string;
   url?: string;
 }) {
+  // Web push
   const subs = await db
     .select({
       id: pushSubscriptionsTable.id,
@@ -240,8 +293,11 @@ export async function sendPushToDeliveryPerson(deliveryPersonId: number, payload
         isNull(pushSubscriptionsTable.userId)
       )
     );
-
   await sendPushToSubs(subs, payload);
+
+  // Mobile FCM
+  const token = fcmTokenStore.get(`delivery:${deliveryPersonId}`);
+  if (token) await sendFcm(token, { title: payload.title, body: payload.body });
 }
 
 export async function sendPushToCustomer(userId: number, payload: {
@@ -249,6 +305,7 @@ export async function sendPushToCustomer(userId: number, payload: {
   body: string; bodyAr: string;
   url?: string;
 }) {
+  // Web push
   const subs = await db
     .select({
       id: pushSubscriptionsTable.id,
@@ -264,12 +321,12 @@ export async function sendPushToCustomer(userId: number, payload: {
         eq(usersTable.role, "customer")
       )
     );
-
   await sendPushToSubs(subs, payload);
-}
 
-// In-memory FCM token store (keyed by userId/deliveryId). Replace with DB column in production.
-const fcmTokens = new Map<string, string>();
+  // Mobile FCM
+  const token = fcmTokenStore.get(`customer:${userId}`);
+  if (token) await sendFcm(token, { title: payload.title, body: payload.body });
+}
 
 // POST /notifications/fcm-token — register a mobile FCM device token
 router.post("/fcm-token", authenticate(false), (req: AuthRequest, res) => {
@@ -283,7 +340,7 @@ router.post("/fcm-token", authenticate(false), (req: AuthRequest, res) => {
     return;
   }
   const key = `${req.userRole}:${req.userId}`;
-  fcmTokens.set(key, token);
+  fcmTokenStore.set(key, token);
   logger.info({ userId: req.userId, role: req.userRole }, "FCM token registered");
   res.json({ success: true });
 });
@@ -294,7 +351,7 @@ router.delete("/fcm-token", authenticate(false), (req: AuthRequest, res) => {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  fcmTokens.delete(`${req.userRole}:${req.userId}`);
+  fcmTokenStore.delete(`${req.userRole}:${req.userId}`);
   res.json({ success: true });
 });
 
