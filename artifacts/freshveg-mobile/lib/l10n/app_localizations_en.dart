@@ -620,4 +620,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get supportChat => 'Support Chat';
+
+  @override
+  String get communityFeed => 'Community Feed';
+
+  @override
+  String get failedToPost => 'Failed to post';
+
+  @override
+  String get confirmDelivery => 'Confirm Delivery';
+
+  @override
+  String get markAsDelivered => 'Mark as delivered?';
+
+  @override
+  String get callDriver => 'Call';
+
+  @override
+  String get openMap => 'Map';
+
+  @override
+  String get continueShopping => 'Continue Shopping';
+
+  @override
+  String get trackOrder => 'Track Order';
+
+  @override
+  String get roleSelect => 'Select Role';
+
+  @override
+  String get customerPortal => 'Customer Portal';
+
+  @override
+  String get hi => 'Hi';
 }

@@ -69,7 +69,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get createAccount => 'إنشاء حساب';
 
   @override
-  String get adminPortal => 'لوحة الإدارة';
+  String get adminPortal => 'بوابة الإدارة';
 
   @override
   String get deliveryPortal => 'بوابة التوصيل';
@@ -619,4 +619,37 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get supportChat => 'محادثة الدعم';
+
+  @override
+  String get communityFeed => 'المجتمع';
+
+  @override
+  String get failedToPost => 'فشل النشر';
+
+  @override
+  String get confirmDelivery => 'تأكيد التسليم';
+
+  @override
+  String get markAsDelivered => 'تحديد كمُسلَّم؟';
+
+  @override
+  String get callDriver => 'اتصال';
+
+  @override
+  String get openMap => 'الخريطة';
+
+  @override
+  String get continueShopping => 'مواصلة التسوق';
+
+  @override
+  String get trackOrder => 'تتبع الطلب';
+
+  @override
+  String get roleSelect => 'اختر الدور';
+
+  @override
+  String get customerPortal => 'بوابة العملاء';
+
+  @override
+  String get hi => 'مرحبا';
 }
