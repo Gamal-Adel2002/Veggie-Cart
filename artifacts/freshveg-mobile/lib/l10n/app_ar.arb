@@ -203,5 +203,18 @@
   "deliveryZone": "منطقة التوصيل",
   "invalidPromoCode": "رمز خصم غير صالح",
   "enterDeliveryAddress": "يرجى إدخال عنوان التوصيل",
-  "supportChat": "محادثة الدعم"
+  "supportChat": "محادثة الدعم",
+  "communityFeed": "المجتمع",
+  "failedToPost": "فشل النشر",
+  "confirmDelivery": "تأكيد التسليم",
+  "markAsDelivered": "تحديد كمُسلَّم؟",
+  "callDriver": "اتصال",
+  "openMap": "الخريطة",
+  "orderConfirmed": "تم تأكيد الطلب!",
+  "continueShopping": "مواصلة التسوق",
+  "trackOrder": "تتبع الطلب",
+  "roleSelect": "اختر الدور",
+  "customerPortal": "بوابة العملاء",
+  "adminPortal": "بوابة الإدارة",
+  "hi": "مرحبا"
 }

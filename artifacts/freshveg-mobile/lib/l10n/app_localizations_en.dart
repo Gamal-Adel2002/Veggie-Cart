@@ -605,4 +605,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get liveIndicator => 'Live';
+
+  @override
+  String get orderSummary => 'Order Summary';
+
+  @override
+  String get deliveryZone => 'Delivery Zone';
+
+  @override
+  String get invalidPromoCode => 'Invalid promo code';
+
+  @override
+  String get enterDeliveryAddress => 'Please enter delivery address';
+
+  @override
+  String get supportChat => 'Support Chat';
 }

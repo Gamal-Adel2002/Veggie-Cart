@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../config/theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/chat.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_client.dart';
@@ -39,7 +40,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to post: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('${AppLocalizations.of(context)!.failedToPost}: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -60,7 +61,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     final auth = ref.watch(authProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Community Feed')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.communityFeed)),
       body: Column(
         children: [
           if (auth.isLoggedIn)

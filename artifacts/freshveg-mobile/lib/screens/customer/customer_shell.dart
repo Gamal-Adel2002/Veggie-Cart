@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../l10n/app_localizations.dart';
 import '../../providers/cart_provider.dart';
 
 class CustomerShell extends ConsumerWidget {
@@ -21,6 +22,7 @@ class CustomerShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cartCount = ref.watch(cartCountProvider);
     final idx = _currentIndex(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: child,
@@ -41,14 +43,14 @@ class CustomerShell extends ConsumerWidget {
           }
         },
         destinations: [
-          const NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: 'Home'),
-          const NavigationDestination(
-              icon: Icon(Icons.store_outlined),
-              selectedIcon: Icon(Icons.store),
-              label: 'Shop'),
+          NavigationDestination(
+              icon: const Icon(Icons.home_outlined),
+              selectedIcon: const Icon(Icons.home),
+              label: l10n.home),
+          NavigationDestination(
+              icon: const Icon(Icons.store_outlined),
+              selectedIcon: const Icon(Icons.store),
+              label: l10n.shop),
           NavigationDestination(
             icon: Badge(
               isLabelVisible: cartCount > 0,
@@ -60,16 +62,16 @@ class CustomerShell extends ConsumerWidget {
               label: Text('$cartCount'),
               child: const Icon(Icons.shopping_cart),
             ),
-            label: 'Cart',
+            label: l10n.cart,
           ),
-          const NavigationDestination(
-              icon: Icon(Icons.feed_outlined),
-              selectedIcon: Icon(Icons.feed),
-              label: 'Feed'),
-          const NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person),
-              label: 'Account'),
+          NavigationDestination(
+              icon: const Icon(Icons.feed_outlined),
+              selectedIcon: const Icon(Icons.feed),
+              label: l10n.feed),
+          NavigationDestination(
+              icon: const Icon(Icons.person_outline),
+              selectedIcon: const Icon(Icons.person),
+              label: l10n.myAccount),
         ],
       ),
     );

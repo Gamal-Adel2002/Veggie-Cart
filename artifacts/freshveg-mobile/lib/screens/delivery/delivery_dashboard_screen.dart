@@ -269,6 +269,7 @@ class _DeliveryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -313,7 +314,7 @@ class _DeliveryCard extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton.icon(
                     icon: const Icon(Icons.phone, size: 16),
-                    label: const Text('Call'),
+                    label: Text(l10n.callDriver),
                     onPressed: () => launchUrl(
                         Uri.parse('tel:${order.customerPhone}')),
                   ),
@@ -323,7 +324,7 @@ class _DeliveryCard extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.map_outlined, size: 16),
-                      label: const Text('Map'),
+                      label: Text(l10n.openMap),
                       onPressed: () => _showMap(context, order),
                     ),
                   ),
@@ -331,7 +332,7 @@ class _DeliveryCard extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.check, size: 16),
-                    label: const Text('Delivered'),
+                    label: Text(l10n.delivered),
                     onPressed: () => _markDelivered(context),
                     style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,

@@ -203,5 +203,18 @@
   "deliveryZone": "Delivery Zone",
   "invalidPromoCode": "Invalid promo code",
   "enterDeliveryAddress": "Please enter delivery address",
-  "supportChat": "Support Chat"
+  "supportChat": "Support Chat",
+  "communityFeed": "Community Feed",
+  "failedToPost": "Failed to post",
+  "confirmDelivery": "Confirm Delivery",
+  "markAsDelivered": "Mark as delivered?",
+  "callDriver": "Call",
+  "openMap": "Map",
+  "orderConfirmed": "Order Confirmed!",
+  "continueShopping": "Continue Shopping",
+  "trackOrder": "Track Order",
+  "roleSelect": "Select Role",
+  "customerPortal": "Customer Portal",
+  "adminPortal": "Admin Portal",
+  "hi": "Hi"
 }

@@ -1291,6 +1291,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Live'**
   String get liveIndicator;
+
+  /// No description provided for @orderSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Summary'**
+  String get orderSummary;
+
+  /// No description provided for @deliveryZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery Zone'**
+  String get deliveryZone;
+
+  /// No description provided for @invalidPromoCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid promo code'**
+  String get invalidPromoCode;
+
+  /// No description provided for @enterDeliveryAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter delivery address'**
+  String get enterDeliveryAddress;
+
+  /// No description provided for @supportChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Support Chat'**
+  String get supportChat;
 }
 
 class _AppLocalizationsDelegate

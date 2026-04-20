@@ -604,4 +604,19 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get liveIndicator => 'مباشر';
+
+  @override
+  String get orderSummary => 'ملخص الطلب';
+
+  @override
+  String get deliveryZone => 'منطقة التوصيل';
+
+  @override
+  String get invalidPromoCode => 'رمز خصم غير صالح';
+
+  @override
+  String get enterDeliveryAddress => 'يرجى إدخال عنوان التوصيل';
+
+  @override
+  String get supportChat => 'محادثة الدعم';
 }

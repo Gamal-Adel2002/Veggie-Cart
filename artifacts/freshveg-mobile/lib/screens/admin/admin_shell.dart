@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../providers/auth_provider.dart';
 
 /// GlobalKey for the AdminShell's outer Scaffold, so AdminAppBar can open the
@@ -27,6 +28,7 @@ class _AdminDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authProvider).user;
+    final l10n = AppLocalizations.of(context)!;
 
     return Drawer(
       child: Column(
@@ -42,14 +44,14 @@ class _AdminDrawer extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('FreshVeg Admin',
-                        style: TextStyle(
+                    Text('${l10n.appName} Admin',
+                        style: const TextStyle(
                             color: Colors.white,
                             fontSize: 18,
                             fontWeight: FontWeight.bold)),
                     Text(user?.email ?? '',
                         style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 0.8),
                             fontSize: 12)),
                   ],
                 ),
@@ -60,28 +62,28 @@ class _AdminDrawer extends ConsumerWidget {
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                _NavItem(Icons.dashboard_outlined, 'Dashboard', '/admin'),
-                _NavItem(Icons.receipt_long_outlined, 'Orders', '/admin/orders'),
-                _NavItem(Icons.inventory_2_outlined, 'Products', '/admin/products'),
-                _NavItem(Icons.category_outlined, 'Categories', '/admin/categories'),
+                _NavItem(Icons.dashboard_outlined, l10n.dashboard, '/admin'),
+                _NavItem(Icons.receipt_long_outlined, l10n.orders, '/admin/orders'),
+                _NavItem(Icons.inventory_2_outlined, l10n.products, '/admin/products'),
+                _NavItem(Icons.category_outlined, l10n.categories, '/admin/categories'),
                 const Divider(),
-                _NavItem(Icons.people_outline, 'Customers', '/admin/customers'),
-                _NavItem(Icons.badge_outlined, 'Staff', '/admin/staff'),
-                _NavItem(Icons.local_shipping_outlined, 'Suppliers', '/admin/suppliers'),
-                _NavItem(Icons.shopping_bag_outlined, 'Supplier Orders', '/admin/supplier-orders'),
+                _NavItem(Icons.people_outline, l10n.customers, '/admin/customers'),
+                _NavItem(Icons.badge_outlined, l10n.staff, '/admin/staff'),
+                _NavItem(Icons.local_shipping_outlined, l10n.suppliers, '/admin/suppliers'),
+                _NavItem(Icons.shopping_bag_outlined, l10n.supplierOrders, '/admin/supplier-orders'),
                 const Divider(),
-                _NavItem(Icons.map_outlined, 'Delivery Zones', '/admin/delivery-zones'),
-                _NavItem(Icons.access_time, 'Store Hours', '/admin/store-hours'),
-                _NavItem(Icons.local_offer_outlined, 'Promo Codes', '/admin/promo-codes'),
-                _NavItem(Icons.card_giftcard_outlined, 'Vouchers', '/admin/vouchers'),
+                _NavItem(Icons.map_outlined, l10n.deliveryZones, '/admin/delivery-zones'),
+                _NavItem(Icons.access_time, l10n.storeHours, '/admin/store-hours'),
+                _NavItem(Icons.local_offer_outlined, l10n.promoCodes, '/admin/promo-codes'),
+                _NavItem(Icons.card_giftcard_outlined, l10n.vouchers, '/admin/vouchers'),
                 const Divider(),
-                _NavItem(Icons.forum_outlined, 'Public Chat', '/admin/public-chat'),
-                _NavItem(Icons.chat_outlined, 'Private Chats', '/admin/private-chats'),
+                _NavItem(Icons.forum_outlined, l10n.publicChat, '/admin/public-chat'),
+                _NavItem(Icons.chat_outlined, l10n.privateChats, '/admin/private-chats'),
                 const Divider(),
                 ListTile(
                   leading: const Icon(Icons.logout, color: Colors.red),
-                  title: const Text('Logout',
-                      style: TextStyle(color: Colors.red)),
+                  title: Text(l10n.logout,
+                      style: const TextStyle(color: Colors.red)),
                   onTap: () async {
                     await ref.read(authProvider.notifier).logout();
                     if (context.mounted) context.go('/role-select');

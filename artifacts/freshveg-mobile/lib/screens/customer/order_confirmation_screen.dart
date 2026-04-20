@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/order.dart';
 import '../../services/api_client.dart';
 import '../../widgets/order_status_badge.dart';
@@ -39,6 +40,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -62,9 +64,9 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                         .animate()
                         .scale(duration: 600.ms, curve: Curves.elasticOut),
                     const SizedBox(height: 24),
-                    const Text(
-                      'Order Confirmed!',
-                      style: TextStyle(
+                    Text(
+                      l10n.orderConfirmed,
+                      style: const TextStyle(
                           fontSize: 28, fontWeight: FontWeight.bold),
                     ).animate().fadeIn(delay: 300.ms),
                     const SizedBox(height: 8),
@@ -117,7 +119,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () => context.go('/account'),
-                        child: const Text('Track Order'),
+                        child: Text(l10n.trackOrder),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -125,7 +127,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                       width: double.infinity,
                       child: OutlinedButton(
                         onPressed: () => context.go('/home'),
-                        child: const Text('Continue Shopping'),
+                        child: Text(l10n.continueShopping),
                       ),
                     ),
                   ],
