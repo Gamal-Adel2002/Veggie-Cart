@@ -2,7 +2,17 @@
 # ============================================================
 # FreshVeg — Generate android/key.properties from Replit Secrets
 #
-# Run this before `flutter build appbundle` or `flutter build apk`.
+# WHEN TO USE THIS SCRIPT:
+#   - Local development / debugging, when you have the ANDROID_*
+#     env vars exported in your shell but want to inspect or pre-
+#     generate key.properties before running a build.
+#
+# WHEN YOU DON'T NEED THIS SCRIPT:
+#   - Release builds inside Replit: `flutter build appbundle` already
+#     reads the Replit Secrets automatically via android/app/build.gradle.kts
+#     (Gradle auto-generates key.properties at configuration time).
+#     Just run `flutter build appbundle --dart-define=...` directly.
+#
 # Reads environment variables set from Replit Secrets:
 #   ANDROID_KEYSTORE_BASE64  — base64-encoded .jks file
 #   ANDROID_STORE_PASSWORD   — keystore password
