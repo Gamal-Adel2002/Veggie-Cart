@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../config/theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/product.dart';
 import '../../models/category.dart';
 import '../../providers/locale_provider.dart';
@@ -27,6 +28,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final featured = ref.watch(_featuredProvider);
     final categories = ref.watch(_categoriesProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAF8),
@@ -40,8 +42,8 @@ class HomeScreen extends ConsumerWidget {
               children: [
                 const Icon(Icons.eco, color: kPrimaryGreen),
                 const SizedBox(width: 8),
-                const Text('FreshVeg',
-                    style: TextStyle(
+                Text(l10n.appName,
+                    style: const TextStyle(
                         color: kPrimaryGreen, fontWeight: FontWeight.bold)),
                 const Spacer(),
                 IconButton(
@@ -60,12 +62,12 @@ class HomeScreen extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Popular Categories',
-                      style: TextStyle(
+                  Text(l10n.popularCategories,
+                      style: const TextStyle(
                           fontSize: 18, fontWeight: FontWeight.bold)),
                   TextButton(
                     onPressed: () => context.go('/shop'),
-                    child: const Text('View All'),
+                    child: Text(l10n.viewAll),
                   ),
                 ],
               ),
@@ -96,12 +98,12 @@ class HomeScreen extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Featured Products',
-                      style: TextStyle(
+                  Text(l10n.featuredProducts,
+                      style: const TextStyle(
                           fontSize: 18, fontWeight: FontWeight.bold)),
                   TextButton(
                     onPressed: () => context.go('/shop'),
-                    child: const Text('View All'),
+                    child: Text(l10n.viewAll),
                   ),
                 ],
               ),

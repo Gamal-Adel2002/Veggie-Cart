@@ -42,6 +42,25 @@ class FcmService {
             requestSoundPermission: false,
           ),
         ),
+        onDidReceiveNotificationResponse: (details) {
+          // Tapping a foreground local notification navigates to account orders
+          if (_router != null) {
+            final payload = details.payload;
+            if (payload != null && payload.isNotEmpty) {
+              final validPrefixes = [
+                '/home', '/shop', '/cart', '/account', '/messages', '/feed',
+                '/admin', '/delivery',
+              ];
+              final isValid =
+                  validPrefixes.any((p) => payload == p || payload.startsWith(p));
+              if (isValid) {
+                _router!.go(payload);
+                return;
+              }
+            }
+            _router!.go('/account');
+          }
+        },
       );
 
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
@@ -91,19 +110,28 @@ class FcmService {
     final screen = data['screen'] as String?;
 
     if (screen != null && screen.isNotEmpty) {
-      // Backend sends explicit route (e.g. '/orders/42', '/messages')
-      _router!.go(screen);
-    } else {
-      // Default: send customer to their orders list
-      final role = data['role'] as String? ?? 'customer';
-      switch (role) {
-        case 'admin':
-          _router!.go('/admin/orders');
-        case 'delivery':
-          _router!.go('/delivery/orders');
-        default:
-          _router!.go('/account/orders');
+      // Backend sends explicit route — validate against known paths
+      final validPrefixes = [
+        '/home', '/shop', '/cart', '/account', '/messages', '/feed',
+        '/checkout', '/product/', '/order-confirmation/',
+        '/admin', '/delivery',
+      ];
+      final isValid = validPrefixes.any((p) => screen == p || screen.startsWith(p));
+      if (isValid) {
+        _router!.go(screen);
+        return;
       }
+    }
+
+    // Fallback: role-based default screens (must match app_router.dart routes)
+    final role = data['role'] as String? ?? 'customer';
+    switch (role) {
+      case 'admin':
+        _router!.go('/admin/orders');
+      case 'delivery':
+        _router!.go('/delivery');
+      default:
+        _router!.go('/account');
     }
   }
 
@@ -133,6 +161,17 @@ class FcmService {
     final notification = message.notification;
     if (notification == null) return;
 
+    // Encode the deep-link target as the notification payload
+    final screen = message.data['screen'] as String?;
+    final role = message.data['role'] as String? ?? 'customer';
+    final payload = screen?.isNotEmpty == true
+        ? screen
+        : (role == 'admin'
+            ? '/admin/orders'
+            : role == 'delivery'
+                ? '/delivery'
+                : '/account');
+
     await _localNotifications.show(
       notification.hashCode,
       notification.title,
@@ -148,6 +187,7 @@ class FcmService {
         ),
         iOS: const DarwinNotificationDetails(),
       ),
+      payload: payload,
     );
   }
 }

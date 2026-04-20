@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../config/theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/delivery_zone.dart';
 import '../../providers/cart_provider.dart';
 import '../../services/api_client.dart';
@@ -113,7 +114,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid promo code'), backgroundColor: Colors.red),
+        SnackBar(content: Text(AppLocalizations.of(context)!.invalidPromoCode), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) setState(() => _promoLoading = false);
@@ -123,7 +124,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   Future<void> _placeOrder() async {
     if (_addressCtrl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter delivery address')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.enterDeliveryAddress)),
       );
       return;
     }
@@ -131,8 +132,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     if (_selectedLocation != null && _zones.isNotEmpty &&
         _zoneForPoint(_selectedLocation!) == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Selected location is outside our delivery zones.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.outsideDeliveryZone),
           backgroundColor: Colors.red,
         ),
       );
@@ -173,15 +174,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final fee = _deliveryFee ?? 0;
     final total = subtotal - discount + fee;
 
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Checkout')),
+      appBar: AppBar(title: Text(l10n.checkout)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Order Summary',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(l10n.orderSummary,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             ...cart.map((item) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
@@ -197,25 +199,25 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   ),
                 )),
             const Divider(height: 24),
-            const Text('Delivery Address',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(l10n.deliveryAddress,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             TextField(
               controller: _addressCtrl,
-              decoration: const InputDecoration(
-                hintText: 'Enter your delivery address',
-                prefixIcon: Icon(Icons.location_on_outlined),
+              decoration: InputDecoration(
+                hintText: l10n.deliveryAddress,
+                prefixIcon: const Icon(Icons.location_on_outlined),
               ),
               maxLines: 2,
             ),
             const SizedBox(height: 12),
             if (_zones.isNotEmpty) ...[
-              const Text('Delivery Zone',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              Text(l10n.deliveryZone,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
               DropdownButtonFormField<int>(
                 value: _selectedZoneId,
-                hint: const Text('Select zone (optional)'),
+                hint: Text(l10n.deliveryZone),
                 items: _zones
                     .map((z) => DropdownMenuItem(
                         value: z.id, child: Text(z.name)))

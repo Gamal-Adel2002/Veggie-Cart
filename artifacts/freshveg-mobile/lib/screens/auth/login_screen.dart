@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -34,9 +35,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (mounted) {
       setState(() => _loading = false);
       if (!ok) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(ref.read(authProvider).error ?? 'Login failed'),
+            content: Text(ref.read(authProvider).error ?? l10n.error),
             backgroundColor: Colors.red,
           ),
         );
@@ -46,6 +48,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -56,12 +59,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const SizedBox(height: 40),
               const Icon(Icons.eco, color: kPrimaryGreen, size: 64),
               const SizedBox(height: 12),
-              const Text(
-                'Welcome back',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              Text(
+                l10n.appName,
+                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              const Text('Sign in to your account', style: TextStyle(color: Colors.grey)),
+              Text(l10n.signIn, style: const TextStyle(color: Colors.grey)),
               const SizedBox(height: 40),
               Form(
                 key: _formKey,
@@ -70,27 +73,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     TextFormField(
                       controller: _emailCtrl,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.email_outlined),
+                      decoration: InputDecoration(
+                        labelText: l10n.email,
+                        prefixIcon: const Icon(Icons.email_outlined),
                       ),
                       validator: (v) =>
-                          v == null || !v.contains('@') ? 'Enter valid email' : null,
+                          v == null || !v.contains('@') ? l10n.email : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _passwordCtrl,
                       obscureText: _obscure,
                       decoration: InputDecoration(
-                        labelText: 'Password',
+                        labelText: l10n.password,
                         prefixIcon: const Icon(Icons.lock_outlined),
                         suffixIcon: IconButton(
-                          icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+                          icon:
+                              Icon(_obscure ? Icons.visibility : Icons.visibility_off),
                           onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                       ),
                       validator: (v) =>
-                          v == null || v.length < 6 ? 'Min 6 characters' : null,
+                          v == null || v.length < 6 ? l10n.password : null,
                     ),
                     const SizedBox(height: 28),
                     SizedBox(
@@ -104,7 +108,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 child: CircularProgressIndicator(
                                     strokeWidth: 2, color: Colors.white),
                               )
-                            : const Text('Sign In'),
+                            : Text(l10n.signIn),
                       ),
                     ),
                   ],
@@ -114,12 +118,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text("Don't have an account? "),
+                  Text(l10n.dontHaveAccount),
                   GestureDetector(
                     onTap: () => context.go('/signup'),
-                    child: const Text(
-                      'Sign Up',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.signup,
+                      style: const TextStyle(
                           color: kPrimaryGreen, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -128,7 +132,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () => context.go('/role-select'),
-                child: const Text('← Back to role select'),
+                child: const Text('← Role select'),
               ),
             ],
           ),

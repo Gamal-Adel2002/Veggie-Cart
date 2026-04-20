@@ -198,5 +198,10 @@
   "removeStaff": "Remove",
   "outsideDeliveryZone": "Outside Delivery Zone",
   "selectDeliveryLocation": "Select Delivery Location",
-  "liveIndicator": "Live"
+  "liveIndicator": "Live",
+  "orderSummary": "Order Summary",
+  "deliveryZone": "Delivery Zone",
+  "invalidPromoCode": "Invalid promo code",
+  "enterDeliveryAddress": "Please enter delivery address",
+  "supportChat": "Support Chat"
 }

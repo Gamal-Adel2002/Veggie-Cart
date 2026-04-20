@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../config/theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/product.dart';
 import '../../models/category.dart';
 import '../../providers/locale_provider.dart';
@@ -44,17 +45,18 @@ class _ShopScreenState extends ConsumerState<ShopScreen> {
 
     final products = ref.watch(_shopProductsProvider(params));
 
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAF8),
       appBar: AppBar(
-        title: const Text('Shop'),
+        title: Text(l10n.shop),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Search products…',
+                hintText: l10n.searchProducts,
                 prefixIcon: const Icon(Icons.search, size: 20),
                 filled: true,
                 fillColor: Colors.grey.shade100,

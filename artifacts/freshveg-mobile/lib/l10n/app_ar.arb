@@ -198,5 +198,10 @@
   "removeStaff": "إزالة",
   "outsideDeliveryZone": "خارج نطاق التوصيل",
   "selectDeliveryLocation": "حدد موقع التوصيل",
-  "liveIndicator": "مباشر"
+  "liveIndicator": "مباشر",
+  "orderSummary": "ملخص الطلب",
+  "deliveryZone": "منطقة التوصيل",
+  "invalidPromoCode": "رمز خصم غير صالح",
+  "enterDeliveryAddress": "يرجى إدخال عنوان التوصيل",
+  "supportChat": "محادثة الدعم"
 }

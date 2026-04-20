@@ -32,12 +32,20 @@ function initFirebaseAdmin() {
 initFirebaseAdmin();
 
 /** Send an FCM notification to a single device token */
-async function sendFcm(token: string, payload: { title: string; body: string }) {
+async function sendFcm(
+  token: string,
+  payload: { title: string; body: string; screen?: string; role?: string }
+) {
   if (!fcmApp) return;
   try {
     await admin.messaging(fcmApp).send({
       token,
       notification: { title: payload.title, body: payload.body },
+      // data fields are available to Flutter via RemoteMessage.data
+      data: {
+        ...(payload.screen ? { screen: payload.screen } : {}),
+        ...(payload.role ? { role: payload.role } : {}),
+      },
       android: { priority: "high" },
       apns: { payload: { aps: { sound: "default" } } },
     });
@@ -47,7 +55,10 @@ async function sendFcm(token: string, payload: { title: string; body: string }) 
 }
 
 /** Send FCM to multiple tokens (fire-and-forget) */
-async function sendFcmMulti(tokens: string[], payload: { title: string; body: string }) {
+async function sendFcmMulti(
+  tokens: string[],
+  payload: { title: string; body: string; screen?: string; role?: string }
+) {
   if (!fcmApp || tokens.length === 0) return;
   await Promise.allSettled(tokens.map((t) => sendFcm(t, payload)));
 }
@@ -303,7 +314,12 @@ export async function sendPushToAdmins(payload: {
 
   // Mobile push via FCM (DB-backed token store)
   const adminFcmTokens = await dbGetFcmTokensByRole("admin");
-  await sendFcmMulti(adminFcmTokens, { title: payload.title, body: payload.body });
+  await sendFcmMulti(adminFcmTokens, {
+    title: payload.title,
+    body: payload.body,
+    screen: payload.url ?? "/admin/orders",
+    role: "admin",
+  });
 }
 
 export async function sendPushToDeliveryPerson(deliveryPersonId: number, payload: {
@@ -329,7 +345,12 @@ export async function sendPushToDeliveryPerson(deliveryPersonId: number, payload
 
   // Mobile FCM (DB-backed)
   const deliveryTokens = await dbGetFcmTokensByUser(deliveryPersonId);
-  await sendFcmMulti(deliveryTokens, { title: payload.title, body: payload.body });
+  await sendFcmMulti(deliveryTokens, {
+    title: payload.title,
+    body: payload.body,
+    screen: payload.url ?? "/delivery",
+    role: "delivery",
+  });
 }
 
 export async function sendPushToCustomer(userId: number, payload: {
@@ -357,7 +378,12 @@ export async function sendPushToCustomer(userId: number, payload: {
 
   // Mobile FCM (DB-backed)
   const customerTokens = await dbGetFcmTokensByUser(userId);
-  await sendFcmMulti(customerTokens, { title: payload.title, body: payload.body });
+  await sendFcmMulti(customerTokens, {
+    title: payload.title,
+    body: payload.body,
+    screen: payload.url ?? "/account",
+    role: "customer",
+  });
 }
 
 // POST /notifications/fcm-token — register a mobile FCM device token (DB-backed)

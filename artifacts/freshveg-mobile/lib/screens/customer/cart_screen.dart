@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../config/theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../services/api_client.dart';
@@ -17,10 +18,12 @@ class CartScreen extends ConsumerWidget {
     final cartNotifier = ref.read(cartProvider.notifier);
     final isAr = ref.watch(localeProvider).languageCode == 'ar';
 
+    final l10n = AppLocalizations.of(context)!;
+
     if (cart.isEmpty) {
-      return const Scaffold(
+      return Scaffold(
         body: EmptyState(
-          message: 'Your cart is empty.\nStart shopping!',
+          message: l10n.noOrdersYet,
           icon: Icons.shopping_cart_outlined,
         ),
       );
@@ -28,11 +31,12 @@ class CartScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Cart (${cart.length} items)'),
+        title: Text('${l10n.cart} (${cart.length})'),
         actions: [
           TextButton(
             onPressed: () => cartNotifier.clear(),
-            child: const Text('Clear', style: TextStyle(color: Colors.red)),
+            child: Text(l10n.remove,
+                style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -144,7 +148,7 @@ class CartScreen extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Subtotal',
+                  Text(AppLocalizations.of(context)!.subtotal,
                       style: TextStyle(fontSize: 16, color: Colors.grey)),
                   Text(
                     'EGP ${cartNotifier.subtotal.toStringAsFixed(2)}',
@@ -158,7 +162,7 @@ class CartScreen extends ConsumerWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => context.push('/checkout'),
-                  child: const Text('Proceed to Checkout'),
+                  child: Text(AppLocalizations.of(context)!.checkout),
                 ),
               ),
             ],
