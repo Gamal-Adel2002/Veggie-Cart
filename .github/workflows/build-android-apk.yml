@@ -1,0 +1,57 @@
+name: Build & Release Android APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'artifacts/freshveg-mobile/**'
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: 'API base URL (e.g. https://your-app.replit.app/api)'
+        required: false
+        default: 'https://your-app.replit.app/api'
+
+jobs:
+  build-apk:
+    name: Build Debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.0'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: artifacts/freshveg-mobile
+        run: flutter pub get
+
+      - name: Build debug APK
+        working-directory: artifacts/freshveg-mobile
+        run: |
+          API_URL="${{ github.event.inputs.api_url || 'https://your-app.replit.app/api' }}"
+          flutter build apk --debug \
+            --dart-define=FLUTTER_API_BASE_URL="$API_URL"
+
+      - name: Release APK to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-latest
+          name: FreshVeg Android APK (latest)
+          body: "Automatically built debug APK. Scan the QR code on the app download page to get this directly on your phone."
+          prerelease: true
+          files: artifacts/freshveg-mobile/build/app/outputs/apk/debug/app-debug.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
