@@ -53,6 +53,14 @@ export default defineConfig({
         target: "http://localhost:8080",
         changeOrigin: true,
       },
+      "/download": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+      },
+      "/privacy": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+      },
     },
   },
   preview: {

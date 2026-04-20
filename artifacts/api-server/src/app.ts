@@ -129,6 +129,74 @@ app.get("/privacy", (_req, res) => {
 </html>`);
 });
 
+// ── Flutter app download page ──────────────────────────────────────────────
+app.get("/download/source", (req, res) => {
+  const file = path.join(process.cwd(), "downloads", "freshveg-mobile.tar.gz");
+  res.download(file, "freshveg-mobile.tar.gz", (err) => {
+    if (err) res.status(404).send("File not found");
+  });
+});
+
+app.get("/download", (req, res) => {
+  const proto = req.headers["x-forwarded-proto"] || req.protocol;
+  const host = req.headers["x-forwarded-host"] || req.headers.host;
+  const base = `${proto}://${host}`;
+  const downloadUrl = `${base}/download/source`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&format=png&data=${encodeURIComponent(downloadUrl)}`;
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>FreshVeg Mobile – Download</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f5f7f5;color:#1a1a1a;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{background:#fff;border-radius:20px;padding:40px 32px;max-width:480px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.08);text-align:center}
+    .logo{font-size:2.4rem;margin-bottom:8px}
+    h1{color:#2d7a3a;font-size:1.5rem;margin-bottom:6px}
+    p{color:#555;font-size:.95rem;margin-bottom:24px;line-height:1.5}
+    .qr{border:3px solid #e8f5e9;border-radius:16px;padding:16px;display:inline-block;margin-bottom:24px}
+    .qr img{display:block;width:220px;height:220px}
+    .btn{display:inline-block;background:#2d7a3a;color:#fff;text-decoration:none;padding:14px 32px;border-radius:12px;font-size:1rem;font-weight:600;margin-bottom:24px;transition:background .2s}
+    .btn:hover{background:#225e2c}
+    .steps{background:#f5f7f5;border-radius:12px;padding:20px;text-align:left}
+    .steps h2{font-size:.9rem;text-transform:uppercase;letter-spacing:.05em;color:#2d7a3a;margin-bottom:12px}
+    .steps ol{padding-left:20px;font-size:.88rem;color:#444;line-height:1.9}
+    .steps code{background:#e8f5e9;border-radius:4px;padding:2px 6px;font-size:.82rem;color:#1a5928}
+    .note{font-size:.8rem;color:#888;margin-top:16px}
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">🥦</div>
+  <h1>FreshVeg Mobile App</h1>
+  <p>Download the Flutter source code, then build a free debug APK for your Android phone in under 5 minutes.</p>
+
+  <div class="qr">
+    <img src="${qrUrl}" alt="QR code to download source"/>
+  </div>
+
+  <br/>
+  <a class="btn" href="/download/source">⬇ Download Source (.tar.gz)</a>
+
+  <div class="steps">
+    <h2>Install on Android – 5 steps</h2>
+    <ol>
+      <li>Install <strong>Flutter</strong>: <a href="https://flutter.dev/docs/get-started/install" target="_blank">flutter.dev</a></li>
+      <li>Install <strong>Android Studio</strong> (free): <a href="https://developer.android.com/studio" target="_blank">android.com/studio</a></li>
+      <li>Extract the downloaded file, open a terminal inside it and run:<br/><code>flutter pub get</code></li>
+      <li>Connect your Android phone via USB, enable <strong>USB Debugging</strong> in Developer Options, then run:<br/><code>flutter run</code> — this installs and launches the app directly on your phone</li>
+      <li>Or build a standalone APK file:<br/><code>flutter build apk --debug</code><br/>APK will be at <code>build/app/outputs/apk/debug/app-debug.apk</code> — copy it to your phone and install.</li>
+    </ol>
+  </div>
+  <p class="note">No Google Play account needed. Debug builds are completely free.</p>
+</div>
+</body>
+</html>`);
+});
+
 if (process.env.NODE_ENV === "production") {
   const frontendDist = path.join(process.cwd(), "artifacts/grocery-store/dist/public");
   app.use(express.static(frontendDist));
