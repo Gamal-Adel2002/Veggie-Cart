@@ -77,55 +77,54 @@ You have two options: **TestFlight** (recommended, works up to 90 days) or **Alt
 **Cost:** One-time $25 registration fee  
 **What you need:** [Google Play Console account](https://play.google.com/console)
 
-### Step 1: Generate a Signing Key (do this once)
+### Step 1: Generate a Signing Key (run once on your local machine)
+
+> Requires Java/keytool on your local machine. Install via `brew install openjdk` (macOS), `sudo apt install default-jdk` (Ubuntu), or [Adoptium](https://adoptium.net/) (Windows).
+
+Clone or download the `artifacts/freshveg-mobile` folder to your machine, then run:
 
 ```bash
-keytool -genkey -v -keystore freshveg-release.jks \
-  -keyalg RSA -keysize 2048 -validity 10000 \
-  -alias freshveg
+cd artifacts/freshveg-mobile
+bash scripts/setup-android-signing.sh
 ```
 
-Save the keystore file and passwords safely — you **cannot** recover these.
+The script will:
+1. Ask you to create a store password and key password
+2. Generate `freshveg-release.jks`
+3. Print the base64-encoded keystore — **copy it carefully**
 
-### Step 2: Configure Signing in Flutter
+> Keep `freshveg-release.jks` and both passwords somewhere safe (password manager). You cannot recover them if lost, and you'll need them for every future release.
 
-Create `android/key.properties`:
-```properties
-storePassword=YOUR_STORE_PASSWORD
-keyPassword=YOUR_KEY_PASSWORD
-keyAlias=freshveg
-storeFile=../freshveg-release.jks
-```
+### Step 2: Add Secrets to Replit
 
-Add to `android/app/build.gradle.kts` in the `android {}` block:
-```kotlin
-val keyPropertiesFile = rootProject.file("key.properties")
-val keyProperties = Properties()
-keyProperties.load(FileInputStream(keyPropertiesFile))
+In your Replit project, open the **Secrets** tab (lock icon in the sidebar) and add these four secrets:
 
-signingConfigs {
-    create("release") {
-        keyAlias = keyProperties["keyAlias"] as String
-        keyPassword = keyProperties["keyPassword"] as String
-        storeFile = file(keyProperties["storeFile"] as String)
-        storePassword = keyProperties["storePassword"] as String
-    }
-}
+| Secret name | Value |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | The long base64 string printed by the script |
+| `ANDROID_STORE_PASSWORD` | The store password you chose |
+| `ANDROID_KEY_PASSWORD` | The key password you chose (usually the same) |
+| `ANDROID_KEY_ALIAS` | `freshveg` |
 
-buildTypes {
-    release {
-        signingConfig = signingConfigs.getByName("release")
-    }
-}
-```
+### Step 3: Generate key.properties and Build the Release Bundle
 
-### Step 3: Build the Release Bundle
+Before every release build, run the key.properties generator (reads the secrets from the environment):
 
 ```bash
+cd artifacts/freshveg-mobile
+bash scripts/generate-key-properties.sh
 flutter build appbundle --dart-define=FLUTTER_API_BASE_URL=https://your-app.replit.app
 ```
 
-The AAB file will be at: `build/app/outputs/bundle/release/app-release.aab`
+The signed AAB will be at: `build/app/outputs/bundle/release/app-release.aab`
+
+> `android/key.properties` and `*.jks` are in `.gitignore` — they are never committed to source control.
+
+**One-liner (after secrets are in Replit):**
+```bash
+bash scripts/generate-key-properties.sh && flutter build appbundle \
+  --dart-define=FLUTTER_API_BASE_URL=https://your-app.replit.app
+```
 
 ### Step 4: Submit to Google Play Console
 
