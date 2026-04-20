@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { pushSubscriptionsTable, usersTable } from "@workspace/db/schema";
+import { pushSubscriptionsTable, usersTable, fcmTokensTable } from "@workspace/db/schema";
 import { eq, and, isNotNull, isNull } from "drizzle-orm";
 import { authenticate, sseQueryToken, type AuthRequest } from "../middlewares/authenticate";
 import webpush from "web-push";
@@ -52,9 +52,44 @@ async function sendFcmMulti(tokens: string[], payload: { title: string; body: st
   await Promise.allSettled(tokens.map((t) => sendFcm(t, payload)));
 }
 
-// In-memory FCM token store: key = `role:userId` → device token
-// For production, move this to a `fcm_tokens` DB table
-const fcmTokenStore = new Map<string, string>();
+// ─── FCM token DB helpers ─────────────────────────────────────────────────────
+
+/** Upsert (insert or update) an FCM token for a user+device. */
+async function dbSaveFcmToken(userId: number, role: string, token: string, deviceId?: string) {
+  const existing = await db.select({ id: fcmTokensTable.id })
+    .from(fcmTokensTable)
+    .where(deviceId
+      ? and(eq(fcmTokensTable.userId, userId), eq(fcmTokensTable.deviceId, deviceId))
+      : and(eq(fcmTokensTable.userId, userId), eq(fcmTokensTable.role, role)))
+    .limit(1);
+
+  if (existing.length > 0) {
+    await db.update(fcmTokensTable)
+      .set({ token, role, updatedAt: new Date() })
+      .where(eq(fcmTokensTable.id, existing[0].id));
+  } else {
+    await db.insert(fcmTokensTable).values({ userId, role, token, deviceId: deviceId ?? null });
+  }
+}
+
+/** Delete all FCM tokens for a user (used on logout). */
+async function dbDeleteFcmToken(userId: number) {
+  await db.delete(fcmTokensTable).where(eq(fcmTokensTable.userId, userId));
+}
+
+/** Fetch all FCM tokens for a given role. */
+async function dbGetFcmTokensByRole(role: string): Promise<string[]> {
+  const rows = await db.select({ token: fcmTokensTable.token })
+    .from(fcmTokensTable).where(eq(fcmTokensTable.role, role));
+  return rows.map((r) => r.token);
+}
+
+/** Fetch FCM tokens for a specific user. */
+async function dbGetFcmTokensByUser(userId: number): Promise<string[]> {
+  const rows = await db.select({ token: fcmTokensTable.token })
+    .from(fcmTokensTable).where(eq(fcmTokensTable.userId, userId));
+  return rows.map((r) => r.token);
+}
 
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:admin@freshveggies.app";
 
@@ -266,11 +301,8 @@ export async function sendPushToAdmins(payload: {
     );
   await sendPushToSubs(adminSubs, payload);
 
-  // Mobile push via FCM
-  const adminFcmTokens: string[] = [];
-  for (const [key, token] of fcmTokenStore) {
-    if (key.startsWith("admin:")) adminFcmTokens.push(token);
-  }
+  // Mobile push via FCM (DB-backed token store)
+  const adminFcmTokens = await dbGetFcmTokensByRole("admin");
   await sendFcmMulti(adminFcmTokens, { title: payload.title, body: payload.body });
 }
 
@@ -295,9 +327,9 @@ export async function sendPushToDeliveryPerson(deliveryPersonId: number, payload
     );
   await sendPushToSubs(subs, payload);
 
-  // Mobile FCM
-  const token = fcmTokenStore.get(`delivery:${deliveryPersonId}`);
-  if (token) await sendFcm(token, { title: payload.title, body: payload.body });
+  // Mobile FCM (DB-backed)
+  const deliveryTokens = await dbGetFcmTokensByUser(deliveryPersonId);
+  await sendFcmMulti(deliveryTokens, { title: payload.title, body: payload.body });
 }
 
 export async function sendPushToCustomer(userId: number, payload: {
@@ -323,36 +355,45 @@ export async function sendPushToCustomer(userId: number, payload: {
     );
   await sendPushToSubs(subs, payload);
 
-  // Mobile FCM
-  const token = fcmTokenStore.get(`customer:${userId}`);
-  if (token) await sendFcm(token, { title: payload.title, body: payload.body });
+  // Mobile FCM (DB-backed)
+  const customerTokens = await dbGetFcmTokensByUser(userId);
+  await sendFcmMulti(customerTokens, { title: payload.title, body: payload.body });
 }
 
-// POST /notifications/fcm-token — register a mobile FCM device token
-router.post("/fcm-token", authenticate(false), (req: AuthRequest, res) => {
+// POST /notifications/fcm-token — register a mobile FCM device token (DB-backed)
+router.post("/fcm-token", authenticate(false), async (req: AuthRequest, res) => {
   if (!req.userId) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  const { token } = req.body as { token?: string };
+  const { token, deviceId } = req.body as { token?: string; deviceId?: string };
   if (!token) {
     res.status(400).json({ error: "token is required" });
     return;
   }
-  const key = `${req.userRole}:${req.userId}`;
-  fcmTokenStore.set(key, token);
-  logger.info({ userId: req.userId, role: req.userRole }, "FCM token registered");
-  res.json({ success: true });
+  try {
+    await dbSaveFcmToken(req.userId, req.userRole ?? "customer", token, deviceId);
+    logger.info({ userId: req.userId, role: req.userRole }, "FCM token registered in DB");
+    res.json({ success: true });
+  } catch (err) {
+    logger.error({ err }, "Failed to save FCM token to DB");
+    res.status(500).json({ error: "Failed to save token" });
+  }
 });
 
-// DELETE /notifications/fcm-token — remove FCM device token on logout
-router.delete("/fcm-token", authenticate(false), (req: AuthRequest, res) => {
+// DELETE /notifications/fcm-token — remove FCM device token on logout (DB-backed)
+router.delete("/fcm-token", authenticate(false), async (req: AuthRequest, res) => {
   if (!req.userId) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  fcmTokenStore.delete(`${req.userRole}:${req.userId}`);
-  res.json({ success: true });
+  try {
+    await dbDeleteFcmToken(req.userId);
+    res.json({ success: true });
+  } catch (err) {
+    logger.error({ err }, "Failed to delete FCM token from DB");
+    res.status(500).json({ error: "Failed to delete token" });
+  }
 });
 
 // GET /notifications/vapid-public-key
