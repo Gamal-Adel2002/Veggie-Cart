@@ -30,7 +30,8 @@ val keyPropertiesFile = rootProject.file("key.properties")
 // (before signingConfigs reads it) so a single `flutter build appbundle` is enough.
 if (!keystoreBase64.isNullOrBlank() && !storePasswordEnv.isNullOrBlank() && !keyPasswordEnv.isNullOrBlank()) {
     val keystoreFile = rootProject.file("../freshveg-release.jks")
-    keystoreFile.writeBytes(Base64.getDecoder().decode(keystoreBase64.trim()))
+    // getMimeDecoder tolerates line-wrapped base64 (common when pasting from terminal output)
+    keystoreFile.writeBytes(Base64.getMimeDecoder().decode(keystoreBase64.trim()))
 
     keyPropertiesFile.writeText(
         "storePassword=$storePasswordEnv\n" +
