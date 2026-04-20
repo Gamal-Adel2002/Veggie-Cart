@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.freshveg.app"
+    namespace = "com.freshveg.freshveg_mobile"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
