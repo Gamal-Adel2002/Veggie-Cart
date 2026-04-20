@@ -123,8 +123,10 @@ class _NavItem extends StatelessWidget {
 class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final List<Widget>? actions;
+  final PreferredSizeWidget? bottom;
 
-  const AdminAppBar({super.key, required this.title, this.actions});
+  const AdminAppBar(
+      {super.key, required this.title, this.actions, this.bottom});
 
   @override
   Widget build(BuildContext context) {
@@ -135,9 +137,11 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
         onPressed: () => Scaffold.of(context).openDrawer(),
       ),
       actions: actions,
+      bottom: bottom,
     );
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => Size.fromHeight(
+      kToolbarHeight + (bottom?.preferredSize.height ?? 0));
 }

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../config/api_config.dart';
@@ -46,6 +47,20 @@ class ApiClient {
 
   Future<Response> postFormData(String path, FormData formData) =>
       _dio.post(path, data: formData);
+
+  /// Upload a single file using multipart/form-data. Returns the response body.
+  Future<Map<String, dynamic>> uploadFile(
+    String path, {
+    required File file,
+    String fieldName = 'file',
+  }) async {
+    final fileName = file.path.split('/').last;
+    final formData = FormData.fromMap({
+      fieldName: await MultipartFile.fromFile(file.path, filename: fileName),
+    });
+    final res = await _dio.post(path, data: formData);
+    return res.data as Map<String, dynamic>;
+  }
 
   static Future<void> saveToken(String token) =>
       _storage.write(key: 'jwt_token', value: token);

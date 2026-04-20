@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
@@ -35,6 +34,28 @@ import '../screens/admin/private_chats_screen.dart';
 import '../screens/delivery/delivery_login_screen.dart';
 import '../screens/delivery/delivery_dashboard_screen.dart';
 
+const _customerRoutes = [
+  '/home', '/shop', '/product', '/cart', '/checkout',
+  '/order-confirmation', '/account', '/feed', '/messages',
+];
+
+const _adminRoutes = ['/admin'];
+
+String? _roleRedirect(String path, String role) {
+  final isCustomerRoute = _customerRoutes.any((r) => path == r || path.startsWith('$r/') || path.startsWith(r));
+  final isAdminRoute = _adminRoutes.any((r) => path == r || path.startsWith('$r/'));
+  final isDeliveryRoute = path == '/delivery';
+
+  if (role == 'customer') {
+    if (isAdminRoute || isDeliveryRoute) return '/home';
+  } else if (role == 'admin') {
+    if (isCustomerRoute || isDeliveryRoute) return '/admin';
+  } else if (role == 'delivery') {
+    if (isCustomerRoute || isAdminRoute) return '/delivery';
+  }
+  return null;
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
   return GoRouter(
@@ -61,6 +82,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           if (role == 'delivery') return '/delivery';
           return '/home';
         }
+        final roleRedirect = _roleRedirect(path, role);
+        if (roleRedirect != null) return roleRedirect;
       }
       return null;
     },

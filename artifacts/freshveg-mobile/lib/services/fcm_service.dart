@@ -4,7 +4,7 @@ import 'api_client.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Handle background messages
+  // Background message — Firebase handles display automatically
 }
 
 class FcmService {
@@ -12,33 +12,78 @@ class FcmService {
   static const _channelId = 'freshveg_channel';
   static const _channelName = 'FreshVeg Notifications';
 
+  static const _androidChannel = AndroidNotificationChannel(
+    _channelId,
+    _channelName,
+    description: 'FreshVeg order and delivery updates',
+    importance: Importance.high,
+  );
+
   static Future<void> initialize() async {
     try {
+      await _localNotifications
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(_androidChannel);
+
       await _localNotifications.initialize(
         const InitializationSettings(
           android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-          iOS: DarwinInitializationSettings(),
+          iOS: DarwinInitializationSettings(
+            requestAlertPermission: false,
+            requestBadgePermission: false,
+            requestSoundPermission: false,
+          ),
         ),
       );
 
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-      await FirebaseMessaging.instance
-          .requestPermission(alert: true, badge: true, sound: true);
+      await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
 
-      FirebaseMessaging.onMessage.listen((message) {
-        _showLocalNotification(message);
-      });
+      final settings = await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
 
-      final token = await FirebaseMessaging.instance.getToken();
-      if (token != null) {
-        await _sendTokenToBackend(token);
+      if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional) {
+        final token = await FirebaseMessaging.instance.getToken();
+        if (token != null) {
+          await _sendTokenToBackend(token);
+        }
+        FirebaseMessaging.instance.onTokenRefresh.listen(_sendTokenToBackend);
       }
 
-      FirebaseMessaging.instance.onTokenRefresh.listen(_sendTokenToBackend);
-    } catch (e) {
-      // Firebase not configured — skip silently
+      FirebaseMessaging.onMessage.listen(_showLocalNotification);
+
+      FirebaseMessaging.onMessageOpenedApp.listen((message) {
+        // Navigate to relevant screen based on message.data if needed
+      });
+    } catch (_) {
+      // Firebase not configured — silently skip
     }
+  }
+
+  /// Call after a successful login to register the current device token
+  static Future<void> sendCurrentToken() async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token != null) await _sendTokenToBackend(token);
+    } catch (_) {}
+  }
+
+  /// Call before logout to unregister this device
+  static Future<void> deleteToken() async {
+    try {
+      await apiClient.delete('/notifications/fcm-token');
+      await FirebaseMessaging.instance.deleteToken();
+    } catch (_) {}
   }
 
   static Future<void> _sendTokenToBackend(String token) async {
@@ -55,14 +100,16 @@ class FcmService {
       notification.hashCode,
       notification.title,
       notification.body,
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails(
           _channelId,
           _channelName,
+          channelDescription: 'FreshVeg order and delivery updates',
           importance: Importance.high,
           priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
         ),
-        iOS: DarwinNotificationDetails(),
+        iOS: const DarwinNotificationDetails(),
       ),
     );
   }

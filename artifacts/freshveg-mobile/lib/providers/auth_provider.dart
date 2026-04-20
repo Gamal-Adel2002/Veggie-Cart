@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user.dart';
 import '../services/auth_service.dart';
+import '../services/fcm_service.dart';
 
 class AuthState {
   final AppUser? user;
@@ -28,6 +29,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> _init() async {
     final user = await AuthService.getMe();
     state = AuthState(user: user);
+    if (user != null) {
+      await FcmService.sendCurrentToken();
+    }
   }
 
   Future<bool> loginCustomer(String email, String password) async {
@@ -36,6 +40,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final data = await AuthService.loginCustomer(email: email, password: password);
       final user = AppUser.fromJson(data['user'] as Map<String, dynamic>);
       state = AuthState(user: user);
+      await FcmService.sendCurrentToken();
       return true;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -50,6 +55,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           name: name, email: email, password: password, phone: phone);
       final user = AppUser.fromJson(data['user'] as Map<String, dynamic>);
       state = AuthState(user: user);
+      await FcmService.sendCurrentToken();
       return true;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -63,6 +69,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final data = await AuthService.loginAdmin(email: email, password: password);
       final user = AppUser.fromJson(data['user'] as Map<String, dynamic>);
       state = AuthState(user: user);
+      await FcmService.sendCurrentToken();
       return true;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -76,6 +83,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final data = await AuthService.loginDelivery(email: email, password: password);
       final user = AppUser.fromJson(data['user'] as Map<String, dynamic>);
       state = AuthState(user: user);
+      await FcmService.sendCurrentToken();
       return true;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -84,6 +92,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
+    await FcmService.deleteToken();
     await AuthService.logout();
     state = const AuthState();
   }

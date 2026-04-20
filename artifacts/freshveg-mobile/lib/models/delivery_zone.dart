@@ -4,6 +4,7 @@ class DeliveryZone {
   final double centerLat;
   final double centerLng;
   final double radiusKm;
+  final double fee;
   final bool active;
 
   const DeliveryZone({
@@ -12,15 +13,17 @@ class DeliveryZone {
     required this.centerLat,
     required this.centerLng,
     required this.radiusKm,
+    this.fee = 0,
     required this.active,
   });
 
   factory DeliveryZone.fromJson(Map<String, dynamic> json) => DeliveryZone(
         id: json['id'] as int,
         name: json['name'] as String? ?? '',
-        centerLat: (json['centerLat'] as num).toDouble(),
-        centerLng: (json['centerLng'] as num).toDouble(),
-        radiusKm: (json['radiusKm'] as num).toDouble(),
+        centerLat: (json['centerLat'] as num?)?.toDouble() ?? 0,
+        centerLng: (json['centerLng'] as num?)?.toDouble() ?? 0,
+        radiusKm: (json['radiusKm'] as num?)?.toDouble() ?? 1,
+        fee: (json['fee'] as num?)?.toDouble() ?? 0,
         active: json['active'] as bool? ?? true,
       );
 
@@ -29,6 +32,7 @@ class DeliveryZone {
         'centerLat': centerLat,
         'centerLng': centerLng,
         'radiusKm': radiusKm,
+        'fee': fee,
         'active': active,
       };
 }

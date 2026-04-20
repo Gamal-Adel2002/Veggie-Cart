@@ -164,7 +164,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     .map((z) => DropdownMenuItem(
                         value: z.id, child: Text(z.name)))
                     .toList(),
-                onChanged: (v) => setState(() => _selectedZoneId = v),
+                onChanged: (v) {
+                  final zone = _zones.firstWhere((z) => z.id == v);
+                  setState(() {
+                    _selectedZoneId = v;
+                    _deliveryFee = zone.fee > 0 ? zone.fee : null;
+                  });
+                },
                 decoration: const InputDecoration(),
               ),
               const SizedBox(height: 12),

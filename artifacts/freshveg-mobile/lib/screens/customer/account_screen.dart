@@ -1,8 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../config/theme.dart';
 import '../../models/order.dart';
+import '../../models/user.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../app.dart';
@@ -86,25 +90,102 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
   }
 }
 
-class _ProfileTab extends ConsumerWidget {
-  final locale;
-  final themeMode;
+class _ProfileTab extends ConsumerStatefulWidget {
+  final dynamic locale;
+  final dynamic themeMode;
 
   const _ProfileTab({required this.locale, required this.themeMode});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ProfileTab> createState() => _ProfileTabState();
+}
+
+class _ProfileTabState extends ConsumerState<_ProfileTab> {
+  final _nameCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  bool _editing = false;
+  bool _saving = false;
+  XFile? _pickedImage;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = ref.read(authProvider).user;
+    if (user != null) {
+      _nameCtrl.text = user.name;
+      _phoneCtrl.text = user.phone ?? '';
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+        source: ImageSource.gallery, maxWidth: 800, imageQuality: 80);
+    if (picked != null) setState(() => _pickedImage = picked);
+  }
+
+  Future<void> _saveProfile() async {
+    setState(() => _saving = true);
+    try {
+      String? imageUrl;
+      if (_pickedImage != null) {
+        final formData = await apiClient.uploadFile(
+          '/upload',
+          file: File(_pickedImage!.path),
+          fieldName: 'image',
+        );
+        imageUrl = formData['url'] as String?;
+      }
+      await apiClient.put('/auth/profile', data: {
+        'name': _nameCtrl.text.trim(),
+        'phone': _phoneCtrl.text.trim(),
+        if (imageUrl != null) 'profileImage': imageUrl,
+      });
+      final meRes = await apiClient.get('/auth/me');
+      final user = AppUser.fromJson(meRes.data as Map<String, dynamic>);
+      ref.read(authProvider.notifier).setUser(user);
+      if (mounted) {
+        setState(() => _editing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile updated!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final user = ref.watch(authProvider).user!;
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Center(
-          child: Column(
-            children: [
-              CircleAvatar(
+    Widget avatar = _pickedImage != null
+        ? CircleAvatar(
+            radius: 44,
+            backgroundImage: FileImage(File(_pickedImage!.path)),
+          )
+        : user.profileImage != null
+            ? CircleAvatar(
                 radius: 44,
-                backgroundColor: kPrimaryGreen.withOpacity(0.1),
+                backgroundImage:
+                    CachedNetworkImageProvider(user.profileImage!),
+              )
+            : CircleAvatar(
+                radius: 44,
+                backgroundColor: kPrimaryGreen.withValues(alpha: 0.12),
                 child: Text(
                   user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
                   style: const TextStyle(
@@ -112,19 +193,107 @@ class _ProfileTab extends ConsumerWidget {
                       fontWeight: FontWeight.bold,
                       color: kPrimaryGreen),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Text(user.name,
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold)),
-              Text(user.email,
-                  style: const TextStyle(color: Colors.grey)),
-              if (user.phone != null)
-                Text(user.phone!,
-                    style: const TextStyle(color: Colors.grey, fontSize: 13)),
+              );
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Center(
+          child: Stack(
+            children: [
+              avatar,
+              if (_editing)
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: GestureDetector(
+                    onTap: _pickImage,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(
+                        color: kPrimaryGreen,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.camera_alt,
+                          color: Colors.white, size: 16),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
+        const SizedBox(height: 12),
+        if (!_editing) ...[
+          Center(
+            child: Text(user.name,
+                style: const TextStyle(
+                    fontSize: 20, fontWeight: FontWeight.bold)),
+          ),
+          Center(
+            child: Text(user.email,
+                style: const TextStyle(color: Colors.grey)),
+          ),
+          if (user.phone != null)
+            Center(
+              child: Text(user.phone!,
+                  style: const TextStyle(color: Colors.grey, fontSize: 13)),
+            ),
+          const SizedBox(height: 16),
+          Center(
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.edit_outlined, size: 16),
+              label: const Text('Edit Profile'),
+              onPressed: () => setState(() => _editing = true),
+            ),
+          ),
+        ] else ...[
+          const SizedBox(height: 8),
+          TextField(
+            controller: _nameCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Full Name',
+              prefixIcon: Icon(Icons.person_outline),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _phoneCtrl,
+            keyboardType: TextInputType.phone,
+            decoration: const InputDecoration(
+              labelText: 'Phone',
+              prefixIcon: Icon(Icons.phone_outlined),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => setState(() {
+                    _editing = false;
+                    _pickedImage = null;
+                    _nameCtrl.text = user.name;
+                    _phoneCtrl.text = user.phone ?? '';
+                  }),
+                  child: const Text('Cancel'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _saving ? null : _saveProfile,
+                  child: _saving
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white))
+                      : const Text('Save'),
+                ),
+              ),
+            ],
+          ),
+        ],
         const SizedBox(height: 32),
         const Text('Settings',
             style: TextStyle(
@@ -138,7 +307,7 @@ class _ProfileTab extends ConsumerWidget {
               SwitchListTile(
                 title: const Text('Dark Mode'),
                 secondary: const Icon(Icons.dark_mode_outlined),
-                value: themeMode == ThemeMode.dark,
+                value: widget.themeMode == ThemeMode.dark,
                 onChanged: (_) =>
                     ref.read(themeModeProvider.notifier).toggle(),
               ),
@@ -151,14 +320,14 @@ class _ProfileTab extends ConsumerWidget {
                   children: [
                     _LangChip(
                       label: 'EN',
-                      selected: locale.languageCode == 'en',
+                      selected: widget.locale.languageCode == 'en',
                       onTap: () =>
                           ref.read(localeProvider.notifier).setLocale('en'),
                     ),
                     const SizedBox(width: 8),
                     _LangChip(
                       label: 'AR',
-                      selected: locale.languageCode == 'ar',
+                      selected: widget.locale.languageCode == 'ar',
                       onTap: () =>
                           ref.read(localeProvider.notifier).setLocale('ar'),
                     ),
@@ -195,7 +364,8 @@ class _LangChip extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _LangChip({required this.label, required this.selected, required this.onTap});
+  const _LangChip(
+      {required this.label, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -265,6 +435,17 @@ class _OrdersTab extends ConsumerWidget {
                           style: const TextStyle(
                               color: Colors.grey, fontSize: 12),
                         ),
+                        if (order.status == 'waiting' || order.status == 'accepted')
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: OutlinedButton.icon(
+                              icon: const Icon(Icons.cancel_outlined,
+                                  size: 16, color: Colors.red),
+                              label: const Text('Cancel Order',
+                                  style: TextStyle(color: Colors.red)),
+                              onPressed: () => _cancelOrder(context, ref, order.id),
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -274,6 +455,40 @@ class _OrdersTab extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('Error: $e')),
     );
+  }
+
+  Future<void> _cancelOrder(
+      BuildContext context, WidgetRef ref, int orderId) async {
+    final ok = await showDialog<bool>(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('Cancel Order'),
+            content: Text('Cancel order #$orderId?'),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('No')),
+              ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red, foregroundColor: Colors.white),
+                  child: const Text('Cancel Order')),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!ok) return;
+    try {
+      await apiClient.patch('/orders/$orderId/cancel');
+      ref.invalidate(_myOrdersProvider);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   String _formatDate(String s) {
