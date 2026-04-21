@@ -130,7 +130,7 @@ app.get("/privacy", (_req, res) => {
 });
 
 // ── Flutter app download routes ────────────────────────────────────────────
-const GITHUB_REPO = "Gamal-Adel2002/Veggie-Cart";
+const GITHUB_REPO = "Gamal-Adel2002/FreshVeg-Mobile";
 const GITHUB_RELEASE_TAG = "apk-latest";
 
 async function getApkAsset(): Promise<{ downloadUrl: string; size: number; updatedAt: string } | null> {
