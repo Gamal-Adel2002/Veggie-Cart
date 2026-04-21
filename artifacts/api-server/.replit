@@ -1,0 +1,31 @@
+language = "nodejs"
+modules = ["nodejs-24"]
+
+[deployment]
+router = "application"
+deploymentTarget = "autoscale"
+run = "node --enable-source-maps dist/index.mjs"
+
+[deployment.preBuild]
+command = "pnpm install && pnpm run build"
+
+[deployment.postBuild]
+command = "pnpm prune"
+
+[nix]
+channel = "stable-25_05"
+
+[postBuild]
+command = "pnpm install && pnpm run build"
+
+[service]
+port = 8080
+
+[userenv.shared]
+# Set these values in Replit Settings -> Environment:
+# DATABASE_URL = "postgresql://user:password@localhost:5432/veggie_cart"
+# JWT_SECRET = "generate_a_secure_random_string_min_32_chars"
+PORT = 8080
+
+[tool.volumes]
+db = "/data/db"

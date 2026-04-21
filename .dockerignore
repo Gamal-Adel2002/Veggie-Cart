@@ -1,0 +1,37 @@
+# Version control
+.git
+.gitattributes
+.github
+
+# Dev-only canvas/mockup tool
+artifacts/mockup-sandbox/
+
+# Nested node_modules (workspace root node_modules is used instead)
+artifacts/grocery-store/node_modules/
+artifacts/api-server/node_modules/
+
+# Attached assets from agent chat sessions
+attached_assets/
+
+# Agent local data and skills
+.local/
+
+# Stray build pid files
+*.pid
+
+# Nix/SDK caches that may exist from dev sessions
+android-sdk/
+.gradle/
+.pub-cache/
+.flutter/
+.dart_tool/
+ndk-*/
+
+# Documentation files not needed at runtime
+CLAUDE.md
+DATABASE_SETUP.md
+VIEW_DATABASES.md
+REPLIT_SETUP.md
+NEON_ACCESS.md
+MIGRATE_DATA.md
+PUBLISH_GUIDE.md
